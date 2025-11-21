@@ -51,12 +51,16 @@ class ABTestingSystem {
   // Assign user to variation and track in Paid.ai
   async assignVariation(userId, experimentId) {
     const experiment = this.experiments.get(experimentId);
+    if (!experiment) {
+      throw new Error(`Experiment ${experimentId} not found`);
+    }
     const variation = this.selectVariation(experiment.variations);
     
     // Fetch user's billing data from Paid.ai
     const billingData = await this.fetchPaidBillingData(userId);
     
     // Record assignment with billing context
+    // Note: Implement trackAssignment method to store assignment data
     await this.trackAssignment({
       userId,
       experimentId,
@@ -77,6 +81,10 @@ class ABTestingSystem {
       }
     });
     
+    if (!response.ok) {
+      throw new Error(`Failed to fetch billing data: ${response.status}`);
+    }
+    
     return await response.json();
   }
 
@@ -84,6 +92,7 @@ class ABTestingSystem {
   async trackConversion(userId, experimentId, conversionData) {
     const billingData = await this.fetchPaidBillingData(userId);
     
+    // Note: Implement recordMetric method to store metric data
     await this.recordMetric({
       userId,
       experimentId,
@@ -138,6 +147,7 @@ Your A/B testing solution can query Paid.ai's APIs to enrich experiment data wit
 ```javascript
 // Fetch aggregate metrics for experiment analysis
 async function getExperimentMetrics(experimentId, variation) {
+  // Note: Implement getUsersInVariation to query your database
   const users = await getUsersInVariation(experimentId, variation);
   
   const metrics = await Promise.all(
@@ -219,8 +229,8 @@ async function analyzeExperiment(experimentId) {
         users: metrics.totalUsers,
         conversions: metrics.totalConversions,
         conversionRate: metrics.conversionRate,
-        avgRevenuePerUser: metrics.totalRevenue / metrics.totalUsers,
-        avgLTV: metrics.totalLTV / metrics.totalUsers
+        avgRevenuePerUser: metrics.totalUsers > 0 ? metrics.totalRevenue / metrics.totalUsers : 0,
+        avgLTV: metrics.totalUsers > 0 ? metrics.totalLTV / metrics.totalUsers : 0
       };
     })
   );
