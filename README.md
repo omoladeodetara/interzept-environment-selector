@@ -3,12 +3,18 @@
 ## What is Paid.ai?
 
 Paid.ai is an AI platform focused on monetization and billing infrastructure for the AI agent economy. The company provides solutions for SaaS businesses to transition from traditional seat-based pricing to usage-based models tailored for AI agents.
+**Note:** The API documentation scraper used for research is located in the [`/scraper`](scraper/) folder.
+
+## What is Paid.ai?
+
+Paid.ai is an AI platform focused on monetization and billing infrastructure for the AI agent economy. The company provides solutions for SaaS businesses to transition from traditional seat-based pricing models to usage-based and outcome-based billing, which is becoming essential as AI agents automate more of the modern workforce.
 
 ### Key Information
 
 **Funding**: Paid.ai raised $21 million in a seed round led by Lightspeed, FUSE, and EQT, with participation from Sequoia Capital and strategic angel investors.
 
 **Vision**: The company aims to help SaaS companies "break free from the seat-based trap," anticipating that up to 50% of the workforce will consist of AI agents by 2030. This shift requires new approaches to pricing and billing.
+**Vision**: The company aims to help SaaS companies "break free from the seat-based trap," anticipating that up to 50% of the workforce will consist of AI agents by 2030. This shift requires new approaches to measure, price, and monetize AI agents that perform tasks independently.
 
 ### Platform Features
 
@@ -33,6 +39,7 @@ For more information, visit the [Paid.ai website](https://paid.ai) or their [com
 **Does Paid.ai support A/B testing?**
 
 Paid.ai does not currently offer built-in A/B testing functionality. The platform focuses on billing infrastructure, usage tracking, and monetization rather than experimentation features. However, you can build a custom A/B testing solution that integrates with Paid.ai's APIs to test different pricing strategies.
+Paid.ai does not currently offer built-in A/B testing functionality. The platform focuses on billing infrastructure, usage tracking, and monetization rather than experimentation features. However, you can build custom A/B testing capabilities using Paid.ai's extensible APIs.
 
 ### Building an A/B Testing Solution with Paid.ai
 
@@ -112,6 +119,57 @@ To enable A/B testing for pricing experiments, you can build a custom system tha
    - Set up webhooks to receive payment and usage events from Paid.ai
    - Correlate these events with your A/B test variant assignments
    - Calculate conversion rates, average revenue per user (ARPU), and other metrics per variant
+   - Example webhook handler with proper validation:
+   ```javascript
+   // Handle Paid.ai webhooks in your A/B testing system
+   app.post('/webhooks/paid', async (req, res) => {
+     const event = req.body;
+     
+     // Validate event data exists
+     if (!event || !event.data) {
+       console.error('Invalid webhook payload: missing event data');
+       return res.status(400).json({ error: 'Invalid webhook payload' });
+     }
+     
+     // Validate required fields exist
+     if (!event.data.customerId) {
+       console.error('Invalid webhook payload: missing customerId');
+       return res.status(400).json({ error: 'Missing customerId in webhook payload' });
+     }
+     
+     if (!event.data.experimentId) {
+       console.error('Invalid webhook payload: missing experimentId');
+       return res.status(400).json({ error: 'Missing experimentId in webhook payload' });
+     }
+     
+     switch (event.type) {
+       case 'subscription.created':
+         if (!event.data.amount) {
+           console.error('Invalid webhook payload: missing amount for subscription.created');
+           return res.status(400).json({ error: 'Missing amount in webhook payload' });
+         }
+         
+         await abTesting.trackConversion(
+           event.data.customerId,
+           event.data.experimentId,
+           { revenue: event.data.amount }
+         );
+         break;
+         
+       case 'subscription.cancelled':
+         await abTesting.trackChurn(
+           event.data.customerId,
+           event.data.experimentId
+         );
+         break;
+       
+       default:
+         console.log(`Unhandled webhook event type: ${event.type}`);
+     }
+     
+     res.status(200).send('OK');
+   });
+   ```
 
 4. **Analytics Dashboard**
    - Build a dashboard to visualize test results
