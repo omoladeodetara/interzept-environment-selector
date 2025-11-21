@@ -249,8 +249,8 @@ async function analyzeExperiment(experimentId) {
         users: metrics.totalUsers,
         conversions: metrics.totalConversions,
         conversionRate: metrics.conversionRate,
-        avgRevenuePerUser: metrics.totalUsers > 0 ? metrics.totalRevenue / metrics.totalUsers : 0,
-        avgLTV: metrics.totalUsers > 0 ? metrics.totalLTV / metrics.totalUsers : 0
+        avgRevenuePerUser: metrics.totalUsers > 0 ? metrics.totalRevenue / metrics.totalUsers : null,
+        avgLTV: metrics.totalUsers > 0 ? metrics.totalLTV / metrics.totalUsers : null
       };
     })
   );
