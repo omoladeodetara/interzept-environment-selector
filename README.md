@@ -58,22 +58,37 @@ To enable A/B testing for Paid.ai customers, you can leverage their existing API
    const PAID_API_KEY = process.env.PAID_API_KEY;
    
    async function emitABTestSignal(orderId, variant, conversionEvent) {
-     return fetch("https://api.paid.ai/signals", {
-       method: "POST",
-       headers: {
-         "Authorization": `Bearer ${PAID_API_KEY}`,
-         "Content-Type": "application/json",
-       },
-       body: JSON.stringify({
-         order: orderId,
-         type: "ab_test_event",
-         properties: {
-           variant: variant,
-           experiment_id: "pricing_test_001",
-           conversion: conversionEvent
+     if (!PAID_API_KEY) {
+       throw new Error('PAID_API_KEY environment variable is not set');
+     }
+     
+     try {
+       const response = await fetch("https://api.paid.ai/signals", {
+         method: "POST",
+         headers: {
+           "Authorization": `Bearer ${PAID_API_KEY}`,
+           "Content-Type": "application/json",
          },
-       }),
-     });
+         body: JSON.stringify({
+           order: orderId,
+           type: "ab_test_event",
+           properties: {
+             variant: variant,
+             experiment_id: "pricing_test_001",
+             conversion: conversionEvent
+           },
+         }),
+       });
+       
+       if (!response.ok) {
+         throw new Error(`API request failed: ${response.statusText}`);
+       }
+       
+       return await response.json();
+     } catch (error) {
+       console.error('Failed to emit A/B test signal:', error);
+       throw error;
+     }
    }
    ```
 
