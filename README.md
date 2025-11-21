@@ -109,7 +109,7 @@ class ABTestingSystem {
       experimentId,
       type: 'conversion',
       revenue: conversionData.revenue,
-      subscriptionValue: billingData.subscriptionValue,
+      subscriptionValue: billingData && typeof billingData.subscriptionValue !== 'undefined' ? billingData.subscriptionValue : null,
       timestamp: new Date()
     });
   }
