@@ -66,14 +66,18 @@ class ABTestingSystem {
       billingData = { tier: null, lifetimeValue: null };
     }
     
+    // Validate billingData and its properties
+    const subscriptionTier = billingData && typeof billingData.tier !== 'undefined' ? billingData.tier : null;
+    const ltv = billingData && typeof billingData.lifetimeValue !== 'undefined' ? billingData.lifetimeValue : null;
+    
     // Record assignment with billing context
     // Note: Implement trackAssignment method to store assignment data
     await this.trackAssignment({
       userId,
       experimentId,
       variation,
-      subscriptionTier: billingData.tier,
-      ltv: billingData.lifetimeValue
+      subscriptionTier,
+      ltv
     });
     
     return variation;
