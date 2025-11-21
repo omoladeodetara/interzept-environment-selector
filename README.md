@@ -27,6 +27,7 @@ python scrape_api.py --url https://docs.paid.ai/api-reference/ --output my_outpu
 **Command-line options:**
 - `--url`: Base URL for API documentation (default: https://docs.paid.ai/api-reference/)
 - `--output`: Output JSON file (default: paid_api_docs.json)
+- `--max-subpages`: Maximum number of sub-pages to scrape (default: 10)
 - `--verbose`: Enable verbose output with scraping summary
 
 ### Output
