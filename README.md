@@ -96,7 +96,8 @@ To enable A/B testing for Paid.ai customers, you can leverage their existing API
        });
        
        if (!response.ok) {
-         throw new Error(`API request failed: ${response.statusText}`);
+         const errorBody = await response.text();
+         throw new Error(`API request failed with status ${response.status}: ${response.statusText}. Response body: ${errorBody}`);
        }
        
        return await response.json();
