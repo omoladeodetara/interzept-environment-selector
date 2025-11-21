@@ -111,17 +111,25 @@ class ABTestingSystem {
   }
 
   selectVariation(variations) {
+    if (!variations || variations.length === 0) {
+      return null;
+    }
+    // Normalize weights so their sum is 1.0
+    const totalWeight = variations.reduce((sum, v) => sum + v.weight, 0);
+    const normalized = variations.map(v => ({
+      name: v.name,
+      weight: v.weight / (totalWeight || 1) // avoid division by zero
+    }));
     const random = Math.random();
     let cumulative = 0;
-    
-    for (const variation of variations) {
+    for (const variation of normalized) {
       cumulative += variation.weight;
       if (random < cumulative) {
         return variation.name;
       }
     }
-    
-    return variations[0].name;
+    // In case of floating point error, return last variation
+    return normalized[normalized.length - 1].name;
   }
 }
 
