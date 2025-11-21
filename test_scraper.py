@@ -198,7 +198,7 @@ def test_parameter_extraction():
     # Find first table
     table = soup.find('table')
     if table:
-        params = scraper._extract_parameters_from_table(table)
+        params = scraper.extract_parameters_from_table(table)
         print(f"\n✓ Extracted {len(params)} parameters:")
         for param in params:
             print(f"  - {param['name']}: {param['description'][:50]}...")

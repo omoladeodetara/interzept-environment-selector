@@ -18,17 +18,23 @@ from bs4 import BeautifulSoup
 class PaidAPIDocScraper:
     """Scraper for Paid.ai API documentation."""
     
-    def __init__(self, base_url: str = "https://docs.paid.ai/api-reference/"):
+    # Class constants
+    MAX_CONTENT_LENGTH = 500  # Maximum length for content preview
+    DEFAULT_MAX_SUBPAGES = 10  # Default maximum number of sub-pages to scrape
+    
+    def __init__(self, base_url: str = "https://docs.paid.ai/api-reference/", max_subpages: int = None):
         """
         Initialize the scraper.
         
         Args:
             base_url: Base URL for the API documentation
+            max_subpages: Maximum number of sub-pages to scrape (default: 10)
         """
         self.base_url = base_url
+        self.max_subpages = max_subpages if max_subpages is not None else self.DEFAULT_MAX_SUBPAGES
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         })
         self.scraped_data = {
             "base_url": base_url,
@@ -119,13 +125,13 @@ class PaidAPIDocScraper:
                 
                 # Look for parameter tables in current element or children
                 if next_elem.name == 'table':
-                    params = self._extract_parameters_from_table(next_elem)
+                    params = self.extract_parameters_from_table(next_elem)
                     if params:
                         endpoint_info['parameters'].extend(params)
                 else:
                     # Look for tables within this element
                     for table in next_elem.find_all('table'):
-                        params = self._extract_parameters_from_table(table)
+                        params = self.extract_parameters_from_table(table)
                         if params:
                             endpoint_info['parameters'].extend(params)
                 
@@ -137,7 +143,7 @@ class PaidAPIDocScraper:
         
         return endpoints
     
-    def _extract_parameters_from_table(self, table) -> List[Dict[str, str]]:
+    def extract_parameters_from_table(self, table) -> List[Dict[str, str]]:
         """
         Extract parameters from a table element.
         
@@ -187,7 +193,7 @@ class PaidAPIDocScraper:
         )):
             section_data = {
                 "title": "",
-                "content": section.get_text(strip=True)[:500],  # First 500 chars
+                "content": section.get_text(strip=True)[:self.MAX_CONTENT_LENGTH],  # Content preview
                 "links": []
             }
             
@@ -241,8 +247,9 @@ class PaidAPIDocScraper:
         nav_links = self._find_navigation_links(soup)
         if nav_links:
             print(f"Found {len(nav_links)} sub-pages to scrape")
-            for i, link in enumerate(nav_links[:10], 1):  # Limit to first 10 to avoid excessive requests
-                print(f"Scraping sub-page {i}/{min(len(nav_links), 10)}: {link}")
+            max_pages = min(len(nav_links), self.max_subpages)
+            for i, link in enumerate(nav_links[:max_pages], 1):
+                print(f"Scraping sub-page {i}/{max_pages}: {link}")
                 self._scrape_subpage(link)
         
         return self.scraped_data
@@ -319,6 +326,12 @@ def main():
         help='Output JSON file (default: paid_api_docs.json)'
     )
     parser.add_argument(
+        '--max-subpages',
+        type=int,
+        default=10,
+        help='Maximum number of sub-pages to scrape (default: 10)'
+    )
+    parser.add_argument(
         '--verbose',
         action='store_true',
         help='Enable verbose output'
@@ -327,7 +340,7 @@ def main():
     args = parser.parse_args()
     
     try:
-        scraper = PaidAPIDocScraper(base_url=args.url)
+        scraper = PaidAPIDocScraper(base_url=args.url, max_subpages=args.max_subpages)
         data = scraper.scrape()
         scraper.save_to_file(args.output)
         
