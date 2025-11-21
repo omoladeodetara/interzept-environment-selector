@@ -185,6 +185,7 @@ async function getExperimentMetrics(experimentId, variation) {
     })
   );
   
+  // Note: Implement aggregateMetrics to process and summarize experiment metrics
   return aggregateMetrics(metrics);
 }
 ```
