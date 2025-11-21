@@ -56,8 +56,15 @@ class ABTestingSystem {
     }
     const variation = this.selectVariation(experiment.variations);
     
-    // Fetch user's billing data from Paid.ai
-    const billingData = await this.fetchPaidBillingData(userId);
+    // Fetch user's billing data from Paid.ai, with error handling
+    let billingData;
+    try {
+      billingData = await this.fetchPaidBillingData(userId);
+    } catch (error) {
+      // Fallback: assign default billing data and optionally log error
+      console.error(`Failed to fetch billing data for user ${userId}:`, error);
+      billingData = { tier: null, lifetimeValue: null };
+    }
     
     // Record assignment with billing context
     // Note: Implement trackAssignment method to store assignment data
