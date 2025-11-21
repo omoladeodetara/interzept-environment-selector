@@ -264,9 +264,12 @@ class PaidAPIDocScraper:
             List of URLs
         """
         links = []
-        nav_elements = soup.find_all(['nav', 'aside', 'div'], class_=lambda x: x and any(
-            cls in str(x).lower() for cls in ['nav', 'sidebar', 'menu', 'toc']
-        ))
+        nav_elements = soup.find_all(
+            ['nav', 'aside', 'div'],
+            class_=lambda x: x and any(
+                cls == c.lower() for c in (x if isinstance(x, list) else [x]) for cls in ['nav', 'sidebar', 'menu', 'toc']
+            )
+        )
         
         for nav in nav_elements:
             for link in nav.find_all('a', href=True):
