@@ -188,9 +188,8 @@ class PaidAPIDocScraper:
         sections = []
         
         # Find main content sections
-        for section in soup.find_all(['section', 'article', 'div'], class_=lambda x: x and any(
-            cls in str(x).lower() for cls in ['content', 'documentation', 'api-section', 'section']
-        )):
+        target_classes = {'content', 'documentation', 'api-section', 'section'}
+        for section in soup.find_all(['section', 'article', 'div'], class_=lambda x: x and set(x if isinstance(x, list) else [x]).intersection(target_classes)):
             section_data = {
                 "title": "",
                 "content": section.get_text(strip=True)[:self.MAX_CONTENT_LENGTH],  # Content preview
