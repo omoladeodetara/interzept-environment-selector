@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Test script for the Paid.ai API documentation scraper.
+Test suite for the Paid.ai API documentation scraper.
 
-This script demonstrates the scraper functionality with sample HTML data.
+This module tests the scraper functionality with sample HTML data using pytest.
 """
 
 import json
 import tempfile
+import os
+import pytest
 from scrape_api import PaidAPIDocScraper
 from bs4 import BeautifulSoup
 
@@ -179,12 +181,23 @@ def test_json_serialization():
     print(f"  - Sections: {len(loaded_data['sections'])}")
     print(f"  - JSON size: {len(json_str)} bytes")
     
-    # Save to temp file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        f.write(json_str)
-        temp_file = f.name
+    # Save to temp file and clean up properly
+    temp_file = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            f.write(json_str)
+            temp_file = f.name
+        
+        print(f"✓ Successfully saved to temporary file: {temp_file}")
+    finally:
+        # Clean up temporary file
+        if temp_file and os.path.exists(temp_file):
+            try:
+                os.unlink(temp_file)
+                print(f"✓ Cleaned up temporary file: {temp_file}")
+            except OSError as e:
+                print(f"⚠ Warning: Could not delete temp file: {e}")
     
-    print(f"✓ Successfully saved to temporary file: {temp_file}")
     print("\n✓ JSON serialization test passed!")
 
 

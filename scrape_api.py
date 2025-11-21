@@ -9,7 +9,9 @@ and saves it in a structured JSON format.
 import json
 import sys
 import argparse
-from typing import Dict, List, Any, Optional
+import time
+import re
+from typing import Dict, List, Any, Optional, Set
 from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
@@ -21,6 +23,9 @@ class PaidAPIDocScraper:
     # Class constants
     MAX_CONTENT_LENGTH = 500  # Maximum length for content preview
     DEFAULT_MAX_SUBPAGES = 10  # Default maximum number of sub-pages to scrape
+    MAX_SIBLING_DEPTH = 20  # Maximum number of siblings to traverse when extracting endpoints
+    REQUEST_TIMEOUT = 30  # Timeout for HTTP requests in seconds
+    REQUEST_DELAY = 1.5  # Delay between requests in seconds (rate limiting)
     
     def __init__(self, base_url: str = "https://docs.paid.ai/api-reference/", max_subpages: int = None):
         """
@@ -34,13 +39,14 @@ class PaidAPIDocScraper:
         self.max_subpages = max_subpages if max_subpages is not None else self.DEFAULT_MAX_SUBPAGES
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
         })
         self.scraped_data = {
             "base_url": base_url,
             "endpoints": [],
             "sections": []
         }
+        self.visited_urls: Set[str] = set()  # Track visited URLs to prevent circular scraping
     
     def fetch_page(self, url: str) -> Optional[BeautifulSoup]:
         """
@@ -53,7 +59,7 @@ class PaidAPIDocScraper:
             BeautifulSoup object or None if fetch fails
         """
         try:
-            response = self.session.get(url, timeout=30)
+            response = self.session.get(url, timeout=self.REQUEST_TIMEOUT)
             response.raise_for_status()
             return BeautifulSoup(response.text, 'html.parser')
         except requests.RequestException as e:
@@ -104,20 +110,21 @@ class PaidAPIDocScraper:
             # Look for code blocks that might contain the endpoint path
             next_elem = header.find_next_sibling()
             depth = 0
-            while next_elem and next_elem.name not in ['h1', 'h2'] and depth < 20:
+            while next_elem and next_elem.name not in ['h1', 'h2'] and depth < self.MAX_SIBLING_DEPTH:
                 depth += 1
                 
                 # Check for code in current element or its children
                 if next_elem.name == 'code' or next_elem.name == 'pre':
                     code_text = next_elem.get_text(strip=True)
-                    if code_text.startswith('/') or 'api' in code_text.lower():
+                    # More strict path detection: must start with / and look like an API path
+                    if self._is_valid_api_path(code_text):
                         endpoint_info['path'] = code_text
                 else:
                     # Look for code elements within this element
                     code_elem = next_elem.find(['code', 'pre'])
                     if code_elem:
                         code_text = code_elem.get_text(strip=True)
-                        if code_text.startswith('/') or 'api' in code_text.lower():
+                        if self._is_valid_api_path(code_text):
                             endpoint_info['path'] = code_text
                 
                 if next_elem.name == 'p' and not endpoint_info['description']:
@@ -142,6 +149,25 @@ class PaidAPIDocScraper:
                 endpoints.append(endpoint_info)
         
         return endpoints
+    
+    def _is_valid_api_path(self, text: str) -> bool:
+        """
+        Check if text looks like a valid API path.
+        
+        Args:
+            text: Text to validate
+            
+        Returns:
+            True if text appears to be an API path
+        """
+        # Must start with / and contain only valid URL path characters
+        # Matches patterns like /api/v1/resource or /resource/{id}
+        api_path_pattern = r'^/[a-zA-Z0-9/_\-{}\.\*]+$'
+        return bool(re.match(api_path_pattern, text)) or (
+            text.startswith('/') and len(text) < 100 and not any(
+                forbidden in text for forbidden in ['\n', ' ', 'http://', 'https://']
+            )
+        )
     
     def extract_parameters_from_table(self, table) -> List[Dict[str, str]]:
         """
@@ -227,6 +253,9 @@ class PaidAPIDocScraper:
         """
         print(f"Scraping API documentation from {self.base_url}")
         
+        # Mark base URL as visited
+        self.visited_urls.add(self.base_url)
+        
         # Fetch the main API reference page
         soup = self.fetch_page(self.base_url)
         
@@ -251,6 +280,9 @@ class PaidAPIDocScraper:
             max_pages = min(len(nav_links), self.max_subpages)
             for i, link in enumerate(nav_links[:max_pages], 1):
                 print(f"Scraping sub-page {i}/{max_pages}: {link}")
+                # Add rate limiting delay between requests
+                if i > 1:  # Don't delay before the first request
+                    time.sleep(self.REQUEST_DELAY)
                 self._scrape_subpage(link)
         
         return self.scraped_data
@@ -280,7 +312,7 @@ class PaidAPIDocScraper:
                     full_url = urljoin(self.base_url, href)
                     # Only include links from the same domain
                     if urlparse(full_url).netloc == urlparse(self.base_url).netloc:
-                        if full_url not in links and full_url != self.base_url:
+                        if full_url not in links and full_url != self.base_url and full_url not in self.visited_urls:
                             links.append(full_url)
         
         return links
@@ -292,6 +324,9 @@ class PaidAPIDocScraper:
         Args:
             url: URL of the sub-page
         """
+        # Mark URL as visited to prevent circular scraping
+        self.visited_urls.add(url)
+        
         soup = self.fetch_page(url)
         if soup:
             endpoints = self.extract_api_endpoints(soup)
