@@ -211,8 +211,37 @@ Set up webhooks to receive real-time updates from Paid.ai when subscription even
 
 ```javascript
 // Handle Paid.ai webhooks in your A/B testing system
+const crypto = require('crypto');
+
+// NOTE: To verify webhook signatures, you must access the raw request body.
+// In Express, configure body-parser to provide req.rawBody.
+// Example middleware setup (not shown here):
+// app.use('/webhooks/paid', express.raw({ type: 'application/json' }));
+
 app.post('/webhooks/paid', async (req, res) => {
-  const event = req.body;
+  const paidSignature = req.headers['paid-signature'];
+  const webhookSecret = process.env.PAIDAI_WEBHOOK_SECRET;
+
+  // Compute expected signature (assuming HMAC-SHA256, adjust if Paid.ai uses a different scheme)
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(req.body) // req.body should be the raw buffer, not parsed JSON
+    .digest('hex');
+
+  // Timing-safe comparison
+  function safeCompare(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return false;
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+  }
+
+  if (!paidSignature || !safeCompare(paidSignature, expectedSignature)) {
+    return res.status(400).send('Invalid signature');
+  }
+
+  // Parse event after signature verification
+  const event = JSON.parse(req.body);
   
   switch (event.type) {
     case 'subscription.created':
