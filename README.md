@@ -41,7 +41,7 @@ To enable A/B testing for Paid.ai customers, you can leverage their existing API
 #### Prerequisites
 - Access to Paid.ai API credentials (available from your Paid.ai dashboard)
 - Understanding of the [Signals API](https://docs.paid.ai/documentation/getting-started/integrate-signals-and-cost-tracking-to-your-codebase) for tracking events
-- Familiarity with [Webhooks API](https://api-docs.payments.ai/docs/get-started/tutorials/webhook-setup/) for real-time notifications
+- Familiarity with Webhooks API for real-time notifications (see [Getting Started guide](https://docs.paid.ai/documentation/getting-started/your-first-10-minutes-with-paid-from-signup-to-first-invoice))
 
 #### Architecture Approach
 
@@ -99,7 +99,7 @@ To enable A/B testing for Paid.ai customers, you can leverage their existing API
 
 - [Signals and Cost Tracking Integration Guide](https://docs.paid.ai/documentation/getting-started/integrate-signals-and-cost-tracking-to-your-codebase)
 - [API Reference](https://docs.paid.ai/api-reference/sdk-reference/usage)
-- [Webhook Setup Tutorial](https://api-docs.payments.ai/docs/get-started/tutorials/webhook-setup/)
+- [Getting Started with Paid.ai](https://docs.paid.ai/documentation/getting-started/your-first-10-minutes-with-paid-from-signup-to-first-invoice)
 - [Example Integration (GitHub)](https://github.com/paid-ai/paid-ai-vercel-ai-sdk-integration-example)
 
 This approach allows you to run sophisticated A/B tests on pricing models, feature tiers, and billing strategies while leveraging Paid.ai's robust billing infrastructure.
