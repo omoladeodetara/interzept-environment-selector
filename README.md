@@ -178,9 +178,9 @@ async function getExperimentMetrics(experimentId, variation) {
       return {
         userId,
         variation,
-        revenue: billing.totalRevenue,
-        subscriptionTier: billing.currentPlan,
-        churnRisk: billing.churnProbability
+        revenue: (billing && typeof billing.totalRevenue === 'number') ? billing.totalRevenue : 0,
+        subscriptionTier: (billing && typeof billing.currentPlan === 'string') ? billing.currentPlan : "unknown",
+        churnRisk: (billing && typeof billing.churnProbability !== 'undefined') ? billing.churnProbability : null
       };
     })
   );
