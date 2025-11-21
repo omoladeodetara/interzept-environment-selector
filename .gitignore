@@ -35,8 +35,7 @@ env/
 *~
 
 # Output files
-paid_api_docs.json
-*.json
+# Note: paid_api_docs.json is included in the repository as sample output
 
 # OS
 .DS_Store
