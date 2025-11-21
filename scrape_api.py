@@ -162,14 +162,16 @@ class PaidAPIDocScraper:
         if header_row:
             headers = [th.get_text(strip=True).lower() for th in header_row.find_all(['th', 'td'])]
         
+        # Map header names to their column indices
+        header_map = {header: idx for idx, header in enumerate(headers)}
         for row in rows[1:]:
             cells = row.find_all(['td', 'th'])
-            if len(cells) >= 2:
+            if len(cells) >= 1:
                 param = {
-                    "name": cells[0].get_text(strip=True),
-                    "description": cells[1].get_text(strip=True) if len(cells) > 1 else "",
-                    "type": cells[2].get_text(strip=True) if len(cells) > 2 else "",
-                    "required": cells[3].get_text(strip=True) if len(cells) > 3 else ""
+                    "name": cells[header_map.get("name", 0)].get_text(strip=True) if "name" in header_map and len(cells) > header_map["name"] else "",
+                    "description": cells[header_map.get("description", 1)].get_text(strip=True) if "description" in header_map and len(cells) > header_map["description"] else "",
+                    "type": cells[header_map.get("type", 2)].get_text(strip=True) if "type" in header_map and len(cells) > header_map["type"] else "",
+                    "required": cells[header_map.get("required", 3)].get_text(strip=True) if "required" in header_map and len(cells) > header_map["required"] else ""
                 }
                 parameters.append(param)
         
