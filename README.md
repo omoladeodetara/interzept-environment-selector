@@ -112,6 +112,57 @@ To enable A/B testing for pricing experiments, you can build a custom system tha
    - Set up webhooks to receive payment and usage events from Paid.ai
    - Correlate these events with your A/B test variant assignments
    - Calculate conversion rates, average revenue per user (ARPU), and other metrics per variant
+   - Example webhook handler with proper validation:
+   ```javascript
+   // Handle Paid.ai webhooks in your A/B testing system
+   app.post('/webhooks/paid', async (req, res) => {
+     const event = req.body;
+     
+     // Validate event data exists
+     if (!event || !event.data) {
+       console.error('Invalid webhook payload: missing event data');
+       return res.status(400).json({ error: 'Invalid webhook payload' });
+     }
+     
+     // Validate required fields exist
+     if (!event.data.customerId) {
+       console.error('Invalid webhook payload: missing customerId');
+       return res.status(400).json({ error: 'Missing customerId in webhook payload' });
+     }
+     
+     if (!event.data.experimentId) {
+       console.error('Invalid webhook payload: missing experimentId');
+       return res.status(400).json({ error: 'Missing experimentId in webhook payload' });
+     }
+     
+     switch (event.type) {
+       case 'subscription.created':
+         if (!event.data.amount) {
+           console.error('Invalid webhook payload: missing amount for subscription.created');
+           return res.status(400).json({ error: 'Missing amount in webhook payload' });
+         }
+         
+         await abTesting.trackConversion(
+           event.data.customerId,
+           event.data.experimentId,
+           { revenue: event.data.amount }
+         );
+         break;
+         
+       case 'subscription.cancelled':
+         await abTesting.trackChurn(
+           event.data.customerId,
+           event.data.experimentId
+         );
+         break;
+       
+       default:
+         console.log(`Unhandled webhook event type: ${event.type}`);
+     }
+     
+     res.status(200).send('OK');
+   });
+   ```
 
 4. **Analytics Dashboard**
    - Build a dashboard to visualize test results
