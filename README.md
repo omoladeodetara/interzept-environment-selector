@@ -1,5 +1,59 @@
 # fluff-fuzzy-succotash
 
+## API Documentation Scraper
+
+This repository includes a Python script to scrape the API documentation from [Paid.ai's API Reference](https://docs.paid.ai/api-reference/).
+
+### Installation
+
+1. Install Python 3.7 or higher
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+### Usage
+
+Basic usage:
+```bash
+python scrape_api.py
+```
+
+With custom options:
+```bash
+python scrape_api.py --url https://docs.paid.ai/api-reference/ --output my_output.json --verbose
+```
+
+**Command-line options:**
+- `--url`: Base URL for API documentation (default: https://docs.paid.ai/api-reference/)
+- `--output`: Output JSON file (default: paid_api_docs.json)
+- `--verbose`: Enable verbose output with scraping summary
+
+### Output
+
+The scraper generates a JSON file containing:
+- **endpoints**: List of API endpoints with methods, paths, parameters, and descriptions
+- **sections**: Documentation sections with content and links
+- **base_url**: The source URL that was scraped
+
+Example output structure:
+```json
+{
+  "base_url": "https://docs.paid.ai/api-reference/",
+  "endpoints": [
+    {
+      "title": "Create Signal",
+      "method": "POST",
+      "path": "/api/v1/signals",
+      "description": "Send a signal to track usage",
+      "parameters": [...],
+      "responses": [...]
+    }
+  ],
+  "sections": [...]
+}
+```
+
 ## What is Paid.ai?
 
 Paid.ai is an AI platform focused on monetization and billing infrastructure for the AI agent economy. The company provides solutions for SaaS businesses to transition from traditional seat-based pricing models to usage-based and outcome-based billing, which is becoming essential as AI agents automate more of the modern workforce.
