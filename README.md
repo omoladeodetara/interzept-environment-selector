@@ -58,6 +58,21 @@ To enable A/B testing for Paid.ai customers, you can leverage their existing API
    const PAID_API_KEY = process.env.PAID_API_KEY;
    
    async function emitABTestSignal(orderId, variant, conversionEvent) {
+     // Input validation
+     if (typeof orderId !== 'string' || orderId.trim() === '') {
+       throw new Error('Invalid orderId: must be a non-empty string');
+     }
+     if (typeof variant !== 'string' || variant.trim() === '') {
+       throw new Error('Invalid variant: must be a non-empty string');
+     }
+     // Optionally, restrict variant to allowed values
+     // const allowedVariants = ['control', 'experiment'];
+     // if (!allowedVariants.includes(variant)) {
+     //   throw new Error(`Invalid variant: must be one of ${allowedVariants.join(', ')}`);
+     // }
+     if (typeof conversionEvent !== 'string' && typeof conversionEvent !== 'boolean') {
+       throw new Error('Invalid conversionEvent: must be a string or boolean');
+     }
      if (!PAID_API_KEY) {
        throw new Error('PAID_API_KEY environment variable is not set');
      }
