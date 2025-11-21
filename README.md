@@ -1,5 +1,8 @@
 # fluff-fuzzy-succotash
 
+## What is Paid.ai?
+
+Paid.ai is an AI platform focused on monetization and billing infrastructure for the AI agent economy. The company provides solutions for SaaS businesses to transition from traditional seat-based pricing to usage-based models tailored for AI agents.
 **Note:** The API documentation scraper used for research is located in the [`/scraper`](scraper/) folder.
 
 ## What is Paid.ai?
@@ -10,6 +13,7 @@ Paid.ai is an AI platform focused on monetization and billing infrastructure for
 
 **Funding**: Paid.ai raised $21 million in a seed round led by Lightspeed, FUSE, and EQT, with participation from Sequoia Capital and strategic angel investors.
 
+**Vision**: The company aims to help SaaS companies "break free from the seat-based trap," anticipating that up to 50% of the workforce will consist of AI agents by 2030. This shift requires new approaches to pricing and billing.
 **Vision**: The company aims to help SaaS companies "break free from the seat-based trap," anticipating that up to 50% of the workforce will consist of AI agents by 2030. This shift requires new approaches to measure, price, and monetize AI agents that perform tasks independently.
 
 ### Platform Features
@@ -34,6 +38,7 @@ For more information, visit the [Paid.ai website](https://paid.ai) or their [com
 
 **Does Paid.ai support A/B testing?**
 
+Paid.ai does not currently offer built-in A/B testing functionality. The platform focuses on billing infrastructure, usage tracking, and monetization rather than experimentation features. However, you can build a custom A/B testing solution that integrates with Paid.ai's APIs to test different pricing strategies.
 Paid.ai does not currently offer built-in A/B testing functionality. The platform focuses on billing infrastructure, usage tracking, and monetization rather than experimentation features. However, you can build custom A/B testing capabilities using Paid.ai's extensible APIs.
 
 ### Building an A/B Testing Solution with Paid.ai
