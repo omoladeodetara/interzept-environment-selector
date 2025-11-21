@@ -90,9 +90,9 @@ class PaidAPIDocScraper:
             }
             
             # Look for method badges near the header
-            method_badge = header.find(['span', 'code'], class_=lambda x: x and any(
-                method in str(x).lower() for method in ['get', 'post', 'put', 'delete', 'patch']
-            ))
+            method_badge = header.find(['span', 'code'], class_=[
+                'badge-get', 'badge-post', 'badge-put', 'badge-delete', 'badge-patch'
+            ])
             
             if method_badge:
                 method_text = method_badge.get_text(strip=True).upper()
