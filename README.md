@@ -27,3 +27,79 @@ Paid.ai is designed for:
 - Organizations looking to measure costs and protect margins in AI implementations
 
 For more information, visit the [Paid.ai website](https://paid.ai) or their [company blog](https://paid.ai/blog/company).
+
+## A/B Testing with Paid.ai
+
+**Does Paid.ai support A/B testing?**
+
+Paid.ai does not currently offer built-in A/B testing functionality. The platform focuses on billing infrastructure, usage tracking, and monetization rather than experimentation features. However, you can build custom A/B testing capabilities using Paid.ai's extensible APIs.
+
+### Building an A/B Testing Plugin for Paid.ai
+
+To enable A/B testing for Paid.ai customers, you can leverage their existing APIs to create a plugin:
+
+#### Prerequisites
+- Access to Paid.ai API credentials (available from your Paid.ai dashboard)
+- Understanding of the [Signals API](https://docs.paid.ai/documentation/getting-started/integrate-signals-and-cost-tracking-to-your-codebase) for tracking events
+- Familiarity with [Webhooks API](https://api-docs.payments.ai/docs/get-started/tutorials/webhook-setup/) for real-time notifications
+
+#### Architecture Approach
+
+1. **Variant Assignment Service**
+   - Create a service that assigns users to test variants (control vs. experimental groups)
+   - Store variant assignments in your database with user IDs and experiment metadata
+   - Use randomized assignment with proper statistical distribution
+
+2. **Integration with Signals API**
+   - Emit custom signals for A/B test events (variant shown, conversion, etc.)
+   - Track which pricing tier or feature variation was presented to each user
+   - Example signal emission:
+   ```javascript
+   const PAID_API_KEY = process.env.PAID_API_KEY;
+   
+   async function emitABTestSignal(orderId, variant, conversionEvent) {
+     return fetch("https://api.paid.ai/signals", {
+       method: "POST",
+       headers: {
+         "Authorization": `Bearer ${PAID_API_KEY}`,
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
+         order: orderId,
+         type: "ab_test_event",
+         properties: {
+           variant: variant,
+           experiment_id: "pricing_test_001",
+           conversion: conversionEvent
+         },
+       }),
+     });
+   }
+   ```
+
+3. **Webhook Integration for Real-time Analysis**
+   - Set up webhooks to receive payment and usage events from Paid.ai
+   - Correlate these events with your A/B test variant assignments
+   - Calculate conversion rates, average revenue per user (ARPU), and other metrics per variant
+
+4. **Analytics Dashboard**
+   - Build a dashboard to visualize test results
+   - Track key metrics: conversion rate, revenue per variant, statistical significance
+   - Use the data from both your variant assignment system and Paid.ai's billing data
+
+#### Key Implementation Steps
+
+1. **Setup**: Obtain API credentials from [Paid.ai dashboard](https://docs.paid.ai/documentation/getting-started/your-first-10-minutes-with-paid-from-signup-to-first-invoice)
+2. **Instrument**: Add signal emission to your application code where pricing decisions occur
+3. **Track**: Use webhooks to capture billing events and correlate with test variants
+4. **Analyze**: Build statistical analysis to determine winning variants
+5. **Iterate**: Roll out winning variants and start new experiments
+
+#### Resources for Plugin Development
+
+- [Signals and Cost Tracking Integration Guide](https://docs.paid.ai/documentation/getting-started/integrate-signals-and-cost-tracking-to-your-codebase)
+- [API Reference](https://docs.paid.ai/api-reference/sdk-reference/usage)
+- [Webhook Setup Tutorial](https://api-docs.payments.ai/docs/get-started/tutorials/webhook-setup/)
+- [Example Integration (GitHub)](https://github.com/paid-ai/paid-ai-vercel-ai-sdk-integration-example)
+
+This approach allows you to run sophisticated A/B tests on pricing models, feature tiers, and billing strategies while leveraging Paid.ai's robust billing infrastructure.
