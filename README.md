@@ -258,7 +258,9 @@ async function analyzeExperiment(experimentId) {
   return {
     experimentId,
     results,
+    // Placeholder: implement determineWinner to select the best variation
     winner: determineWinner(results),
+    // Placeholder: implement calculateStatisticalSignificance to assess confidence
     confidence: calculateStatisticalSignificance(results)
   };
 }
