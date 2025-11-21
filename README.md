@@ -171,9 +171,13 @@ async function getExperimentMetrics(experimentId, variation) {
   
   const metrics = await Promise.all(
     users.map(async (userId) => {
-      const billing = await fetch(`https://api.paid.ai/v1/customers/${userId}`, {
+      const response = await fetch(`https://api.paid.ai/v1/customers/${userId}`, {
         headers: { 'Authorization': `Bearer ${PAID_API_KEY}` }
-      }).then(r => r.json());
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch billing data for user ${userId}: ${response.status} ${response.statusText}`);
+      }
+      const billing = await response.json();
       
       return {
         userId,
