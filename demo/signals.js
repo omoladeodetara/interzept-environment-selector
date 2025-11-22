@@ -5,7 +5,7 @@
  * for tracking user behavior and A/B test outcomes.
  */
 
-const fetch = require('node-fetch');
+const axios = require('axios');
 const config = require('./config');
 
 /**
@@ -53,27 +53,18 @@ async function emitABTestSignal(orderId, variant, conversionEvent, experimentId)
       console.log(`Emitting signal to ${url}:`, JSON.stringify(payload, null, 2));
     }
     
-    const response = await fetch(url, {
-      method: 'POST',
+    const response = await axios.post(url, payload, {
       headers: {
         'Authorization': `Bearer ${config.paidApiKey}`,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+      }
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to emit signal: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-    
-    const result = await response.json();
-    
     if (config.nodeEnv === 'development') {
-      console.log('Signal emitted successfully:', result);
+      console.log('Signal emitted successfully:', response.data);
     }
     
-    return result;
+    return response.data;
   } catch (error) {
     console.error('Error emitting A/B test signal:', error.message);
     throw error;

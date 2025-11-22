@@ -157,6 +157,9 @@ app.post('/api/convert', async (req, res) => {
  * 
  * Receives webhook events from Paid.ai about subscriptions, payments, etc.
  * Links these events to A/B test experiments for tracking.
+ * 
+ * SECURITY WARNING: This endpoint lacks signature verification for demonstration purposes.
+ * In production, you MUST verify webhook signatures to prevent spoofing attacks.
  */
 app.post('/webhooks/paid', async (req, res) => {
   try {
@@ -167,8 +170,14 @@ app.post('/webhooks/paid', async (req, res) => {
       return res.status(400).json({ error: 'Invalid webhook payload' });
     }
     
-    // NOTE: In production, verify webhook signature using config.webhookSecret
-    // Example: verifyWebhookSignature(req.headers, req.body, config.webhookSecret)
+    // TODO [HIGH PRIORITY]: Implement webhook signature verification for production
+    // Webhooks without signature verification can be spoofed by attackers
+    // Example implementation:
+    //   const signature = req.headers['x-paid-signature'];
+    //   if (!verifyWebhookSignature(signature, req.body, config.webhookSecret)) {
+    //     return res.status(401).json({ error: 'Invalid webhook signature' });
+    //   }
+    // See demo/README.md "Production Considerations" section for full implementation
     
     // Log webhook event (development only)
     if (config.nodeEnv === 'development') {

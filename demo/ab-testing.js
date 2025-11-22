@@ -5,6 +5,7 @@
  * and analytics for A/B testing experiments.
  */
 
+const crypto = require('crypto');
 const config = require('./config');
 
 /**
@@ -45,7 +46,7 @@ function assignVariant(userId, experimentId, weights = null) {
   // Deterministic random assignment based on user ID and experiment ID
   // This ensures the same user always gets the same variant for an experiment
   const hash = hashString(`${userId}:${experimentId}`);
-  const randomValue = hash % 100 / 100; // Value between 0 and 1
+  const randomValue = hash / 100; // Value between 0 and 1 (hash is 0-99)
   
   const variant = randomValue < assignmentWeights.controlWeight ? 'control' : 'experiment';
   
@@ -72,19 +73,19 @@ function assignVariant(userId, experimentId, weights = null) {
 }
 
 /**
- * Simple hash function for deterministic random assignment
+ * Robust hash function for deterministic random assignment
+ * Uses crypto module to ensure better distribution for A/B testing
  * 
  * @param {string} str - The string to hash
- * @returns {number} A hash value
+ * @returns {number} A hash value between 0 and 99
  */
 function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return Math.abs(hash);
+  // Use MD5 for deterministic hashing with good distribution
+  const hash = crypto.createHash('md5').update(str).digest('hex');
+  // Take first 8 characters and convert to integer
+  const hashInt = parseInt(hash.substring(0, 8), 16);
+  // Return value between 0 and 99
+  return hashInt % 100;
 }
 
 /**
