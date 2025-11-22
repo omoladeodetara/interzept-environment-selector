@@ -180,6 +180,7 @@ app.post('/webhooks/paid', async (req, res) => {
     
     res.status(200).send('OK');
   } catch (error) {
+    // In production, use proper error logging/monitoring (e.g., Sentry, Datadog) instead of just console.error
     console.error('Error processing webhook:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
