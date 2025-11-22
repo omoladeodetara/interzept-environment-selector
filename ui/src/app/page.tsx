@@ -35,7 +35,16 @@ const mockExperimentResults = {
 
 export default function Home() {
   const [userId, setUserId] = useState<string>("")
-  const [pricingData, setPricingData] = useState<any>(null)
+  const [pricingData, setPricingData] = useState<{
+    userId: string
+    experimentId: string
+    variant: "control" | "experiment"
+    pricing: {
+      plan: string
+      price: number
+      features: string[]
+    }
+  } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
   const [hasConverted, setHasConverted] = useState(false)
@@ -183,7 +192,7 @@ export default function Home() {
               </div>
             )}
 
-            {hasConverted && (
+            {hasConverted && pricingData && (
               <Card className="max-w-2xl mx-auto">
                 <CardHeader className="text-center">
                   <CardTitle className="text-2xl">🎉 Thank You for Subscribing!</CardTitle>
