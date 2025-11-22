@@ -30,7 +30,12 @@ interface AnalyticsDashboardProps {
 }
 
 export function AnalyticsDashboard({ results }: AnalyticsDashboardProps) {
-  const isExperimentWinning = parseFloat(results.experiment.conversionRate) > parseFloat(results.control.conversionRate)
+  const controlRate = parseFloat(results.control.conversionRate)
+  const experimentRate = parseFloat(results.experiment.conversionRate)
+  const isExperimentWinning =
+    !isNaN(controlRate) &&
+    !isNaN(experimentRate) &&
+    experimentRate > controlRate
 
   return (
     <div className="space-y-6">
