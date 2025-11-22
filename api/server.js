@@ -1,20 +1,32 @@
 /**
- * Express Server for Paid.ai A/B Testing Demo
+ * Express Server for Paid.ai A/B Testing API
  * 
- * This server demonstrates how to implement A/B testing for pricing
- * experiments using Paid.ai's APIs and webhooks.
+ * This server implements A/B testing for pricing experiments
+ * using Paid.ai's APIs and webhooks with OpenAPI specification.
  */
 
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
 const config = require('./config');
 const abTesting = require('./ab-testing');
 const signals = require('./signals');
 
 const app = express();
 
+// Load OpenAPI specification
+const openApiDocument = YAML.load(path.join(__dirname, 'openapi.yaml'));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger UI for API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument, {
+  customSiteTitle: 'Paid.ai A/B Testing API Documentation',
+  customCss: '.swagger-ui .topbar { display: none }',
+}));
 
 // Request logging middleware (development only)
 if (config.nodeEnv === 'development') {
@@ -322,11 +334,12 @@ app.use((req, res) => {
 // Start server
 const server = app.listen(config.port, () => {
   console.log('='.repeat(50));
-  console.log('🚀 Paid.ai A/B Testing Demo Server Started');
+  console.log('🚀 Paid.ai A/B Testing API Server Started');
   console.log('='.repeat(50));
   console.log(`Environment: ${config.nodeEnv}`);
   console.log(`Server running at: http://localhost:${config.port}`);
   console.log(`Health check: http://localhost:${config.port}/health`);
+  console.log(`API Documentation: http://localhost:${config.port}/api-docs`);
   console.log('='.repeat(50));
   console.log('\nAvailable endpoints:');
   console.log('  GET  /api/pricing - Get pricing with A/B test variant');

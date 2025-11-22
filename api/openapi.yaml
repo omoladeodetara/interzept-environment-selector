@@ -1,0 +1,419 @@
+openapi: 3.0.3
+info:
+  title: Paid.ai A/B Testing API
+  description: |
+    API for conducting A/B testing experiments on pricing strategies using Paid.ai integration.
+    
+    This API provides endpoints for:
+    - Assigning users to experiment variants
+    - Tracking pricing page views and conversions
+    - Processing Paid.ai webhook events
+    - Analyzing experiment results
+    
+    **Architecture**: The system uses deterministic SHA-256 hashing to ensure consistent user-to-variant mapping,
+    emits signals to Paid.ai's Signals API for event tracking, and provides real-time analytics.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Experiments
+    description: A/B testing experiment operations
+  - name: Webhooks
+    description: Paid.ai webhook integration
+  - name: Debug
+    description: Debugging and development endpoints
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API service is running
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00.000Z'
+
+  /api/pricing:
+    get:
+      summary: Get pricing with variant assignment
+      description: |
+        Assigns a user to an A/B test variant (control or experiment) and returns the corresponding pricing.
+        The assignment is deterministic based on userId and experimentId, ensuring consistency across sessions.
+        Also emits a signal to Paid.ai tracking the pricing view event.
+      tags:
+        - Experiments
+      parameters:
+        - name: userId
+          in: query
+          description: Unique identifier for the user
+          required: false
+          schema:
+            type: string
+            example: user_123
+        - name: experimentId
+          in: query
+          description: Unique identifier for the experiment
+          required: false
+          schema:
+            type: string
+            example: pricing_test_001
+            default: pricing_test_001
+      responses:
+        '200':
+          description: Pricing returned with variant assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/convert:
+    post:
+      summary: Track a conversion event
+      description: |
+        Records a conversion (subscription/purchase) for a user in an experiment.
+        The user must have been previously assigned to a variant via the /api/pricing endpoint.
+        Emits a conversion signal to Paid.ai for tracking.
+      tags:
+        - Experiments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - experimentId
+              properties:
+                userId:
+                  type: string
+                  description: User identifier from the pricing request
+                  example: user_123
+                experimentId:
+                  type: string
+                  description: Experiment identifier
+                  example: pricing_test_001
+      responses:
+        '200':
+          description: Conversion tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No variant assignment found for user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/results:
+    get:
+      summary: Get experiment results
+      description: |
+        Retrieves comprehensive analytics and statistics for an A/B test experiment,
+        including view counts, conversion rates, revenue metrics, and ARPU by variant.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Unique identifier for the experiment
+          schema:
+            type: string
+            example: pricing_test_001
+      responses:
+        '200':
+          description: Experiment results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResults'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /webhooks/paid:
+    post:
+      summary: Paid.ai webhook endpoint
+      description: |
+        Receives webhook events from Paid.ai about subscriptions, payments, and other billing events.
+        Links these events to A/B test experiments for conversion tracking.
+        
+        **Security**: In production, webhook signatures should be verified using the WEBHOOK_SECRET.
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        '400':
+          description: Invalid webhook payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid webhook signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/debug/assignments:
+    get:
+      summary: Get all experiment assignments
+      description: |
+        Returns all current experiment assignments for debugging purposes.
+        Only available in development mode.
+      tags:
+        - Debug
+      responses:
+        '200':
+          description: Assignments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 10
+                  assignments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Assignment'
+        '403':
+          description: Endpoint only available in development mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    PricingResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: user_123
+        experimentId:
+          type: string
+          example: pricing_test_001
+        variant:
+          type: string
+          enum: [control, experiment]
+          example: experiment
+        pricing:
+          type: object
+          properties:
+            plan:
+              type: string
+              example: Premium
+            price:
+              type: number
+              format: float
+              example: 39.99
+            features:
+              type: array
+              items:
+                type: string
+              example: ['Feature A', 'Feature B', 'Feature C', 'Feature D']
+
+    ConversionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        userId:
+          type: string
+          example: user_123
+        experimentId:
+          type: string
+          example: pricing_test_001
+        variant:
+          type: string
+          enum: [control, experiment]
+          example: experiment
+        revenue:
+          type: number
+          format: float
+          example: 39.99
+
+    ExperimentResults:
+      type: object
+      properties:
+        experimentId:
+          type: string
+          example: pricing_test_001
+        control:
+          $ref: '#/components/schemas/VariantMetrics'
+        experiment:
+          $ref: '#/components/schemas/VariantMetrics'
+        summary:
+          type: object
+          properties:
+            totalViews:
+              type: integer
+              example: 100
+            totalConversions:
+              type: integer
+              example: 25
+            totalRevenue:
+              type: string
+              example: '749.75'
+            conversionRateDiff:
+              type: string
+              example: '5.00%'
+            revenuePerUserDiff:
+              type: string
+              example: '10.00'
+
+    VariantMetrics:
+      type: object
+      properties:
+        views:
+          type: integer
+          example: 50
+        conversions:
+          type: integer
+          example: 12
+        revenue:
+          type: string
+          example: '359.88'
+        conversionRate:
+          type: string
+          example: '24.00%'
+        arpu:
+          type: string
+          example: '29.99'
+
+    WebhookEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          example: subscription.created
+        data:
+          type: object
+          properties:
+            customer_id:
+              type: string
+              example: user_123
+            amount:
+              type: number
+              format: float
+              example: 29.99
+            metadata:
+              type: object
+              properties:
+                experiment_id:
+                  type: string
+                  example: pricing_test_001
+
+    Assignment:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: user_123
+        experimentId:
+          type: string
+          example: pricing_test_001
+        variant:
+          type: string
+          enum: [control, experiment]
+          example: control
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Invalid request parameters
+        message:
+          type: string
+          example: userId must be a non-empty string
+
+  securitySchemes:
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: x-paid-signature
+      description: HMAC signature for webhook verification

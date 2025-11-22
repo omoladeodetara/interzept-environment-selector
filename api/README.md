@@ -1,15 +1,16 @@
-# Paid.ai A/B Testing Demo Application
+# Paid.ai A/B Testing API
 
-A complete, production-ready demo application that demonstrates how to implement A/B testing for pricing experiments using Paid.ai's APIs and webhooks.
+A production-ready API server for implementing A/B testing on pricing experiments using Paid.ai's APIs and webhooks, with comprehensive OpenAPI 3.0 specification.
 
 ## Overview
 
-This demo implements the A/B testing solution described in the main [README.md](../README.md) of this repository. It provides a practical, runnable example of:
+This API implements the A/B testing solution described in the main [README.md](../README.md) of this repository. It provides a complete, runnable implementation with:
 
-- **Variant Assignment**: Randomly assigns users to control/experiment groups
+- **Variant Assignment**: Deterministic assignment of users to control/experiment groups
 - **Signal Emission**: Tracks user behavior using Paid.ai's Signals API
 - **Webhook Handling**: Processes Paid.ai webhook events for conversions
 - **Analytics**: Tracks and reports experiment results
+- **OpenAPI Specification**: Full API documentation with Swagger UI
 
 ## Architecture
 
@@ -42,9 +43,9 @@ View Analytics
 
 ## Installation
 
-1. **Clone or navigate to the demo directory:**
+1. **Clone or navigate to the api directory:**
    ```bash
-   cd demo
+   cd api
    ```
 
 2. **Install dependencies:**
@@ -81,6 +82,22 @@ npm start
 ```
 
 The server will start at `http://localhost:3000` (or the PORT specified in your `.env` file).
+
+## API Documentation
+
+This API includes a complete **OpenAPI 3.0 specification** with interactive Swagger UI documentation.
+
+**Access the API documentation:**
+- Open `http://localhost:3000/api-docs` in your browser
+- View the `openapi.yaml` file for the complete specification
+- Use the interactive UI to test API endpoints directly
+
+The OpenAPI specification provides:
+- Detailed endpoint descriptions
+- Request/response schemas
+- Example values
+- Parameter validation rules
+- Error response formats
 
 ## API Endpoints
 
@@ -321,11 +338,12 @@ curl http://localhost:3000/api/debug/assignments
 ## Project Structure
 
 ```
-demo/
+api/
 ├── server.js           # Express server with API endpoints
 ├── ab-testing.js       # A/B test variant assignment and tracking
 ├── signals.js          # Paid.ai Signals API integration
 ├── config.js           # Configuration management
+├── openapi.yaml        # OpenAPI 3.0 specification
 ├── package.json        # Dependencies and scripts
 ├── .env.example        # Environment variables template
 ├── .env                # Your local configuration (not committed)
@@ -463,5 +481,5 @@ MIT
 
 ## Support
 
-For issues specific to this demo, please open an issue in this repository.
+For issues specific to this API, please open an issue in this repository.
 For Paid.ai platform issues, contact [Paid.ai support](https://paid.ai/support).
