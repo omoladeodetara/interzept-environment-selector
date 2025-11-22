@@ -2,6 +2,30 @@
 
 **Note:** The API documentation scraper used for research is located in the [`/scraper`](scraper/) folder.
 
+## 🎨 UI Component Library
+
+This repository now includes a **production-ready UI component library** built with [shadcn/ui](https://ui.shadcn.com/) patterns and [Tailwind CSS v4](https://tailwindcss.com/). The component library provides a modern, accessible, and fully responsive interface for pricing experiments and analytics visualization.
+
+**[📚 View UI Component Library Documentation →](UI_COMPONENT_LIBRARY.md)**
+
+### Quick Start
+
+```bash
+cd ui
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+### Key Features
+
+- ✨ **Modern Stack**: Next.js 16 + TypeScript + Tailwind CSS v4
+- 🎨 **shadcn/ui Components**: Button, Card, Badge, Input, Label, and more
+- 🌓 **Dark Mode**: Automatic dark mode based on system preferences
+- 📱 **Fully Responsive**: Mobile-first design
+- ♿ **Accessible**: WCAG 2.1 AA compliant
+- 🧩 **Domain Components**: PricingCard, AnalyticsDashboard
+
 ## Introduction: From Market Haggling to Data-Driven Pricing
 
 In bustling Nigerian markets, the phrase "what is your last price?" marks the culmination of a negotiation dance—a final offer after careful back-and-forth between buyer and seller. This cultural wisdom recognizes that the right price isn't static; it emerges through testing, observation, and adaptation. Much like a market vendor who adjusts their pricing based on customer reactions, modern SaaS businesses use A/B testing to discover their "last price"—the optimal pricing strategy that maximizes both customer satisfaction and revenue.
@@ -242,6 +266,64 @@ The variant that maximizes your target metric (usually revenue or conversions wh
 - [Signals API Reference](https://docs.paid.ai/api-reference/signals)
 - [Webhooks Guide](https://docs.paid.ai/webhooks)
 - [Authentication](https://docs.paid.ai/authentication)
+
+## UI Component Library & Demo
+
+This repository includes a complete **UI component library** that demonstrates how to build modern, accessible pricing and analytics interfaces using **shadcn/ui** patterns and **Tailwind CSS**.
+
+### What's Included
+
+The `/ui` directory contains:
+
+- **Production-ready React components** with TypeScript
+- **shadcn/ui component patterns** (Button, Card, Badge, Input, Label)
+- **Domain-specific components**:
+  - `PricingCard` - Display pricing variants for A/B tests
+  - `AnalyticsDashboard` - Visualize experiment results
+- **Tailwind CSS v4** with custom design tokens
+- **Dark mode support** (automatic based on system preferences)
+- **Fully responsive** mobile-first design
+- **Accessible** WCAG 2.1 AA compliant
+
+### Running the UI Demo
+
+```bash
+# Navigate to UI directory
+cd ui
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Open http://localhost:3000
+```
+
+### Documentation
+
+- **[Complete UI Documentation](UI_COMPONENT_LIBRARY.md)** - Comprehensive guide to all components
+- **[UI README](ui/README.md)** - Setup and usage instructions
+- Component source code in `/ui/src/components/`
+
+### Example Usage
+
+```tsx
+import { PricingCard } from "@/components/pricing-card"
+import { AnalyticsDashboard } from "@/components/analytics-dashboard"
+
+// Display pricing for A/B test variant
+<PricingCard
+  plan="Premium"
+  price={39.99}
+  features={["Feature 1", "Feature 2"]}
+  variant="experiment"
+  onConvert={() => handleSubscribe()}
+/>
+
+// Show experiment results
+<AnalyticsDashboard results={experimentData} />
+```
 
 ## Conclusion: Traditional Wisdom Meets Modern Analytics
 
