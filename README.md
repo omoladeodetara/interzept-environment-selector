@@ -106,6 +106,10 @@ async function emitABTestSignal(orderId, variant, conversionEvent, experimentId)
     throw new Error('Invalid variant: must be "control" or "experiment"');
   }
   
+  if (typeof conversionEvent !== 'boolean') {
+    throw new Error('Invalid conversionEvent: must be a boolean');
+  }
+  
   try {
     const response = await fetch('https://api.paid.ai/v1/signals', {
       method: 'POST',
