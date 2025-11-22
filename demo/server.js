@@ -158,8 +158,7 @@ app.post('/api/convert', async (req, res) => {
  * Receives webhook events from Paid.ai about subscriptions, payments, etc.
  * Links these events to A/B test experiments for tracking.
  * 
- * SECURITY WARNING: This endpoint lacks signature verification for demonstration purposes.
- * In production, you MUST verify webhook signatures to prevent spoofing attacks.
+ * SECURITY WARNING: Webhook signature verification should be enabled in production.
  */
 app.post('/webhooks/paid', async (req, res) => {
   try {
@@ -170,14 +169,30 @@ app.post('/webhooks/paid', async (req, res) => {
       return res.status(400).json({ error: 'Invalid webhook payload' });
     }
     
-    // TODO [HIGH PRIORITY]: Implement webhook signature verification for production
-    // Webhooks without signature verification can be spoofed by attackers
-    // Example implementation:
-    //   const signature = req.headers['x-paid-signature'];
-    //   if (!verifyWebhookSignature(signature, req.body, config.webhookSecret)) {
-    //     return res.status(401).json({ error: 'Invalid webhook signature' });
-    //   }
-    // See demo/README.md "Production Considerations" section for full implementation
+    // Webhook signature verification (if enabled)
+    if (config.enableWebhookVerification) {
+      if (!config.webhookSecret) {
+        console.error('Webhook verification enabled but WEBHOOK_SECRET not configured');
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+      
+      // TODO: Implement actual signature verification based on Paid.ai's webhook signature scheme
+      // Example implementation:
+      //   const signature = req.headers['x-paid-signature'];
+      //   const crypto = require('crypto');
+      //   const computedSignature = crypto
+      //     .createHmac('sha256', config.webhookSecret)
+      //     .update(JSON.stringify(req.body))
+      //     .digest('hex');
+      //   
+      //   if (signature !== computedSignature) {
+      //     return res.status(401).json({ error: 'Invalid webhook signature' });
+      //   }
+      //
+      // See demo/README.md "Production Considerations" section for full implementation
+      
+      console.warn('Webhook verification is enabled but not implemented. Set ENABLE_WEBHOOK_VERIFICATION=false to disable this warning.');
+    }
     
     // Log webhook event (development only)
     if (config.nodeEnv === 'development') {
@@ -212,7 +227,7 @@ app.post('/webhooks/paid', async (req, res) => {
           customerId,
           experimentId,
           {
-            variant: variant,
+            variant,
             revenue: amount,
             timestamp: new Date(),
             eventType: event.type

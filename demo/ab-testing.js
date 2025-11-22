@@ -80,8 +80,8 @@ function assignVariant(userId, experimentId, weights = null) {
  * @returns {number} A hash value between 0 and 99
  */
 function hashString(str) {
-  // Use MD5 for deterministic hashing with good distribution
-  const hash = crypto.createHash('md5').update(str).digest('hex');
+  // Use SHA-256 for deterministic hashing with good distribution and security
+  const hash = crypto.createHash('sha256').update(str).digest('hex');
   // Take first 8 characters and convert to integer
   const hashInt = parseInt(hash.substring(0, 8), 16);
   // Return value between 0 and 99

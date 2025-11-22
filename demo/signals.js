@@ -19,11 +19,7 @@ const config = require('./config');
  * @throws {Error} If validation fails or API request fails
  */
 async function emitABTestSignal(orderId, variant, conversionEvent, experimentId) {
-  // Input validation
-  if (typeof experimentId !== 'string' || experimentId.trim() === '') {
-    throw new Error('Invalid experimentId: must be a non-empty string');
-  }
-  
+  // Input validation (in parameter order for better maintainability)
   if (typeof orderId !== 'string' || orderId.trim() === '') {
     throw new Error('Invalid orderId: must be a non-empty string');
   }
@@ -34,6 +30,10 @@ async function emitABTestSignal(orderId, variant, conversionEvent, experimentId)
   
   if (typeof conversionEvent !== 'boolean') {
     throw new Error('Invalid conversionEvent: must be a boolean');
+  }
+  
+  if (typeof experimentId !== 'string' || experimentId.trim() === '') {
+    throw new Error('Invalid experimentId: must be a non-empty string');
   }
   
   try {

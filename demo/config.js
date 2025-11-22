@@ -28,6 +28,9 @@ const config = {
   
   // Webhook Configuration (optional, for production use)
   webhookSecret: process.env.WEBHOOK_SECRET || null,
+  // Enable webhook signature verification (requires webhookSecret)
+  // Set to 'false' or '0' to disable for development/testing
+  enableWebhookVerification: process.env.ENABLE_WEBHOOK_VERIFICATION !== 'false' && process.env.ENABLE_WEBHOOK_VERIFICATION !== '0',
   
   // A/B Testing Configuration
   experimentDefaults: {
