@@ -21,22 +21,21 @@ class PaidAPIDocScraper:
     """Scraper for Paid.ai API documentation."""
     
     # Class constants
-    MAX_CONTENT_LENGTH = 500  # Maximum length for content preview
-    DEFAULT_MAX_SUBPAGES = 10  # Default maximum number of sub-pages to scrape
-    MAX_SIBLING_DEPTH = 20  # Maximum number of siblings to traverse when extracting endpoints
+    # MAX_CONTENT_LENGTH = 100000  # Maximum length for content preview
+    # DEFAULT_MAX_SUBPAGES = 1000  # Default maximum number of sub-pages to scrape
+    # MAX_SIBLING_DEPTH = 200  # Maximum number of siblings to traverse when extracting endpoints
     REQUEST_TIMEOUT = 30  # Timeout for HTTP requests in seconds
-    REQUEST_DELAY = 1.5  # Delay between requests in seconds (rate limiting)
+    # REQUEST_DELAY = 0.5  # Delay between requests in seconds (rate limiting)
     
-    def __init__(self, base_url: str = "https://docs.paid.ai/api-reference/", max_subpages: int = None):
+    def __init__(self, base_url: str = "https://docs.paid.ai/api-reference/"):
         """
         Initialize the scraper.
         
         Args:
             base_url: Base URL for the API documentation
-            max_subpages: Maximum number of sub-pages to scrape (default: 10)
         """
         self.base_url = base_url
-        self.max_subpages = max_subpages if max_subpages is not None else self.DEFAULT_MAX_SUBPAGES
+        # self.max_subpages = max_subpages if max_subpages is not None else self.DEFAULT_MAX_SUBPAGES
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
@@ -110,7 +109,7 @@ class PaidAPIDocScraper:
             # Look for code blocks that might contain the endpoint path
             next_elem = header.find_next_sibling()
             depth = 0
-            while next_elem and next_elem.name not in ['h1', 'h2'] and depth < self.MAX_SIBLING_DEPTH:
+            while next_elem and next_elem.name not in ['h1', 'h2']:  # and depth < self.MAX_SIBLING_DEPTH:
                 depth += 1
                 
                 # Check for code in current element or its children
@@ -220,7 +219,7 @@ class PaidAPIDocScraper:
         for section in soup.find_all(['section', 'article', 'div'], class_=lambda x: x and set(x if isinstance(x, list) else [x]).intersection(target_classes)):
             section_data = {
                 "title": "",
-                "content": section.get_text(strip=True)[:self.MAX_CONTENT_LENGTH],  # Content preview
+                "content": section.get_text(strip=True),  # [:self.MAX_CONTENT_LENGTH],  # Content preview
                 "links": []
             }
             
@@ -277,12 +276,12 @@ class PaidAPIDocScraper:
         nav_links = self._find_navigation_links(soup)
         if nav_links:
             print(f"Found {len(nav_links)} sub-pages to scrape")
-            max_pages = min(len(nav_links), self.max_subpages)
-            for i, link in enumerate(nav_links[:max_pages], 1):
-                print(f"Scraping sub-page {i}/{max_pages}: {link}")
+            # max_pages = min(len(nav_links), self.max_subpages)
+            for i, link in enumerate(nav_links, 1):  # [:max_pages]
+                print(f"Scraping sub-page {i}/{len(nav_links)}: {link}")
                 # Add rate limiting delay between requests
-                if i > 1:  # Don't delay before the first request
-                    time.sleep(self.REQUEST_DELAY)
+                # if i > 1:  # Don't delay before the first request
+                #     time.sleep(self.REQUEST_DELAY)
                 self._scrape_subpage(link)
         
         return self.scraped_data
@@ -364,12 +363,12 @@ def main():
         default='paid_api_docs.json',
         help='Output JSON file (default: paid_api_docs.json)'
     )
-    parser.add_argument(
-        '--max-subpages',
-        type=int,
-        default=10,
-        help='Maximum number of sub-pages to scrape (default: 10)'
-    )
+    # parser.add_argument(
+    #     '--max-subpages',
+    #     type=int,
+    #     default=1000,
+    #     help='Maximum number of sub-pages to scrape (default: 1000)'
+    # )
     parser.add_argument(
         '--verbose',
         action='store_true',
@@ -379,7 +378,7 @@ def main():
     args = parser.parse_args()
     
     try:
-        scraper = PaidAPIDocScraper(base_url=args.url, max_subpages=args.max_subpages)
+        scraper = PaidAPIDocScraper(base_url=args.url)  # , max_subpages=args.max_subpages)
         data = scraper.scrape()
         scraper.save_to_file(args.output)
         

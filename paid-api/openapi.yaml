@@ -1,0 +1,1049 @@
+openapi: 3.0.3
+info:
+  title: Paid.ai API
+  description: |
+    Paid is the all-in-one, drop-in Business Engine for AI Agents that handles your pricing, 
+    subscriptions, margins, billing, and renewals with just 5 lines of code.
+  version: 1.0.0
+  contact:
+    url: https://docs.paid.ai
+servers:
+  - url: https://api.agentpaid.io/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Customers
+    description: Customer management operations
+  - name: Contacts
+    description: Contact management operations
+  - name: Agents
+    description: AI Agent management operations
+  - name: Orders
+    description: Order management operations
+  - name: Usage
+    description: Agent signal tracking
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Address:
+      type: object
+      properties:
+        line1:
+          type: string
+          example: "123 Business Ave"
+        line2:
+          type: string
+          example: "Suite 100"
+        city:
+          type: string
+          example: "San Francisco"
+        state:
+          type: string
+          example: "CA"
+        zipCode:
+          type: string
+          example: "94105"
+        country:
+          type: string
+          example: "USA"
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the customer
+        organizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Acme Corporation"
+        phone:
+          type: string
+          example: "+1-555-0123"
+        website:
+          type: string
+          example: "https://acme.com"
+        employeeCount:
+          type: integer
+          example: 100
+        annualRevenue:
+          type: number
+          example: 1000000
+        taxExemptStatus:
+          type: string
+          enum: [none, exempt, reverse]
+          default: none
+        creationSource:
+          type: string
+          enum: [manual, api, crm, other]
+        externalId:
+          type: string
+          example: "acme_123"
+        creationState:
+          type: string
+          example: "active"
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+
+    CustomerInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        website:
+          type: string
+        employeeCount:
+          type: integer
+        annualRevenue:
+          type: number
+        taxExemptStatus:
+          type: string
+          enum: [none, exempt, reverse]
+        creationSource:
+          type: string
+          enum: [manual, api, crm, other]
+        externalId:
+          type: string
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        salutation:
+          type: string
+          enum: ["Mr.", "Mrs.", "Miss.", "Ms.", "Dr.", "Prof."]
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        billingStreet:
+          type: string
+        billingCity:
+          type: string
+        billingStateProvince:
+          type: string
+        billingCountry:
+          type: string
+        billingZipPostalCode:
+          type: string
+        externalId:
+          type: string
+        accountName:
+          type: string
+          readOnly: true
+
+    ContactInput:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        salutation:
+          type: string
+          enum: ["Mr.", "Mrs.", "Miss.", "Ms.", "Dr.", "Prof."]
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        billingStreet:
+          type: string
+        billingCity:
+          type: string
+        billingStateProvince:
+          type: string
+        billingCountry:
+          type: string
+        billingZipPostalCode:
+          type: string
+        externalId:
+          type: string
+
+    PriceTier:
+      type: object
+      properties:
+        minQuantity:
+          type: integer
+        maxQuantity:
+          type: integer
+        unitPrice:
+          type: number
+
+    PricePoint:
+      type: object
+      properties:
+        unitPrice:
+          type: number
+        minQuantity:
+          type: integer
+        includedQuantity:
+          type: integer
+        tiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceTier'
+
+    Pricing:
+      type: object
+      properties:
+        eventName:
+          type: string
+        chargeType:
+          type: string
+          enum: [one_time, recurring, usage]
+        pricingModel:
+          type: string
+          enum: [flat_fee, per_unit, tiered_pricing, graduated_pricing, volume_pricing]
+        billingFrequency:
+          type: string
+          enum: [monthly, quarterly, annually]
+        taxable:
+          type: boolean
+        pricePoints:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PricePoint'
+
+    AgentAttribute:
+      type: object
+      properties:
+        name:
+          type: string
+        active:
+          type: boolean
+        pricing:
+          $ref: '#/components/schemas/Pricing'
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        agentCode:
+          type: string
+        externalId:
+          type: string
+        agentAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentAttribute'
+
+    AgentInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        agentCode:
+          type: string
+        externalId:
+          type: string
+        agentAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentAttribute'
+
+    OrderLine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        agentId:
+          type: string
+          format: uuid
+        agentExternalId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+        billedAmountWithoutTax:
+          type: number
+        billedTax:
+          type: number
+        totalBilledAmount:
+          type: number
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        accountId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+        estimatedTax:
+          type: number
+        billedAmountNoTax:
+          type: number
+        billedTax:
+          type: number
+        totalBilledAmount:
+          type: number
+        pendingBillingAmount:
+          type: number
+        creationState:
+          type: string
+        orderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLine'
+
+    OrderInput:
+      type: object
+      required:
+        - accountId
+        - name
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    OrderLineInput:
+      type: object
+      properties:
+        agentExternalId:
+          type: string
+        agentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+
+    AgentSignal:
+      type: object
+      required:
+        - agentId
+        - eventName
+        - customerId
+      properties:
+        agentId:
+          type: string
+          description: Agent identifier
+        eventName:
+          type: string
+          description: Name of the event
+        customerId:
+          type: string
+          description: Customer external identifier
+        data:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for the signal
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+
+paths:
+  /customers:
+    get:
+      tags:
+        - Customers
+      summary: List all customers
+      description: Retrieves all customers associated with your organization
+      operationId: listCustomers
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Customers
+      summary: Create a customer
+      description: Creates a new customer with the given data
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /customers/{customerId}:
+    get:
+      tags:
+        - Customers
+      summary: Retrieve a customer
+      description: Retrieves a customer by its internal ID
+      operationId: getCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Customers
+      summary: Update a customer
+      description: Updates an existing customer by its internal ID
+      operationId: updateCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Customers
+      summary: Delete a customer
+      description: Deletes a customer by its internal ID
+      operationId: deleteCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /customers/external/{externalId}:
+    get:
+      tags:
+        - Customers
+      summary: Retrieve customer by external ID
+      description: Retrieves a customer by its external (custom) ID
+      operationId: getCustomerByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+    put:
+      tags:
+        - Customers
+      summary: Update customer by external ID
+      description: Updates a customer by its external (custom) ID
+      operationId: updateCustomerByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+    delete:
+      tags:
+        - Customers
+      summary: Delete customer by external ID
+      description: Deletes a customer by its external (custom) ID
+      operationId: deleteCustomerByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /contacts:
+    get:
+      tags:
+        - Contacts
+      summary: List all contacts
+      description: Retrieves all contacts associated with your organization
+      operationId: listContacts
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+
+    post:
+      tags:
+        - Contacts
+      summary: Create a contact
+      description: Creates a new contact with given data
+      operationId: createContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+
+  /contacts/{contactId}:
+    get:
+      tags:
+        - Contacts
+      summary: Retrieve a contact
+      description: Retrieves a contact by its internal ID
+      operationId: getContact
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+
+    delete:
+      tags:
+        - Contacts
+      summary: Delete a contact
+      description: Deletes a contact by its internal ID
+      operationId: deleteContact
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+
+  /contacts/external/{externalId}:
+    delete:
+      tags:
+        - Contacts
+      summary: Delete contact by external ID
+      description: Deletes a contact by its external ID
+      operationId: deleteContactByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /agents:
+    get:
+      tags:
+        - Agents
+      summary: List all agents
+      description: Retrieves all agents associated with your organization
+      operationId: listAgents
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Agent'
+
+    post:
+      tags:
+        - Agents
+      summary: Create an agent
+      description: Creates a new agent with the given data
+      operationId: createAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+  /agents/{agentId}:
+    get:
+      tags:
+        - Agents
+      summary: Retrieve an agent
+      description: Retrieves an agent by its internal ID
+      operationId: getAgent
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+    put:
+      tags:
+        - Agents
+      summary: Update an agent
+      description: Updates an agent's information by its internal ID
+      operationId: updateAgent
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+    delete:
+      tags:
+        - Agents
+      summary: Delete an agent
+      description: Deletes an agent by its internal ID
+      operationId: deleteAgent
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+
+  /agents/external/{externalId}:
+    get:
+      tags:
+        - Agents
+      summary: Retrieve agent by external ID
+      description: Retrieves an agent by its external ID
+      operationId: getAgentByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+    put:
+      tags:
+        - Agents
+      summary: Update agent by external ID
+      description: Updates an agent by its external ID
+      operationId: updateAgentByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+    delete:
+      tags:
+        - Agents
+      summary: Delete agent by external ID
+      description: Deletes an agent by its external ID
+      operationId: deleteAgentByExternalId
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: List all orders
+      description: Retrieves all orders associated with your organization
+      operationId: listOrders
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+    post:
+      tags:
+        - Orders
+      summary: Create an order
+      description: Creates a new order with given data
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Retrieve an order
+      description: Retrieves an order by its internal ID
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+    delete:
+      tags:
+        - Orders
+      summary: Delete an order
+      description: Deletes an order by its internal ID
+      operationId: deleteOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+
+  /orders/{orderId}/lines:
+    put:
+      tags:
+        - Orders
+      summary: Update order lines
+      description: Adds/removes order lines for an existing order
+      operationId: updateOrderLines
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lines:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderLineInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderLine'
+
+  /orders/{orderId}/activate:
+    post:
+      tags:
+        - Orders
+      summary: Activate an order
+      description: Activates a draft order by its internal ID
+      operationId: activateOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /usage/signals:
+    post:
+      tags:
+        - Usage
+      summary: Record agent signal
+      description: Records an immutable event for agent usage tracking
+      operationId: recordSignal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signal:
+                  $ref: '#/components/schemas/AgentSignal'
+      responses:
+        '201':
+          description: Signal recorded
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

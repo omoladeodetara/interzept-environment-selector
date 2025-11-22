@@ -1,0 +1,344 @@
+### Paid.ai API - REST Client Requests
+### Set your API token as a variable
+@baseUrl = https://api.agentpaid.io/api/v1
+@token = YOUR_API_TOKEN_HERE
+
+###############################################################################
+# CUSTOMERS
+###############################################################################
+
+### List all customers
+GET {{baseUrl}}/customers
+Authorization: Bearer {{token}}
+
+### Create a customer
+POST {{baseUrl}}/customers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Acme Corporation",
+  "phone": "+1-555-0123",
+  "website": "https://acme.com",
+  "employeeCount": 100,
+  "annualRevenue": 1000000,
+  "taxExemptStatus": "none",
+  "creationSource": "api",
+  "externalId": "acme_123",
+  "billingAddress": {
+    "line1": "123 Business Ave",
+    "line2": "Suite 100",
+    "city": "San Francisco",
+    "state": "CA",
+    "zipCode": "94105",
+    "country": "USA"
+  }
+}
+
+### Get customer by ID
+@customerId = CUSTOMER_UUID_HERE
+GET {{baseUrl}}/customers/{{customerId}}
+Authorization: Bearer {{token}}
+
+### Get customer by external ID
+@customerExternalId = acme_123
+GET {{baseUrl}}/customers/external/{{customerExternalId}}
+Authorization: Bearer {{token}}
+
+### Update customer by ID
+PUT {{baseUrl}}/customers/{{customerId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Acme Corp",
+  "phone": "+1-555-0124",
+  "employeeCount": 150
+}
+
+### Update customer by external ID
+PUT {{baseUrl}}/customers/external/{{customerExternalId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Acme Corp Updated",
+  "employeeCount": 200
+}
+
+### Delete customer by ID
+DELETE {{baseUrl}}/customers/{{customerId}}
+Authorization: Bearer {{token}}
+
+### Delete customer by external ID
+DELETE {{baseUrl}}/customers/external/{{customerExternalId}}
+Authorization: Bearer {{token}}
+
+### Get customer entitlements
+@customerIdForEntitlements = CUSTOMER_UUID_HERE
+GET {{baseUrl}}/customers/{{customerIdForEntitlements}}/entitlements
+Authorization: Bearer {{token}}
+
+### Get customer costs by external ID
+@customerExternalIdForCosts = acme_123
+GET {{baseUrl}}/customers/external/{{customerExternalIdForCosts}}/costs?period=2025-11
+Authorization: Bearer {{token}}
+
+
+###############################################################################
+# CONTACTS
+###############################################################################
+
+### List all contacts
+GET {{baseUrl}}/contacts
+Authorization: Bearer {{token}}
+
+### Create a contact
+POST {{baseUrl}}/contacts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@acme.com",
+  "phone": "+1-555-0199",
+  "salutation": "Mr.",
+  "accountId": "ACCOUNT_UUID_HERE",
+  "externalId": "contact_123",
+  "billingStreet": "123 Main St",
+  "billingCity": "San Francisco",
+  "billingStateProvince": "CA",
+  "billingCountry": "USA",
+  "billingZipPostalCode": "94105"
+}
+
+### Get contact by ID
+@contactId = CONTACT_UUID_HERE
+GET {{baseUrl}}/contacts/{{contactId}}
+Authorization: Bearer {{token}}
+
+### Get contact by external ID
+@contactExternalIdForGet = contact_123
+GET {{baseUrl}}/contacts/external/{{contactExternalIdForGet}}
+Authorization: Bearer {{token}}
+
+### Delete contact by ID
+DELETE {{baseUrl}}/contacts/{{contactId}}
+Authorization: Bearer {{token}}
+
+### Delete contact by external ID
+@contactExternalId = contact_123
+DELETE {{baseUrl}}/contacts/external/{{contactExternalId}}
+Authorization: Bearer {{token}}
+
+
+###############################################################################
+# AGENTS
+###############################################################################
+
+### List all agents
+GET {{baseUrl}}/agents
+Authorization: Bearer {{token}}
+
+### Create an agent
+POST {{baseUrl}}/agents
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Customer Support AI",
+  "description": "AI assistant for customer support",
+  "agentCode": "SUPPORT_AI",
+  "active": true,
+  "externalId": "agent_support_001",
+  "agentAttributes": [
+    {
+      "name": "monthly-messages",
+      "active": true,
+      "pricing": {
+        "eventName": "message_sent",
+        "chargeType": "recurring",
+        "pricingModel": "graduated_pricing",
+        "billingFrequency": "monthly",
+        "taxable": true,
+        "pricePoints": {
+          "USD": {
+            "unitPrice": 1.0,
+            "minQuantity": 0,
+            "includedQuantity": 0,
+            "tiers": [
+              {
+                "minQuantity": 0,
+                "maxQuantity": 100,
+                "unitPrice": 1.0
+              },
+              {
+                "minQuantity": 101,
+                "maxQuantity": 1000,
+                "unitPrice": 0.9
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+### Get agent by ID
+@agentId = AGENT_UUID_HERE
+GET {{baseUrl}}/agents/{{agentId}}
+Authorization: Bearer {{token}}
+
+### Get agent by external ID
+@agentExternalId = agent_support_001
+GET {{baseUrl}}/agents/external/{{agentExternalId}}
+Authorization: Bearer {{token}}
+
+### Update agent by ID
+PUT {{baseUrl}}/agents/{{agentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Enhanced Customer Support AI",
+  "description": "AI assistant with advanced features",
+  "active": true
+}
+
+### Update agent by external ID
+PUT {{baseUrl}}/agents/external/{{agentExternalId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Enhanced Customer Support AI v2",
+  "description": "Updated AI assistant"
+}
+
+### Delete agent by ID
+DELETE {{baseUrl}}/agents/{{agentId}}
+Authorization: Bearer {{token}}
+
+### Delete agent by external ID
+DELETE {{baseUrl}}/agents/external/{{agentExternalId}}
+Authorization: Bearer {{token}}
+
+
+###############################################################################
+# ORDERS
+###############################################################################
+
+### List all orders
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+### Create an order
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "accountId": "ACCOUNT_UUID_HERE",
+  "name": "Q4 2025 Subscription",
+  "description": "Quarterly subscription for AI services",
+  "startDate": "2025-10-01",
+  "endDate": "2025-12-31"
+}
+
+### Get order by ID
+@orderId = ORDER_UUID_HERE
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### Update order lines
+PUT {{baseUrl}}/orders/{{orderId}}/lines
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "lines": [
+    {
+      "agentExternalId": "agent_support_001",
+      "name": "Customer Support Agent",
+      "description": "AI-powered customer support"
+    },
+    {
+      "agentExternalId": "agent_analytics_001",
+      "name": "Analytics Dashboard",
+      "description": "Real-time analytics and reporting"
+    }
+  ]
+}
+
+### Activate an order
+POST {{baseUrl}}/orders/{{orderId}}/activate
+Authorization: Bearer {{token}}
+
+### Delete order by ID
+DELETE {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+
+###############################################################################
+# USAGE / SIGNALS
+###############################################################################
+
+### Record an agent signal
+POST {{baseUrl}}/usage/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "signal": {
+    "agentId": "agent_1",
+    "eventName": "message_sent",
+    "customerId": "customer_external_id_123",
+    "data": {
+      "model": "gpt4",
+      "messageLength": 245,
+      "responseTime": 1.2,
+      "tokens": 450
+    }
+  }
+}
+
+### Record multiple signals (batch)
+POST {{baseUrl}}/usage/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "signal": {
+    "agentId": "agent_1",
+    "eventName": "document_processed",
+    "customerId": "customer_external_id_456",
+    "data": {
+      "documentType": "pdf",
+      "pageCount": 12,
+      "processingTime": 5.4
+    }
+  }
+}
+
+
+###############################################################################
+# TRACES
+###############################################################################
+
+### Get all traces
+GET {{baseUrl}}/traces?limit=50
+Authorization: Bearer {{token}}
+
+### Get traces for specific customer
+GET {{baseUrl}}/traces?customerId=customer_external_id_123&limit=100
+Authorization: Bearer {{token}}
+
+### Get traces for specific agent
+GET {{baseUrl}}/traces?agentId=agent_1&startDate=2025-11-01&endDate=2025-11-30
+Authorization: Bearer {{token}}
+
+### Get traces with date range
+GET {{baseUrl}}/traces?startDate=2025-11-01&endDate=2025-11-22&limit=200
+Authorization: Bearer {{token}}
