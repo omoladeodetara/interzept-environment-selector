@@ -189,7 +189,14 @@ app.post('/webhooks/paid', async (req, res) => {
       }
       
       // TODO: Implement actual signature verification based on Paid.ai's webhook signature scheme
-      // Example implementation:
+      // Until implemented, return error to prevent insecure webhook processing
+      console.error('Webhook signature verification is enabled but not yet implemented');
+      return res.status(501).json({ 
+        error: 'Webhook signature verification not implemented',
+        message: 'Set ENABLE_WEBHOOK_VERIFICATION=false to process webhooks without verification (development only)'
+      });
+      
+      // Example implementation when ready:
       //   const signature = req.headers['x-paid-signature'];
       //   const crypto = require('crypto');
       //   const computedSignature = crypto
@@ -200,10 +207,6 @@ app.post('/webhooks/paid', async (req, res) => {
       //   if (signature !== computedSignature) {
       //     return res.status(401).json({ error: 'Invalid webhook signature' });
       //   }
-      //
-      // See demo/README.md "Production Considerations" section for full implementation
-      
-      console.warn('Webhook verification is enabled but not implemented. Set ENABLE_WEBHOOK_VERIFICATION=false to disable this warning.');
     }
     
     // Log webhook event (development only)
@@ -235,12 +238,9 @@ app.post('/webhooks/paid', async (req, res) => {
         return res.status(200).send('OK');
       }
       
-      // Look up the customer's experiment variant
-      const variant = abTesting.getExperimentVariant(customerId, experimentId);
-      
-      if (variant) {
-        // Record the conversion in the A/B testing system
-        // Note: trackConversion will look up the variant again internally
+      // Track conversion - trackConversion will look up the variant internally
+      // and throw an error if no variant is found
+      try {
         abTesting.trackConversion(
           customerId,
           experimentId,
@@ -251,9 +251,11 @@ app.post('/webhooks/paid', async (req, res) => {
           }
         );
         
+        // Get variant for logging purposes only
+        const variant = abTesting.getExperimentVariant(customerId, experimentId);
         console.log(`Tracked conversion from webhook: user=${customerId}, variant=${variant}, revenue=${amount}`);
-      } else {
-        console.warn(`No variant found for customer ${customerId} in experiment ${experimentId}`);
+      } catch (conversionError) {
+        console.warn(`Failed to track conversion: ${conversionError.message}`);
       }
     }
     
@@ -316,23 +318,25 @@ app.get('/api/debug/assignments', (req, res) => {
 });
 
 /**
+ * 404 handler
+ * Must be placed before error handling middleware
+ */
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Not found',
+    path: req.path 
+  });
+});
+
+/**
  * Error handling middleware
+ * Must be placed last to catch all errors
  */
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ 
     error: 'Internal server error',
     message: config.nodeEnv === 'development' ? err.message : undefined
-  });
-});
-
-/**
- * 404 handler
- */
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Not found',
-    path: req.path 
   });
 });
 

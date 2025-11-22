@@ -167,22 +167,22 @@ function getExperimentResults(experimentId) {
     };
   }
   
-  // Calculate conversion rates
+  // Calculate conversion rates (keep as numbers for accurate calculations)
   const controlConversionRate = results.control.views > 0 
-    ? (results.control.conversions / results.control.views * 100).toFixed(2)
+    ? (results.control.conversions / results.control.views * 100)
     : 0;
     
   const experimentConversionRate = results.experiment.views > 0
-    ? (results.experiment.conversions / results.experiment.views * 100).toFixed(2)
+    ? (results.experiment.conversions / results.experiment.views * 100)
     : 0;
   
-  // Calculate average revenue per user
+  // Calculate average revenue per user (keep as numbers for accurate calculations)
   const controlARPU = results.control.conversions > 0
-    ? (results.control.revenue / results.control.conversions).toFixed(2)
+    ? (results.control.revenue / results.control.conversions)
     : 0;
     
   const experimentARPU = results.experiment.conversions > 0
-    ? (results.experiment.revenue / results.experiment.conversions).toFixed(2)
+    ? (results.experiment.revenue / results.experiment.conversions)
     : 0;
   
   return {
@@ -191,15 +191,15 @@ function getExperimentResults(experimentId) {
       views: results.control.views,
       conversions: results.control.conversions,
       revenue: results.control.revenue.toFixed(2),
-      conversionRate: `${controlConversionRate}%`,
-      arpu: controlARPU
+      conversionRate: `${controlConversionRate.toFixed(2)}%`,
+      arpu: controlARPU.toFixed(2)
     },
     experiment: {
       views: results.experiment.views,
       conversions: results.experiment.conversions,
       revenue: results.experiment.revenue.toFixed(2),
-      conversionRate: `${experimentConversionRate}%`,
-      arpu: experimentARPU
+      conversionRate: `${experimentConversionRate.toFixed(2)}%`,
+      arpu: experimentARPU.toFixed(2)
     },
     summary: {
       totalViews: results.control.views + results.experiment.views,
