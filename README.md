@@ -44,8 +44,6 @@ For more information, visit the [Paid.ai website](https://paid.ai) or their [com
 
 Paid.ai does not currently offer built-in A/B testing functionality. The platform focuses on billing infrastructure, usage tracking, and monetization rather than experimentation features. However, you can build a custom A/B testing solution that integrates with Paid.ai's APIs to test different pricing strategies.
 
-### Building an A/B Testing Solution with Paid.ai
-
 To enable A/B testing for pricing experiments, you can build a custom system that integrates with Paid.ai's existing APIs. This is a separate service in your application that leverages Paid.ai's billing infrastructure through their REST APIs:
 
 *Think of this as setting up your own marketplace stall—you control the prices offered, while Paid.ai handles the transaction infrastructure.*
