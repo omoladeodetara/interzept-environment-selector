@@ -83,7 +83,7 @@ function assignVariant(userId, experimentId, weights = null) {
  * @returns {number} A hash value between 0 and (HASH_BUCKET_SIZE - 1)
  */
 function hashString(str) {
-  // Use SHA-256 for deterministic hashing with good distribution and security
+  // Use SHA-256 for deterministic hashing with good distribution; security is not required here
   const hash = crypto.createHash('sha256').update(str).digest('hex');
   // Take first 8 characters and convert to integer
   const hashInt = parseInt(hash.substring(0, 8), 16);
