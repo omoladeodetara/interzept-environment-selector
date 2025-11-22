@@ -223,11 +223,11 @@ app.post('/webhooks/paid', async (req, res) => {
       
       if (variant) {
         // Record the conversion in the A/B testing system
+        // Note: trackConversion will look up the variant again internally
         abTesting.trackConversion(
           customerId,
           experimentId,
           {
-            variant,
             revenue: amount,
             timestamp: new Date(),
             eventType: event.type

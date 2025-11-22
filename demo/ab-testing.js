@@ -8,6 +8,9 @@
 const crypto = require('crypto');
 const config = require('./config');
 
+// Hash range for variant assignment (0-99 = 100 buckets for percentage-based splits)
+const HASH_BUCKET_SIZE = 100;
+
 /**
  * In-memory storage for experiment assignments
  * In production, replace this with a database (e.g., Redis, PostgreSQL, MongoDB)
@@ -46,7 +49,7 @@ function assignVariant(userId, experimentId, weights = null) {
   // Deterministic random assignment based on user ID and experiment ID
   // This ensures the same user always gets the same variant for an experiment
   const hash = hashString(`${userId}:${experimentId}`);
-  const randomValue = hash / 100; // Value between 0 and 1 (hash is 0-99)
+  const randomValue = hash / HASH_BUCKET_SIZE; // Value between 0 and 1
   
   const variant = randomValue < assignmentWeights.controlWeight ? 'control' : 'experiment';
   
@@ -77,15 +80,15 @@ function assignVariant(userId, experimentId, weights = null) {
  * Uses crypto module to ensure better distribution for A/B testing
  * 
  * @param {string} str - The string to hash
- * @returns {number} A hash value between 0 and 99
+ * @returns {number} A hash value between 0 and (HASH_BUCKET_SIZE - 1)
  */
 function hashString(str) {
   // Use SHA-256 for deterministic hashing with good distribution and security
   const hash = crypto.createHash('sha256').update(str).digest('hex');
   // Take first 8 characters and convert to integer
   const hashInt = parseInt(hash.substring(0, 8), 16);
-  // Return value between 0 and 99
-  return hashInt % 100;
+  // Return value between 0 and (HASH_BUCKET_SIZE - 1)
+  return hashInt % HASH_BUCKET_SIZE;
 }
 
 /**

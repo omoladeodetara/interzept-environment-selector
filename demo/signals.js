@@ -42,7 +42,7 @@ async function emitABTestSignal(orderId, variant, conversionEvent, experimentId)
       order_id: orderId,
       event_type: 'ab_test',
       properties: {
-        variant: variant,
+        variant,
         experiment_id: experimentId,
         conversion: conversionEvent,
         timestamp: new Date().toISOString()
