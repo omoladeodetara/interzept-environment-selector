@@ -16,7 +16,7 @@ Paid.ai is an AI platform focused on monetization and billing infrastructure for
 
 **Funding**: Paid.ai raised $21 million in a seed round led by Lightspeed, FUSE, and EQT, with participation from Sequoia Capital and strategic angel investors.
 
-**Vision**: The company aims to help SaaS companies "break free from the seat-based trap," anticipating that up to 50% of the workforce will consist of AI agents by 2030. This shift requires new approaches to pricing and billing.
+**Vision**: The company aims to help SaaS companies "break free from the seat-based trap," anticipating that up to 50% of the workforce will consist of AI agents by 2030 (as projected by Gartner, see [Gartner: AI Agents and the Future of Work, 2023](https://www.gartner.com/en/newsroom/press-releases/2023-09-12-gartner-predicts-50-percent-of-workforce-could-be-ai-agents-by-2030)). This shift requires new approaches to pricing and billing.
 
 ### Platform Features
 
