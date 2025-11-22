@@ -69,6 +69,22 @@ View Analytics
 
    **Note**: You can obtain your Paid.ai API key from the [Paid.ai dashboard](https://dashboard.paid.ai).
 
+## Dependencies and Telemetry
+
+This project uses `swagger-ui-express` for API documentation, which includes `@scarf/scarf` - a package download analytics service used by the swagger-ui-dist maintainers.
+
+**What is Scarf.sh?**
+- Analytics service that tracks package download statistics
+- Helps open-source maintainers understand package adoption
+- Collects basic telemetry about package usage
+
+**To disable Scarf analytics**, add to your `.env` file:
+```
+SCARF_ANALYTICS=false
+```
+
+No other telemetry or analytics services are included in this API.
+
 ## Running the Server
 
 **Development mode (with auto-reload):**
