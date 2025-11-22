@@ -77,6 +77,8 @@ Your custom A/B testing system should include:
 
 Use Paid.ai's Signals API to track which pricing variant a user experienced and whether they converted:
 
+**Note**: The following code examples are illustrative. In production, add comprehensive input validation, error handling, webhook signature verification, and implement placeholder functions like `getExperimentVariant()` and your analytics tracking system.
+
 ```javascript
 async function emitABTestSignal(orderId, variant, conversionEvent, experimentId) {
   if (typeof experimentId !== 'string' || experimentId.trim() === '') {
