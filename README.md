@@ -149,7 +149,10 @@ app.post('/webhooks/paid', async (req, res) => {
     return res.status(400).json({ error: 'Invalid webhook payload' });
   }
   
-  // Validate required fields
+  // NOTE: The fields `customerId` and `experimentId` are assumed to be custom fields
+  // added to Paid.ai webhook payloads via your own integration or mapping layer.
+  // Standard Paid.ai webhooks may use different field names (e.g., `customer`, `subscription`).
+  // Update this validation to match your actual webhook payload structure.
   if (!event.data.customerId || !event.data.experimentId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
