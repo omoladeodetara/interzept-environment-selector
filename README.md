@@ -98,6 +98,18 @@ async function emitABTestSignal(orderId, variant, conversionEvent, experimentId)
     throw new Error('Invalid experimentId: must be a non-empty string');
   }
   
+  if (typeof orderId !== 'string' || orderId.trim() === '') {
+    throw new Error('Invalid orderId: must be a non-empty string');
+  }
+  
+  if (!['control', 'experiment'].includes(variant)) {
+    throw new Error('Invalid variant: must be "control" or "experiment"');
+  }
+  
+  if (typeof conversionEvent !== 'boolean') {
+    throw new Error('Invalid conversionEvent: must be a boolean');
+  }
+  
   try {
     const response = await fetch('https://api.paid.ai/v1/signals', {
       method: 'POST',
@@ -219,6 +231,8 @@ Compare key metrics across variants:
 - **Customer Lifetime Value (CLV)**
 - **Churn Rate**: Users who "walk away" from each price point
 - **Statistical Significance**: Ensure results are reliable, not just chance
+
+> **Best Practice:** Before drawing conclusions, ensure each variant has a sufficient sample size (e.g., at least 100 conversions per variant) and run your test for a full billing cycle or until you reach statistical significance. This helps avoid decisions based on insufficient data and ensures your results are robust.
 
 The variant that maximizes your target metric (usually revenue or conversions while maintaining acceptable churn) becomes your "last price"—your optimal pricing strategy.
 
