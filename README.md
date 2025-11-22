@@ -36,6 +36,21 @@ Paid.ai is an AI platform focused on monetization and billing infrastructure for
 
 For more information, visit the [Paid.ai website](https://paid.ai) or their [community](https://paid.ai/community).
 
+### Alternative Billing Platforms
+
+*Just as a marketplace has many vendors offering similar goods, the billing infrastructure space offers several solutions to consider:*
+
+While this guide focuses on Paid.ai, here are other platforms that provide usage-based billing and monetization infrastructure:
+
+1. **[Stripe Billing](https://stripe.com/billing)**: Industry-standard subscription management with extensive payment processing capabilities and global reach
+2. **[Chargebee](https://www.chargebee.com/)**: Advanced subscription and revenue operations platform with sophisticated billing workflows
+3. **[Paddle](https://www.paddle.com/)**: Merchant of record solution with built-in tax handling, making global selling simpler
+4. **[Lago](https://www.getlago.com/)**: Open-source usage-based billing platform offering full control and customization
+5. **[Orb](https://www.withorb.com/)**: Modern usage-based billing infrastructure similar to Paid.ai, focused on flexible pricing models
+6. **[Metronome](https://metronome.com/)**: Enterprise-grade usage-based billing designed for complex B2B pricing scenarios
+
+Each platform has unique strengths—evaluate based on your specific needs for pricing flexibility, integration complexity, and scale requirements.
+
 ## Building an A/B Testing Solution with Paid.ai
 
 *Like a market vendor testing different price points with different customers, A/B testing reveals what pricing strategy truly resonates.*
