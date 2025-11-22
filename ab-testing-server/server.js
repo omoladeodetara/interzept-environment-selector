@@ -1,5 +1,5 @@
 /**
- * Express Server for Paid.ai A/B Testing API
+ * A/B Testing Server for Paid.ai Pricing Experiments
  * 
  * This server implements A/B testing for pricing experiments
  * using Paid.ai's APIs and webhooks with OpenAPI specification.
@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Swagger UI for API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument, {
-  customSiteTitle: 'Paid.ai A/B Testing API Documentation',
+  customSiteTitle: 'A/B Testing Server - API Documentation',
   customCss: '.swagger-ui .topbar { display: none }',
 }));
 
@@ -343,7 +343,7 @@ app.use((err, req, res, next) => {
 // Start server
 const server = app.listen(config.port, () => {
   console.log('='.repeat(50));
-  console.log('🚀 Paid.ai A/B Testing API Server Started');
+  console.log('🚀 A/B Testing Server Started');
   console.log('='.repeat(50));
   console.log(`Environment: ${config.nodeEnv}`);
   console.log(`Server running at: http://localhost:${config.port}`);

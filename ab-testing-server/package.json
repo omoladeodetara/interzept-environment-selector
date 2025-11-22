@@ -1,7 +1,7 @@
 {
-  "name": "paid-ai-ab-testing-api",
+  "name": "paid-ai-ab-testing-server",
   "version": "1.0.0",
-  "description": "A/B testing API for pricing experiments with Paid.ai integration",
+  "description": "A/B testing server for pricing experiments with Paid.ai integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

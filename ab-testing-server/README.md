@@ -1,10 +1,10 @@
-# Paid.ai A/B Testing API
+# Paid.ai A/B Testing Server
 
-A production-ready API server for implementing A/B testing on pricing experiments using Paid.ai's APIs and webhooks, with comprehensive OpenAPI 3.0 specification.
+A production-ready server for implementing A/B testing on pricing experiments using Paid.ai's APIs and webhooks, with comprehensive OpenAPI 3.0 specification.
 
 ## Overview
 
-This API implements the A/B testing solution described in the main [README.md](../README.md) of this repository. It provides a complete, runnable implementation with:
+This implementation provides the A/B testing solution described in the main [README.md](../README.md) of this repository. It's a complete, runnable server with:
 
 - **Variant Assignment**: Deterministic assignment of users to control/experiment groups
 - **Signal Emission**: Tracks user behavior using Paid.ai's Signals API
@@ -43,9 +43,9 @@ View Analytics
 
 ## Installation
 
-1. **Clone or navigate to the api directory:**
+1. **Clone or navigate to the ab-testing-server directory:**
    ```bash
-   cd api
+   cd ab-testing-server
    ```
 
 2. **Install dependencies:**
@@ -83,7 +83,7 @@ This project uses `swagger-ui-express` for API documentation, which includes `@s
 SCARF_ANALYTICS=false
 ```
 
-No other telemetry or analytics services are included in this API.
+No other telemetry or analytics services are included in this server.
 
 ## Running the Server
 
@@ -101,7 +101,7 @@ The server will start at `http://localhost:3000` (or the PORT specified in your 
 
 ## API Documentation
 
-This API includes a complete **OpenAPI 3.0 specification** with interactive Swagger UI documentation.
+This server includes a complete **OpenAPI 3.0 specification** with interactive Swagger UI documentation.
 
 **Access the API documentation:**
 - Open `http://localhost:3000/api-docs` in your browser
@@ -354,7 +354,7 @@ curl http://localhost:3000/api/debug/assignments
 ## Project Structure
 
 ```
-api/
+ab-testing-server/
 ├── server.js           # Express server with API endpoints
 ├── ab-testing.js       # A/B test variant assignment and tracking
 ├── signals.js          # Paid.ai Signals API integration
@@ -497,5 +497,5 @@ MIT
 
 ## Support
 
-For issues specific to this API, please open an issue in this repository.
+For issues specific to this server, please open an issue in this repository.
 For Paid.ai platform issues, contact [Paid.ai support](https://paid.ai/support).

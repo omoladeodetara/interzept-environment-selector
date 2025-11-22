@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: Paid.ai A/B Testing API
+  title: A/B Testing Server for Pricing Experiments
   description: |
-    API for conducting A/B testing experiments on pricing strategies using Paid.ai integration.
+    Server for conducting A/B testing experiments on pricing strategies using Paid.ai integration.
     
-    This API provides endpoints for:
+    This server provides endpoints for:
     - Assigning users to experiment variants
     - Tracking pricing page views and conversions
     - Processing Paid.ai webhook events
