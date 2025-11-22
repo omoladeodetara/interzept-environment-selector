@@ -225,8 +225,13 @@ app.post('/webhooks/paid', async (req, res) => {
     if (event.type === 'subscription.created') {
       const amount = event.data.amount || event.data.plan?.amount;
       
-      if (!amount) {
-        console.warn('Subscription created without amount');
+      if (
+        !amount ||
+        typeof amount !== 'number' ||
+        amount <= 0 ||
+        !isFinite(amount)
+      ) {
+        console.warn('Invalid amount in subscription webhook');
         return res.status(200).send('OK');
       }
       
