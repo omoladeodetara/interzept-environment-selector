@@ -1,0 +1,335 @@
+/**
+ * Express Server for Paid.ai A/B Testing Demo
+ * 
+ * This server demonstrates how to implement A/B testing for pricing
+ * experiments using Paid.ai's APIs and webhooks.
+ */
+
+const express = require('express');
+const config = require('./config');
+const abTesting = require('./ab-testing');
+const signals = require('./signals');
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware (development only)
+if (config.nodeEnv === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+  });
+}
+
+/**
+ * Health check endpoint
+ */
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+/**
+ * Get pricing page with A/B test variant assignment
+ * 
+ * This endpoint assigns users to a variant and emits a signal to Paid.ai
+ * tracking which pricing they saw.
+ */
+app.get('/api/pricing', async (req, res) => {
+  try {
+    // Get or generate user ID (in production, this would come from authentication)
+    const userId = req.query.userId || req.headers['x-user-id'] || `user_${Date.now()}`;
+    const experimentId = req.query.experimentId || 'pricing_test_001';
+    
+    // Validate inputs
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid userId parameter' 
+      });
+    }
+    
+    // Assign user to a variant
+    const variant = abTesting.assignVariant(userId, experimentId);
+    
+    // Define pricing based on variant
+    const pricing = variant === 'control' 
+      ? {
+          plan: 'Standard',
+          price: 29.99,
+          features: ['Feature A', 'Feature B', 'Feature C']
+        }
+      : {
+          plan: 'Premium',
+          price: 39.99,
+          features: ['Feature A', 'Feature B', 'Feature C', 'Feature D']
+        };
+    
+    // Emit signal to Paid.ai (non-blocking)
+    signals.emitPricingViewSignal(userId, variant, experimentId)
+      .catch(error => {
+        console.error('Failed to emit pricing view signal:', error.message);
+        // Don't fail the request if signal emission fails
+      });
+    
+    res.json({
+      userId,
+      experimentId,
+      variant,
+      pricing
+    });
+  } catch (error) {
+    console.error('Error in /api/pricing:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Simulate a conversion (subscription/purchase)
+ * 
+ * In a real application, this would be called after successful payment
+ * or integrated with your payment processor.
+ */
+app.post('/api/convert', async (req, res) => {
+  try {
+    const { userId, experimentId } = req.body;
+    
+    // Validate inputs
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid or missing userId' 
+      });
+    }
+    
+    if (!experimentId || typeof experimentId !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid or missing experimentId' 
+      });
+    }
+    
+    // Get the user's variant
+    const variant = abTesting.getExperimentVariant(userId, experimentId);
+    
+    if (!variant) {
+      return res.status(404).json({ 
+        error: 'No variant assignment found for this user and experiment' 
+      });
+    }
+    
+    // Simulate revenue (in production, this would come from actual payment)
+    const revenue = variant === 'control' ? 29.99 : 39.99;
+    
+    // Track conversion in A/B testing system
+    abTesting.trackConversion(userId, experimentId, { 
+      revenue,
+      timestamp: new Date()
+    });
+    
+    // Emit conversion signal to Paid.ai (non-blocking)
+    signals.emitConversionSignal(userId, variant, experimentId)
+      .catch(error => {
+        console.error('Failed to emit conversion signal:', error.message);
+        // Don't fail the request if signal emission fails
+      });
+    
+    res.json({
+      success: true,
+      userId,
+      experimentId,
+      variant,
+      revenue
+    });
+  } catch (error) {
+    console.error('Error in /api/convert:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Paid.ai webhook endpoint
+ * 
+ * Receives webhook events from Paid.ai about subscriptions, payments, etc.
+ * Links these events to A/B test experiments for tracking.
+ */
+app.post('/webhooks/paid', async (req, res) => {
+  try {
+    const event = req.body;
+    
+    // Validate event data exists
+    if (!event || !event.data) {
+      return res.status(400).json({ error: 'Invalid webhook payload' });
+    }
+    
+    // NOTE: In production, verify webhook signature using config.webhookSecret
+    // Example: verifyWebhookSignature(req.headers, req.body, config.webhookSecret)
+    
+    // Log webhook event (development only)
+    if (config.nodeEnv === 'development') {
+      console.log('Received webhook event:', JSON.stringify(event, null, 2));
+    }
+    
+    // Extract customer and experiment data from webhook
+    // NOTE: These field names are examples. Adjust based on actual Paid.ai webhook structure
+    const customerId = event.data.customer_id || event.data.customerId;
+    const experimentId = event.data.metadata?.experiment_id || 'pricing_test_001';
+    
+    if (!customerId) {
+      console.warn('Webhook received without customer_id');
+      return res.status(200).send('OK'); // Accept webhook but don't process
+    }
+    
+    // Event-specific validation and processing
+    if (event.type === 'subscription.created') {
+      const amount = event.data.amount || event.data.plan?.amount;
+      
+      if (!amount) {
+        console.warn('Subscription created without amount');
+        return res.status(200).send('OK');
+      }
+      
+      // Look up the customer's experiment variant
+      const variant = abTesting.getExperimentVariant(customerId, experimentId);
+      
+      if (variant) {
+        // Record the conversion in the A/B testing system
+        abTesting.trackConversion(
+          customerId,
+          experimentId,
+          {
+            variant: variant,
+            revenue: amount,
+            timestamp: new Date(),
+            eventType: event.type
+          }
+        );
+        
+        console.log(`Tracked conversion from webhook: user=${customerId}, variant=${variant}, revenue=${amount}`);
+      } else {
+        console.warn(`No variant found for customer ${customerId} in experiment ${experimentId}`);
+      }
+    }
+    
+    // Acknowledge webhook receipt
+    res.status(200).send('OK');
+  } catch (error) {
+    // Log error but still acknowledge webhook to prevent retries
+    console.error('Error processing webhook:', error);
+    
+    // In production, consider using a dead letter queue or retry mechanism
+    // for failed webhook processing
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Get experiment results
+ * 
+ * Returns analytics and statistics for an A/B test experiment.
+ */
+app.get('/api/experiments/:experimentId/results', (req, res) => {
+  try {
+    const { experimentId } = req.params;
+    
+    if (!experimentId || typeof experimentId !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid experimentId parameter' 
+      });
+    }
+    
+    const results = abTesting.getExperimentResults(experimentId);
+    res.json(results);
+  } catch (error) {
+    console.error('Error in /api/experiments/:experimentId/results:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Get all experiment assignments (for debugging/testing)
+ */
+app.get('/api/debug/assignments', (req, res) => {
+  if (config.nodeEnv !== 'development') {
+    return res.status(403).json({ 
+      error: 'This endpoint is only available in development mode' 
+    });
+  }
+  
+  const assignments = abTesting.getAllAssignments();
+  res.json({ 
+    count: assignments.length,
+    assignments 
+  });
+});
+
+/**
+ * Error handling middleware
+ */
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: config.nodeEnv === 'development' ? err.message : undefined
+  });
+});
+
+/**
+ * 404 handler
+ */
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Not found',
+    path: req.path 
+  });
+});
+
+// Start server
+const server = app.listen(config.port, () => {
+  console.log('='.repeat(50));
+  console.log('🚀 Paid.ai A/B Testing Demo Server Started');
+  console.log('='.repeat(50));
+  console.log(`Environment: ${config.nodeEnv}`);
+  console.log(`Server running at: http://localhost:${config.port}`);
+  console.log(`Health check: http://localhost:${config.port}/health`);
+  console.log('='.repeat(50));
+  console.log('\nAvailable endpoints:');
+  console.log('  GET  /api/pricing - Get pricing with A/B test variant');
+  console.log('  POST /api/convert - Simulate a conversion');
+  console.log('  POST /webhooks/paid - Paid.ai webhook endpoint');
+  console.log('  GET  /api/experiments/:experimentId/results - Get experiment results');
+  if (config.nodeEnv === 'development') {
+    console.log('  GET  /api/debug/assignments - View all assignments (dev only)');
+  }
+  console.log('='.repeat(50));
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('\nSIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\nSIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+module.exports = app;
