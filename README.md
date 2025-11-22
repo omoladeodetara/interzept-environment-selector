@@ -67,7 +67,7 @@ To enable A/B testing for pricing experiments, you can build a custom system tha
 
 **Prerequisites:**
 - Paid.ai account with API access
-- Understanding of Paid.ai's Signals API for tracking events
+- Familiarity with [Paid.ai's Signals API](https://docs.paid.ai/signals-api) for tracking usage and billing events (Signals API enables real-time event tracking such as API calls, resource consumption, and other usage metrics; see [Signals API documentation](https://docs.paid.ai/signals-api) for details)
 - Webhook endpoint to receive billing events
 - Database to store experiment assignments and results
 
