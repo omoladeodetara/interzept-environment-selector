@@ -37,7 +37,7 @@ export function PricingCard({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="text-4xl font-bold">
-          ${price.toFixed(2)}
+          ${price % 1 === 0 ? price.toFixed(0) : price.toFixed(2)}
           <span className="text-muted-foreground text-lg font-normal">/month</span>
         </div>
         <ul className="space-y-3">
