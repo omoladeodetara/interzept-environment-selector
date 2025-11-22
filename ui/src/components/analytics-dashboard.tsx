@@ -132,7 +132,7 @@ export function AnalyticsDashboard({ results }: AnalyticsDashboardProps) {
             <div className="flex items-center justify-between">
               <CardTitle>Experiment (Variant B)</CardTitle>
               <Badge variant={isExperimentWinning ? "default" : "secondary"}>
-                {isExperimentWinning ? "Winner 🏆" : "Premium"}
+                {isExperimentWinning ? "Winner" : "Premium"}
               </Badge>
             </div>
             <CardDescription>Alternative pricing variant</CardDescription>

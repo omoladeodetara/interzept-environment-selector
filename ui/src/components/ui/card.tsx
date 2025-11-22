@@ -29,50 +29,28 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
-type CardTitleProps<T extends React.ElementType = "h3"> = {
-  as?: T
-} & React.ComponentPropsWithoutRef<T> & {
-  className?: string
-}
-
-const CardTitle = React.forwardRef(
-  <T extends React.ElementType = "h3">(
-    { as, className, ...props }: CardTitleProps<T>,
-    ref: React.Ref<React.ElementRef<T>>
-  ) => {
-    const Component = as || "h3"
-    return (
-      <Component
-        ref={ref}
-        className={cn("font-semibold leading-none tracking-tight", className)}
-        {...props}
-      />
-    )
-  }
-)
+const CardTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn("font-semibold leading-none tracking-tight", className)}
+    {...props}
+  />
+))
 CardTitle.displayName = "CardTitle"
 
-type CardDescriptionProps<T extends React.ElementType = "p"> = {
-  as?: T
-} & React.ComponentPropsWithoutRef<T> & {
-  className?: string
-}
-
-const CardDescription = React.forwardRef(
-  <T extends React.ElementType = "p">(
-    { as, className, ...props }: CardDescriptionProps<T>,
-    ref: React.Ref<React.ElementRef<T>>
-  ) => {
-    const Component = as || "p"
-    return (
-      <Component
-        ref={ref}
-        className={cn("text-sm text-muted-foreground", className)}
-        {...props}
-      />
-    )
-  }
-)
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
 CardDescription.displayName = "CardDescription"
 
 const CardContent = React.forwardRef<
