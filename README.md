@@ -196,17 +196,15 @@ app.post('/webhooks/paid', async (req, res) => {
    ↓
 4. Emit signal to Paid.ai (variant shown)
    ↓
-5. User subscribes via Paid.ai
+5. User proceeds to checkout/payment (Paid.ai hosted checkout or custom payment form)
    ↓
-6. Paid.ai webhook fires → Your endpoint
+6. User subscribes via Paid.ai
    ↓
-7. Record conversion with variant
+7. Paid.ai webhook fires → Your endpoint
    ↓
-8. Analyze results to find your "last price"
-```
-
-*Like a vendor who gradually learns the optimal price through many transactions, you iterate toward the best pricing strategy.*
-
+8. Record conversion with variant
+   ↓
+9. Analyze results to find your "last price"
 ### Analyzing Results
 
 *After many market days, a vendor knows which prices work best. Similarly, analyze your data to find the winning strategy.*
