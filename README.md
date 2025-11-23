@@ -1,6 +1,15 @@
-# fluff-fuzzy-succotash
+# Last Price: A/B Testing for Pricing Experiments
 
-**Note:** The API documentation scraper used for research is located in the [`/scraper`](scraper/) folder.
+> *"Wetin be your last price?"* — A comprehensive guide and implementation for discovering optimal pricing through systematic A/B testing, inspired by Nigerian marketplace wisdom.
+
+This repository provides a complete **educational resource and working implementation** for conducting pricing experiments. While the examples use [Paid.ai](https://paid.ai)'s infrastructure, the concepts and patterns apply to any billing platform (Stripe, Chargebee, Paddle, etc.). It includes:
+
+- 📚 **Comprehensive Guide**: Detailed explanation of A/B testing concepts and implementation strategies
+- 🖥️ **Production-Ready Server**: Express.js backend with example API integration ([`/ab-testing-server`](ab-testing-server/))
+- 🎨 **Modern UI Library**: Next.js component library with shadcn/ui patterns ([`/ui`](ui/))
+- 🔍 **API Documentation Scraper**: Tool for researching API documentation ([`/scraper`](scraper/))
+
+**Note:** The examples in this repository use Paid.ai as a demonstration platform, but the patterns and architecture can be adapted to work with any billing infrastructure (Stripe, Chargebee, Paddle, Lago, etc.).
 
 ## 🎨 UI Component Library
 
@@ -32,7 +41,7 @@ In bustling Nigerian markets, the phrase "what is your last price?" marks the cu
 
 Just as vendors observe when customers "walk away" to refine their approach, companies track churn metrics. Where vendors rely on intuition honed through thousands of interactions, businesses leverage data analytics to understand patterns. The marketplace haggle and the A/B test share the same fundamental truth: discovering the right price is an iterative process of proposing, observing, and refining.
 
-This guide explores how Paid.ai's infrastructure enables modern businesses to conduct this discovery process systematically—bringing the marketplace wisdom of "last price" negotiation into the digital age through rigorous experimentation and data-driven decision making.
+This guide explores how to conduct this discovery process systematically using modern billing infrastructure—bringing the marketplace wisdom of "last price" negotiation into the digital age through rigorous experimentation and data-driven decision making. The examples use Paid.ai, but the architecture and patterns apply to any billing platform.
 
 ## What is Paid.ai?
 
@@ -75,9 +84,11 @@ While this guide focuses on Paid.ai, here are other platforms that provide usage
 
 Each platform has unique strengths—evaluate based on your specific needs for pricing flexibility, integration complexity, and scale requirements.
 
-## Building an A/B Testing Solution with Paid.ai
+## Building an A/B Testing Solution (Example: Paid.ai)
 
 *Like a market vendor testing different price points with different customers, A/B testing reveals what pricing strategy truly resonates.*
+
+This section demonstrates how to build a pricing A/B testing solution using Paid.ai as an example.
 
 **Does Paid.ai support A/B testing?**
 
@@ -245,6 +256,8 @@ app.post('/webhooks/paid', async (req, res) => {
 8. Record conversion with variant
    ↓
 9. Analyze results to find your "last price"
+```
+
 ### Analyzing Results
 
 *After many market days, a vendor knows which prices work best. Similarly, analyze your data to find the winning strategy.*
@@ -329,6 +342,6 @@ import { AnalyticsDashboard } from "@/components/analytics-dashboard"
 
 The Nigerian marketplace teaches us that finding the right price is never a guess—it's discovered through patient negotiation, keen observation, and willingness to adapt. Modern A/B testing embodies this same wisdom at scale. Where a vendor adjusts prices based on customer reactions throughout the day, businesses now adjust pricing strategies based on thousands of data points collected through systematic experimentation.
 
-Paid.ai provides the infrastructure to conduct these pricing experiments with the rigor they deserve—tracking every signal, processing every transaction, and providing the data needed to discover your "last price." Whether you're a market vendor or a SaaS founder, the principle remains: the best price isn't guessed, it's discovered through continuous learning and adaptation.
+Modern billing infrastructure platforms provide the tools to conduct these pricing experiments with the rigor they deserve—tracking every signal, processing every transaction, and providing the data needed to discover your "last price." Whether you use Paid.ai, Stripe, Chargebee, or another platform, the principle remains the same: the best price isn't guessed, it's discovered through continuous learning and adaptation.
 
 *"Wetin be your last price?"—the question that drives discovery, whether asked in a Lagos market or through an A/B test dashboard.*
