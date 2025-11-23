@@ -1,4 +1,13 @@
-# fluff-fuzzy-succotash
+# Last Price: A/B Testing for Pricing Experiments with Paid.ai
+
+> *"Wetin be your last price?"* — A comprehensive guide and implementation for discovering optimal pricing through systematic A/B testing, inspired by Nigerian marketplace wisdom.
+
+This repository provides a complete **educational resource and working implementation** for conducting pricing experiments using [Paid.ai](https://paid.ai)'s infrastructure. It includes:
+
+- 📚 **Comprehensive Guide**: Detailed explanation of A/B testing concepts and implementation strategies
+- 🖥️ **Production-Ready Server**: Express.js backend with Paid.ai API integration ([`/ab-testing-server`](ab-testing-server/))
+- 🎨 **Modern UI Library**: Next.js component library with shadcn/ui patterns ([`/ui`](ui/))
+- 🔍 **API Documentation Scraper**: Tool for researching Paid.ai's API documentation ([`/scraper`](scraper/))
 
 **Note:** The API documentation scraper used for research is located in the [`/scraper`](scraper/) folder.
 
@@ -245,6 +254,8 @@ app.post('/webhooks/paid', async (req, res) => {
 8. Record conversion with variant
    ↓
 9. Analyze results to find your "last price"
+```
+
 ### Analyzing Results
 
 *After many market days, a vendor knows which prices work best. Similarly, analyze your data to find the winning strategy.*
