@@ -88,7 +88,7 @@ Each platform has unique strengths—evaluate based on your specific needs for p
 
 *Like a market vendor testing different price points with different customers, A/B testing reveals what pricing strategy truly resonates.*
 
-This section demonstrates how to build a pricing A/B testing solution using Paid.ai as an example. The architecture and patterns shown here can be adapted to work with other billing platforms like Stripe, Chargebee, or Paddle.
+This section demonstrates how to build a pricing A/B testing solution using Paid.ai as an example.
 
 **Does Paid.ai support A/B testing?**
 
