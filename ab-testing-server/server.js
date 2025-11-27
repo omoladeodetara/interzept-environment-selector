@@ -318,7 +318,7 @@ app.post('/api/jale/optimize', async (req, res) => {
       });
     }
     
-    // Call jale recommendation service (non-blocking style)
+    // Call jale recommendation service (non-blocking for the event loop)
     const result = await jale.recommendPrice({ 
       experimentId, 
       objective, 

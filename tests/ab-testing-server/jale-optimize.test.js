@@ -127,6 +127,7 @@ describe('POST /api/jale/optimize', () => {
       .expect(400);
 
     expect(response.body).toHaveProperty('error');
+    expect(response.body.error).toBe('Invalid or missing experimentId');
     expect(jale.recommendPrice).not.toHaveBeenCalled();
   });
 
