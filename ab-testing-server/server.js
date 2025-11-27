@@ -12,6 +12,7 @@ const path = require('path');
 const config = require('./config');
 const abTesting = require('./ab-testing');
 const signals = require('./signals');
+const jale = require('../jale');
 
 const app = express();
 
@@ -301,6 +302,41 @@ app.get('/api/experiments/:experimentId/results', (req, res) => {
 });
 
 /**
+ * Get pricing recommendation from jale optimization service
+ * 
+ * Calls the jale service to recommend a price based on experiment data
+ * and returns the result. Requires experimentId in request body.
+ */
+app.post('/api/jale/optimize', async (req, res) => {
+  try {
+    const { experimentId, objective, candidates, lookbackDays } = req.body;
+    
+    // Validate required experimentId
+    if (!experimentId || typeof experimentId !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid or missing experimentId' 
+      });
+    }
+    
+    // Call jale recommendation service (non-blocking style)
+    const result = await jale.recommendPrice({ 
+      experimentId, 
+      objective, 
+      candidates, 
+      lookbackDays 
+    });
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error in /api/jale/optimize:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
  * Get all experiment assignments (for debugging/testing)
  */
 app.get('/api/debug/assignments', (req, res) => {
@@ -340,42 +376,46 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-const server = app.listen(config.port, () => {
-  console.log('='.repeat(50));
-  console.log('🚀 A/B Testing Server Started');
-  console.log('='.repeat(50));
-  console.log(`Environment: ${config.nodeEnv}`);
-  console.log(`Server running at: http://localhost:${config.port}`);
-  console.log(`Health check: http://localhost:${config.port}/health`);
-  console.log(`API Documentation: http://localhost:${config.port}/api-docs`);
-  console.log('='.repeat(50));
-  console.log('\nAvailable endpoints:');
-  console.log('  GET  /api/pricing - Get pricing with A/B test variant');
-  console.log('  POST /api/convert - Simulate a conversion');
-  console.log('  POST /webhooks/paid - Paid.ai webhook endpoint');
-  console.log('  GET  /api/experiments/:experimentId/results - Get experiment results');
-  if (config.nodeEnv === 'development') {
-    console.log('  GET  /api/debug/assignments - View all assignments (dev only)');
-  }
-  console.log('='.repeat(50));
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('\nSIGTERM received, shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
+// Start server only when run directly (not when imported for testing)
+let server;
+if (require.main === module) {
+  server = app.listen(config.port, () => {
+    console.log('='.repeat(50));
+    console.log('🚀 A/B Testing Server Started');
+    console.log('='.repeat(50));
+    console.log(`Environment: ${config.nodeEnv}`);
+    console.log(`Server running at: http://localhost:${config.port}`);
+    console.log(`Health check: http://localhost:${config.port}/health`);
+    console.log(`API Documentation: http://localhost:${config.port}/api-docs`);
+    console.log('='.repeat(50));
+    console.log('\nAvailable endpoints:');
+    console.log('  GET  /api/pricing - Get pricing with A/B test variant');
+    console.log('  POST /api/convert - Simulate a conversion');
+    console.log('  POST /api/jale/optimize - Get pricing recommendation from jale');
+    console.log('  POST /webhooks/paid - Paid.ai webhook endpoint');
+    console.log('  GET  /api/experiments/:experimentId/results - Get experiment results');
+    if (config.nodeEnv === 'development') {
+      console.log('  GET  /api/debug/assignments - View all assignments (dev only)');
+    }
+    console.log('='.repeat(50));
   });
-});
 
-process.on('SIGINT', () => {
-  console.log('\nSIGINT received, shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('\nSIGTERM received, shutting down gracefully...');
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
   });
-});
+
+  process.on('SIGINT', () => {
+    console.log('\nSIGINT received, shutting down gracefully...');
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  });
+}
 
 module.exports = app;
