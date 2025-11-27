@@ -29,6 +29,8 @@ tags:
     description: Service health check
   - name: Experiments
     description: A/B testing experiment operations
+  - name: Optimization
+    description: Jale pricing optimization endpoints
   - name: Webhooks
     description: Paid.ai webhook integration
   - name: Debug
@@ -180,6 +182,43 @@ paths:
                 $ref: '#/components/schemas/ExperimentResults'
         '400':
           description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/jale/optimize:
+    post:
+      summary: Get pricing recommendation from jale optimization
+      description: |
+        Calls the jale service to recommend an optimal price based on experiment data.
+        Uses historical conversion and revenue data to simulate expected outcomes for candidate prices.
+        
+        The endpoint analyzes experiment results and returns a recommended price along with
+        confidence score and revenue simulation data.
+      tags:
+        - Optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JaleOptimizeRequest'
+      responses:
+        '200':
+          description: Pricing recommendation returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JaleOptimizeResponse'
+        '400':
+          description: Invalid request body (missing or invalid experimentId)
           content:
             application/json:
               schema:
@@ -400,6 +439,80 @@ components:
           type: string
           enum: [control, experiment]
           example: control
+
+    JaleOptimizeRequest:
+      type: object
+      required:
+        - experimentId
+      properties:
+        experimentId:
+          type: string
+          description: Unique identifier for the experiment to optimize
+          example: pricing_test_001
+        objective:
+          type: string
+          description: Optimization objective (revenue, conversion, or profit)
+          enum: [revenue, conversion, profit]
+          default: revenue
+          example: revenue
+        candidates:
+          type: array
+          description: Optional list of candidate prices to evaluate
+          items:
+            type: number
+            format: float
+          example: [19.99, 29.99, 39.99, 49.99]
+        lookbackDays:
+          type: integer
+          description: Number of days of historical data to consider
+          minimum: 1
+          default: 30
+          example: 30
+
+    JaleOptimizeResponse:
+      type: object
+      properties:
+        recommendedPrice:
+          type: number
+          format: float
+          description: The recommended optimal price
+          example: 35.99
+        expectedRevenue:
+          type: number
+          format: float
+          description: Expected revenue at the recommended price
+          example: 1799.50
+        confidence:
+          type: number
+          format: float
+          description: Confidence score for the recommendation (0-1)
+          minimum: 0
+          maximum: 1
+          example: 0.5
+        simulation:
+          type: array
+          description: Revenue simulation results for all candidate prices
+          items:
+            $ref: '#/components/schemas/PriceSimulation'
+
+    PriceSimulation:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+          description: Candidate price point
+          example: 29.99
+        estimatedCv:
+          type: number
+          format: float
+          description: Estimated conversion rate at this price
+          example: 0.12
+        expectedRevenue:
+          type: number
+          format: float
+          description: Expected revenue at this price
+          example: 3598.80
 
     Error:
       type: object
