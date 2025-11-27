@@ -254,7 +254,64 @@ curl http://localhost:3000/api/experiments/pricing_test_001/results
 
 ---
 
-### 5. Paid.ai Webhook Endpoint
+### 5. Get Pricing Recommendation (Jale Optimization)
+**POST** `/api/jale/optimize`
+
+Calls the jale service to recommend an optimal price based on experiment data. Uses historical conversion and revenue data to simulate expected outcomes for candidate prices.
+
+**Request Body:**
+```json
+{
+  "experimentId": "pricing_test_001",
+  "objective": "revenue",
+  "candidates": [19.99, 29.99, 39.99, 49.99],
+  "lookbackDays": 30
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `experimentId` | string | Yes | Unique identifier for the experiment to optimize |
+| `objective` | string | No | Optimization objective: `revenue`, `conversion`, or `profit`. Defaults to `revenue` |
+| `candidates` | number[] | No | Optional list of candidate prices to evaluate |
+| `lookbackDays` | integer | No | Number of days of historical data to consider. Defaults to 30 |
+
+**Example:**
+```bash
+curl -X POST http://localhost:3000/api/jale/optimize \
+  -H "Content-Type: application/json" \
+  -d '{"experimentId":"pricing_test_001"}'
+```
+
+**Response:**
+```json
+{
+  "recommendedPrice": 35.99,
+  "expectedRevenue": 1799.50,
+  "confidence": 0.5,
+  "simulation": [
+    {
+      "price": 29.99,
+      "estimatedCv": 0.12,
+      "expectedRevenue": 3598.80
+    },
+    {
+      "price": 35.99,
+      "estimatedCv": 0.10,
+      "expectedRevenue": 3599.00
+    },
+    {
+      "price": 39.99,
+      "estimatedCv": 0.08,
+      "expectedRevenue": 3199.20
+    }
+  ]
+}
+```
+
+---
+
+### 6. Paid.ai Webhook Endpoint
 **POST** `/webhooks/paid`
 
 Receives webhook events from Paid.ai about subscriptions, payments, etc.
@@ -291,7 +348,7 @@ curl -X POST http://localhost:3000/webhooks/paid \
 
 ---
 
-### 6. Debug Assignments (Development Only)
+### 7. Debug Assignments (Development Only)
 **GET** `/api/debug/assignments`
 
 Returns all current experiment assignments. Only available in development mode.
@@ -347,7 +404,12 @@ curl -X POST http://localhost:3000/api/convert \
 # 6. Check experiment results
 curl http://localhost:3000/api/experiments/pricing_test_001/results
 
-# 7. (Optional) View all assignments in dev mode
+# 7. Get pricing recommendation from jale
+curl -X POST http://localhost:3000/api/jale/optimize \
+  -H "Content-Type: application/json" \
+  -d '{"experimentId":"pricing_test_001"}'
+
+# 8. (Optional) View all assignments in dev mode
 curl http://localhost:3000/api/debug/assignments
 ```
 

@@ -1,0 +1,9 @@
+{
+  "name": "jale",
+  "version": "1.0.0",
+  "description": "Pricing calculator / agent layer for A/B testing optimization",
+  "main": "index.js",
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}
