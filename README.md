@@ -345,3 +345,24 @@ The Nigerian marketplace teaches us that finding the right price is never a gues
 Modern billing infrastructure platforms provide the tools to conduct these pricing experiments with the rigor they deserve—tracking every signal, processing every transaction, and providing the data needed to discover your "last price." Whether you use Paid.ai, Stripe, Chargebee, or another platform, the principle remains the same: the best price isn't guessed, it's discovered through continuous learning and adaptation.
 
 *"Wetin be your last price?"—the question that drives discovery, whether asked in a Lagos market or through an A/B test dashboard.*
+
+## OpenAPI Specifications
+
+This repository includes OpenAPI 3.0 specifications for API-first development:
+
+| Specification | Location | Description |
+|--------------|----------|-------------|
+| A/B Testing Server | [`ab-testing-server/openapi.yaml`](ab-testing-server/openapi.yaml) | A/B testing experiment endpoints |
+| Paid.ai API | [`paid-api/openapi.yaml`](paid-api/openapi.yaml) | Paid.ai platform API reference |
+
+Use these specifications to:
+- Generate API clients in your preferred language
+- Generate server stubs for new implementations
+- Validate API requests and responses
+- Explore the API via Swagger UI at `/api-docs`
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+
+**Key guideline**: When adding API functionality, prefer generating code from OpenAPI specifications rather than hand-writing endpoint implementations.
