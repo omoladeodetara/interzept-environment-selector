@@ -8,7 +8,6 @@
 import {
   DashboardData,
   ElasticityAnalysis,
-  Experiment,
   ExperimentResults,
   ValidationError,
 } from './types';

@@ -5,9 +5,8 @@
  */
 
 import {
-  TenantUsageSummary,
   PlanType,
-  ValidationError,
+  TenantUsageSummary,
 } from '../core/types';
 import { getTenant } from './tenant-manager';
 import { getTenantUsageSummary } from './usage-tracker';

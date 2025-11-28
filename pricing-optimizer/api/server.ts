@@ -11,7 +11,7 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
-import { authenticate, optionalAuth, generateToken } from './middleware/auth';
+import { authenticate, generateToken } from './middleware/auth';
 import { rateLimit, checkUsageLimit, trackApiUsage } from './middleware/rate-limit';
 import experimentsRouter from './routes/experiments';
 import recommendationsRouter from './routes/recommendations';

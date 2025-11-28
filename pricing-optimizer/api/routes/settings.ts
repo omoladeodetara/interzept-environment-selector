@@ -9,7 +9,6 @@ import axios from 'axios';
 import {
   getTenant,
   updateTenant,
-  switchMode,
 } from '../../multi-tenant/tenant-manager';
 import {
   storeApiKey,

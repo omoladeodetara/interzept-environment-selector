@@ -2,6 +2,23 @@
 
 A hybrid multi-tenant pricing optimizer that supports both "Bring Your Own Key" (BYOK) and "Managed Mode" for Paid.ai integration.
 
+## API-First Design
+
+This project follows an **OpenAPI-first approach**. The API specification is defined in [`openapi.yaml`](./openapi.yaml) following the OpenAPI 3.0.3 standard.
+
+### Viewing the API Documentation
+
+You can view the API documentation using any OpenAPI-compatible tool:
+
+```bash
+# Using Swagger UI (via Docker)
+docker run -p 8080:8080 -e SWAGGER_JSON=/api/openapi.yaml -v $(pwd):/api swaggerapi/swagger-ui
+
+# Or use online viewers like:
+# - https://editor.swagger.io/
+# - https://petstore.swagger.io/
+```
+
 ## Features
 
 - **Multi-Tenant Architecture**: Manage multiple customer accounts with isolated data and configurations

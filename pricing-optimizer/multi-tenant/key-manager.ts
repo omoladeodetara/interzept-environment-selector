@@ -6,7 +6,7 @@
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import { TenantConfig, ValidationError } from '../core/types';
+import { ValidationError } from '../core/types';
 import { getTenant, updateTenant } from './tenant-manager';
 
 // Encryption configuration

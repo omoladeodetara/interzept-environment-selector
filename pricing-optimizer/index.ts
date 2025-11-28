@@ -14,8 +14,6 @@ import {
   ExperimentResults,
   PricingRecommendation,
   BusinessGoals,
-  SignalData,
-  ConversionData,
   BillingAdapter,
 } from './core/types';
 import {
@@ -33,7 +31,7 @@ import { generateRecommendation } from './core/recommendation-engine';
 import { createPaidAiAdapter } from './integrations/paid-ai-adapter';
 import { createStripeAdapter } from './integrations/stripe-adapter';
 import { createManualAdapter } from './integrations/manual-adapter';
-import { createTenant, getTenant, updateTenant } from './multi-tenant/tenant-manager';
+import { createTenant, getTenant } from './multi-tenant/tenant-manager';
 import { trackTenantUsage } from './multi-tenant/usage-tracker';
 
 export interface PricingOptimizerConfig {

@@ -6,7 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UnauthorizedError, ValidationError } from '../../core/types';
+import { UnauthorizedError } from '../../core/types';
 import { getTenant } from '../../multi-tenant/tenant-manager';
 
 // JWT secret - in production, use environment variable

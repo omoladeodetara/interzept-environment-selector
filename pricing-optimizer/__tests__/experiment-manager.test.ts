@@ -7,7 +7,6 @@ import {
   getExperiment,
   listExperiments,
   updateExperiment,
-  addVariant,
   activateExperiment,
   stopExperiment,
   deleteExperiment,

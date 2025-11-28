@@ -349,7 +349,8 @@ export function getExperimentResults(
   experimentId: string,
   tenantId?: string
 ): ExperimentResults {
-  const experiment = getExperiment(experimentId, tenantId);
+  // Validate experiment exists and tenant has access (value intentionally unused)
+  getExperiment(experimentId, tenantId);
   const metrics = experimentMetrics.get(experimentId);
 
   if (!metrics) {

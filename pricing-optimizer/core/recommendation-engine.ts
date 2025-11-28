@@ -13,7 +13,6 @@ import {
   ValidationError,
 } from './types';
 import {
-  calculateElasticity,
   analyzeElasticity,
   calculateOptimalPrice,
   calculateRevenueImpact,
