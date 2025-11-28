@@ -4,9 +4,14 @@ API Documentation Scraper for Paid.ai
 
 This script scrapes the API documentation from https://docs.paid.ai/api-reference/
 and saves it in a structured JSON format.
+
+Supports two scraping methods:
+1. Traditional HTML parsing with BeautifulSoup (default)
+2. AI-powered extraction via Parse.bot API (requires PARSE_BOT_API_KEY)
 """
 
 import json
+import os
 import sys
 import argparse
 import time
@@ -15,6 +20,13 @@ from typing import Dict, List, Any, Optional, Set
 from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
+
+# Optional import for Parse.bot client (only needed for parsebot method)
+try:
+    from parsebot_client import ParseBotClient, format_parsebot_result
+    PARSEBOT_AVAILABLE = True
+except ImportError:
+    PARSEBOT_AVAILABLE = False
 
 
 class PaidAPIDocScraper:
@@ -348,6 +360,32 @@ class PaidAPIDocScraper:
         print(f"Data saved to {filename}")
 
 
+def scrape_with_parsebot(url: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Scrape API documentation using Parse.bot AI-powered extraction.
+    
+    Args:
+        url: URL to scrape
+        api_key: Parse.bot API key (or use PARSE_BOT_API_KEY env var)
+        
+    Returns:
+        Dictionary containing scraped API documentation
+        
+    Raises:
+        ImportError: If parsebot_client module is not available
+    """
+    if not PARSEBOT_AVAILABLE:
+        raise ImportError(
+            "parsebot_client module not found. "
+            "Make sure parsebot_client.py is in the same directory."
+        )
+    
+    client = ParseBotClient(api_key=api_key)
+    result = client.scrape_api_documentation(url)
+    
+    return format_parsebot_result(result, url)
+
+
 def main():
     """Main entry point for the scraper."""
     parser = argparse.ArgumentParser(
@@ -363,12 +401,16 @@ def main():
         default='paid_api_docs.json',
         help='Output JSON file (default: paid_api_docs.json)'
     )
-    # parser.add_argument(
-    #     '--max-subpages',
-    #     type=int,
-    #     default=1000,
-    #     help='Maximum number of sub-pages to scrape (default: 1000)'
-    # )
+    parser.add_argument(
+        '--method',
+        choices=['html', 'parsebot'],
+        default='html',
+        help='Scraping method: html (BeautifulSoup) or parsebot (AI-powered). Default: html'
+    )
+    parser.add_argument(
+        '--api-key',
+        help='Parse.bot API key (or set PARSE_BOT_API_KEY env var). Required for parsebot method.'
+    )
     parser.add_argument(
         '--verbose',
         action='store_true',
@@ -378,16 +420,35 @@ def main():
     args = parser.parse_args()
     
     try:
-        scraper = PaidAPIDocScraper(base_url=args.url)  # , max_subpages=args.max_subpages)
-        data = scraper.scrape()
-        scraper.save_to_file(args.output)
+        if args.method == 'parsebot':
+            # Use Parse.bot AI-powered scraping
+            api_key = args.api_key or os.environ.get('PARSE_BOT_API_KEY')
+            if not api_key:
+                print(
+                    "Error: Parse.bot API key is required for parsebot method.\n"
+                    "Set PARSE_BOT_API_KEY environment variable or use --api-key",
+                    file=sys.stderr
+                )
+                return 1
+            
+            print(f"Using Parse.bot AI-powered scraping for {args.url}")
+            data = scrape_with_parsebot(args.url, api_key=api_key)
+            
+            with open(args.output, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"Data saved to {args.output}")
+        else:
+            # Use traditional HTML parsing
+            scraper = PaidAPIDocScraper(base_url=args.url)
+            data = scraper.scrape()
+            scraper.save_to_file(args.output)
         
         if args.verbose:
             print("\nScraping Summary:")
-            print(f"Total endpoints found: {len(data['endpoints'])}")
-            print(f"Total sections found: {len(data['sections'])}")
+            print(f"Total endpoints found: {len(data.get('endpoints', []))}")
+            print(f"Total sections found: {len(data.get('sections', []))}")
             
-            if data['endpoints']:
+            if data.get('endpoints'):
                 print("\nEndpoints:")
                 for endpoint in data['endpoints']:
                     print(f"  - {endpoint.get('method', 'N/A')} {endpoint.get('path', endpoint.get('title', 'N/A'))}")

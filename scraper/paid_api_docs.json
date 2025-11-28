@@ -1,5 +1,709 @@
 {
-  "base_url": "https://docs.paid.ai/api-reference/",
-  "endpoints": [],
-  "sections": []
+  "base_url": "https://api.agentpaid.io/api/v1",
+  "endpoints": [
+    {
+      "title": "List all customers",
+      "method": "GET",
+      "path": "/customers",
+      "description": "Retrieves all customers associated with your organization",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Retrieved"
+        },
+        {
+          "code": "401",
+          "description": "Unauthorized"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "listCustomers"
+    },
+    {
+      "title": "Create a customer",
+      "method": "POST",
+      "path": "/customers",
+      "description": "Creates a new customer with the given data",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "201",
+          "description": "Created"
+        },
+        {
+          "code": "400",
+          "description": "Bad Request"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "createCustomer",
+      "requestBody": "CustomerInput"
+    },
+    {
+      "title": "Retrieve a customer",
+      "method": "GET",
+      "path": "/customers/{customerId}",
+      "description": "Retrieves a customer by its internal ID",
+      "parameters": [
+        {
+          "name": "customerId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Success"
+        },
+        {
+          "code": "404",
+          "description": "Not Found"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "getCustomer"
+    },
+    {
+      "title": "Update a customer",
+      "method": "PUT",
+      "path": "/customers/{customerId}",
+      "description": "Updates an existing customer by its internal ID",
+      "parameters": [
+        {
+          "name": "customerId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Updated"
+        },
+        {
+          "code": "404",
+          "description": "Not Found"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "updateCustomer",
+      "requestBody": "CustomerInput"
+    },
+    {
+      "title": "Delete a customer",
+      "method": "DELETE",
+      "path": "/customers/{customerId}",
+      "description": "Deletes a customer by its internal ID",
+      "parameters": [
+        {
+          "name": "customerId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        },
+        {
+          "code": "404",
+          "description": "Not Found"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "deleteCustomer"
+    },
+    {
+      "title": "Retrieve customer by external ID",
+      "method": "GET",
+      "path": "/customers/external/{externalId}",
+      "description": "Retrieves a customer by its external (custom) ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Success"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "getCustomerByExternalId"
+    },
+    {
+      "title": "Update customer by external ID",
+      "method": "PUT",
+      "path": "/customers/external/{externalId}",
+      "description": "Updates a customer by its external (custom) ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Updated"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "updateCustomerByExternalId",
+      "requestBody": "CustomerInput"
+    },
+    {
+      "title": "Delete customer by external ID",
+      "method": "DELETE",
+      "path": "/customers/external/{externalId}",
+      "description": "Deletes a customer by its external (custom) ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        }
+      ],
+      "tags": [
+        "Customers"
+      ],
+      "operationId": "deleteCustomerByExternalId"
+    },
+    {
+      "title": "List all contacts",
+      "method": "GET",
+      "path": "/contacts",
+      "description": "Retrieves all contacts associated with your organization",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Retrieved"
+        }
+      ],
+      "tags": [
+        "Contacts"
+      ],
+      "operationId": "listContacts"
+    },
+    {
+      "title": "Create a contact",
+      "method": "POST",
+      "path": "/contacts",
+      "description": "Creates a new contact with given data",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "201",
+          "description": "Created"
+        }
+      ],
+      "tags": [
+        "Contacts"
+      ],
+      "operationId": "createContact",
+      "requestBody": "ContactInput"
+    },
+    {
+      "title": "Retrieve a contact",
+      "method": "GET",
+      "path": "/contacts/{contactId}",
+      "description": "Retrieves a contact by its internal ID",
+      "parameters": [
+        {
+          "name": "contactId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Success"
+        }
+      ],
+      "tags": [
+        "Contacts"
+      ],
+      "operationId": "getContact"
+    },
+    {
+      "title": "Delete a contact",
+      "method": "DELETE",
+      "path": "/contacts/{contactId}",
+      "description": "Deletes a contact by its internal ID",
+      "parameters": [
+        {
+          "name": "contactId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        }
+      ],
+      "tags": [
+        "Contacts"
+      ],
+      "operationId": "deleteContact"
+    },
+    {
+      "title": "Delete contact by external ID",
+      "method": "DELETE",
+      "path": "/contacts/external/{externalId}",
+      "description": "Deletes a contact by its external ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        }
+      ],
+      "tags": [
+        "Contacts"
+      ],
+      "operationId": "deleteContactByExternalId"
+    },
+    {
+      "title": "List all agents",
+      "method": "GET",
+      "path": "/agents",
+      "description": "Retrieves all agents associated with your organization",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Retrieved"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "listAgents"
+    },
+    {
+      "title": "Create an agent",
+      "method": "POST",
+      "path": "/agents",
+      "description": "Creates a new agent with the given data",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "201",
+          "description": "Created"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "createAgent",
+      "requestBody": "AgentInput"
+    },
+    {
+      "title": "Retrieve an agent",
+      "method": "GET",
+      "path": "/agents/{agentId}",
+      "description": "Retrieves an agent by its internal ID",
+      "parameters": [
+        {
+          "name": "agentId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Success"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "getAgent"
+    },
+    {
+      "title": "Update an agent",
+      "method": "PUT",
+      "path": "/agents/{agentId}",
+      "description": "Updates an agent's information by its internal ID",
+      "parameters": [
+        {
+          "name": "agentId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Updated"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "updateAgent",
+      "requestBody": "AgentInput"
+    },
+    {
+      "title": "Delete an agent",
+      "method": "DELETE",
+      "path": "/agents/{agentId}",
+      "description": "Deletes an agent by its internal ID",
+      "parameters": [
+        {
+          "name": "agentId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "deleteAgent"
+    },
+    {
+      "title": "Retrieve agent by external ID",
+      "method": "GET",
+      "path": "/agents/external/{externalId}",
+      "description": "Retrieves an agent by its external ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Success"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "getAgentByExternalId"
+    },
+    {
+      "title": "Update agent by external ID",
+      "method": "PUT",
+      "path": "/agents/external/{externalId}",
+      "description": "Updates an agent by its external ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Updated"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "updateAgentByExternalId",
+      "requestBody": "AgentInput"
+    },
+    {
+      "title": "Delete agent by external ID",
+      "method": "DELETE",
+      "path": "/agents/external/{externalId}",
+      "description": "Deletes an agent by its external ID",
+      "parameters": [
+        {
+          "name": "externalId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        }
+      ],
+      "tags": [
+        "Agents"
+      ],
+      "operationId": "deleteAgentByExternalId"
+    },
+    {
+      "title": "List all orders",
+      "method": "GET",
+      "path": "/orders",
+      "description": "Retrieves all orders associated with your organization",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Retrieved"
+        }
+      ],
+      "tags": [
+        "Orders"
+      ],
+      "operationId": "listOrders"
+    },
+    {
+      "title": "Create an order",
+      "method": "POST",
+      "path": "/orders",
+      "description": "Creates a new order with given data",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "201",
+          "description": "Created"
+        }
+      ],
+      "tags": [
+        "Orders"
+      ],
+      "operationId": "createOrder",
+      "requestBody": "OrderInput"
+    },
+    {
+      "title": "Retrieve an order",
+      "method": "GET",
+      "path": "/orders/{orderId}",
+      "description": "Retrieves an order by its internal ID",
+      "parameters": [
+        {
+          "name": "orderId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Success"
+        }
+      ],
+      "tags": [
+        "Orders"
+      ],
+      "operationId": "getOrder"
+    },
+    {
+      "title": "Delete an order",
+      "method": "DELETE",
+      "path": "/orders/{orderId}",
+      "description": "Deletes an order by its internal ID",
+      "parameters": [
+        {
+          "name": "orderId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "204",
+          "description": "Deleted"
+        }
+      ],
+      "tags": [
+        "Orders"
+      ],
+      "operationId": "deleteOrder"
+    },
+    {
+      "title": "Update order lines",
+      "method": "PUT",
+      "path": "/orders/{orderId}/lines",
+      "description": "Adds/removes order lines for an existing order",
+      "parameters": [
+        {
+          "name": "orderId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Updated"
+        }
+      ],
+      "tags": [
+        "Orders"
+      ],
+      "operationId": "updateOrderLines"
+    },
+    {
+      "title": "Activate an order",
+      "method": "POST",
+      "path": "/orders/{orderId}/activate",
+      "description": "Activates a draft order by its internal ID",
+      "parameters": [
+        {
+          "name": "orderId",
+          "description": "",
+          "type": "string",
+          "required": "True",
+          "in": "path"
+        }
+      ],
+      "responses": [
+        {
+          "code": "200",
+          "description": "Activated"
+        }
+      ],
+      "tags": [
+        "Orders"
+      ],
+      "operationId": "activateOrder"
+    },
+    {
+      "title": "Record agent signal",
+      "method": "POST",
+      "path": "/usage/signals",
+      "description": "Records an immutable event for agent usage tracking",
+      "parameters": [],
+      "responses": [
+        {
+          "code": "201",
+          "description": "Signal recorded"
+        },
+        {
+          "code": "400",
+          "description": "Bad Request"
+        }
+      ],
+      "tags": [
+        "Usage"
+      ],
+      "operationId": "recordSignal"
+    }
+  ],
+  "sections": [
+    {
+      "title": "Customers",
+      "content": "Customer management operations",
+      "links": []
+    },
+    {
+      "title": "Contacts",
+      "content": "Contact management operations",
+      "links": []
+    },
+    {
+      "title": "Agents",
+      "content": "AI Agent management operations",
+      "links": []
+    },
+    {
+      "title": "Orders",
+      "content": "Order management operations",
+      "links": []
+    },
+    {
+      "title": "Usage",
+      "content": "Agent signal tracking",
+      "links": []
+    },
+    {
+      "title": "Authentication",
+      "content": "Bearer token authentication using JWT",
+      "links": []
+    }
+  ],
+  "authentication": {
+    "type": "Bearer",
+    "scheme": "bearer",
+    "format": "JWT"
+  },
+  "metadata": {
+    "title": "Paid.ai API",
+    "description": "Paid is the all-in-one, drop-in Business Engine for AI Agents that handles your pricing, \nsubscriptions, margins, billing, and renewals with just 5 lines of code.\n",
+    "version": "1.0.0"
+  },
+  "scraped_with": "openapi-spec",
+  "source": "paid-api/openapi.yaml"
 }
