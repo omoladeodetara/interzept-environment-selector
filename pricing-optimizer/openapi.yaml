@@ -1,0 +1,1632 @@
+openapi: 3.0.3
+info:
+  title: Pricing Optimizer API
+  description: |
+    Hybrid Multi-Tenant Pricing Optimizer API supporting both BYOK (Bring Your Own Key) 
+    and Managed modes for Paid.ai integration.
+    
+    This API enables small businesses to:
+    - Run A/B pricing experiments
+    - Calculate price elasticity of demand
+    - Get AI-powered pricing recommendations
+    - Track and analyze conversion metrics
+    
+    ## Authentication
+    
+    All endpoints require JWT authentication via the `Authorization` header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Rate Limiting
+    
+    Rate limits vary by plan tier:
+    - Free: 60 requests/minute
+    - Starter: 300 requests/minute
+    - Pro: 1000 requests/minute
+    - Enterprise: 5000 requests/minute
+    
+    ## Modes
+    
+    - **BYOK (Bring Your Own Key)**: Use your own Paid.ai API key
+    - **Managed**: Use the platform's managed service
+    
+  version: 1.0.0
+  contact:
+    name: Pricing Optimizer Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://api.pricing-optimizer.example.com/api
+    description: Production server
+
+tags:
+  - name: Experiments
+    description: Manage pricing experiments and A/B tests
+  - name: Recommendations
+    description: AI-powered pricing recommendations
+  - name: Analytics
+    description: Advanced metrics and insights
+  - name: Settings
+    description: Integration and billing configuration
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for tenant authentication
+
+  schemas:
+    # ============ Common Schemas ============
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Validation error: name is required"
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of items
+          example: 42
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+        offset:
+          type: integer
+          description: Current offset
+          example: 0
+
+    # ============ Tenant Schemas ============
+    PlanType:
+      type: string
+      enum: [free, starter, pro, enterprise]
+      description: Subscription plan tier
+
+    TenantMode:
+      type: string
+      enum: [managed, byok]
+      description: Integration mode (BYOK or Managed)
+
+    ProviderType:
+      type: string
+      enum: [paid-ai, stripe, manual]
+      description: Billing provider type
+
+    # ============ Experiment Schemas ============
+    ExperimentStatus:
+      type: string
+      enum: [draft, active, paused, completed]
+      description: Current status of the experiment
+
+    ExperimentVariant:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - weight
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique variant identifier
+          example: "var_abc123"
+        name:
+          type: string
+          description: Human-readable variant name
+          example: "control"
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Price for this variant
+          example: 4.99
+        weight:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Traffic allocation percentage (0-100)
+          example: 50
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional variant metadata
+
+    Experiment:
+      type: object
+      required:
+        - id
+        - tenantId
+        - name
+        - status
+        - variants
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique experiment identifier
+          example: "exp_xyz789"
+        tenantId:
+          type: string
+          description: Tenant ID that owns this experiment
+        name:
+          type: string
+          description: Experiment name
+          example: "Latte Pricing Test"
+        description:
+          type: string
+          description: Optional experiment description
+          example: "Testing $4.99 vs $5.49 for lattes"
+        status:
+          $ref: '#/components/schemas/ExperimentStatus'
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentVariant'
+          minItems: 1
+        startDate:
+          type: string
+          format: date-time
+          description: When the experiment started
+        endDate:
+          type: string
+          format: date-time
+          description: When the experiment ended
+        targetSampleSize:
+          type: integer
+          minimum: 1
+          description: Target number of samples before concluding
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateExperimentRequest:
+      type: object
+      required:
+        - name
+        - variants
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Experiment name
+          example: "Latte Pricing Test"
+        description:
+          type: string
+          maxLength: 1000
+          description: Optional experiment description
+        variants:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - price
+            properties:
+              name:
+                type: string
+                description: Variant name
+                example: "control"
+              price:
+                type: number
+                format: float
+                minimum: 0
+                description: Price for this variant
+                example: 4.99
+              weight:
+                type: integer
+                minimum: 0
+                maximum: 100
+                default: 50
+                description: Traffic allocation percentage
+          minItems: 1
+          maxItems: 10
+
+    UpdateExperimentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        status:
+          $ref: '#/components/schemas/ExperimentStatus'
+
+    AddVariantRequest:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          description: Variant name
+          example: "discount"
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: Price for this variant
+          example: 3.99
+        weight:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+          description: Traffic allocation percentage
+
+    # ============ Results Schemas ============
+    VariantMetrics:
+      type: object
+      required:
+        - variantId
+        - variantName
+        - price
+        - views
+        - conversions
+        - revenue
+        - conversionRate
+        - averageOrderValue
+        - revenuePerView
+      properties:
+        variantId:
+          type: string
+        variantName:
+          type: string
+        price:
+          type: number
+          format: float
+        views:
+          type: integer
+          description: Number of views/impressions
+          example: 1000
+        conversions:
+          type: integer
+          description: Number of conversions/purchases
+          example: 50
+        revenue:
+          type: number
+          format: float
+          description: Total revenue generated
+          example: 249.50
+        conversionRate:
+          type: number
+          format: float
+          description: Conversion rate (0-1)
+          example: 0.05
+        averageOrderValue:
+          type: number
+          format: float
+          example: 4.99
+        revenuePerView:
+          type: number
+          format: float
+          example: 0.2495
+
+    ExperimentResults:
+      type: object
+      required:
+        - experimentId
+        - variants
+        - summary
+      properties:
+        experimentId:
+          type: string
+        variants:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/VariantMetrics'
+        summary:
+          type: object
+          properties:
+            totalViews:
+              type: integer
+            totalConversions:
+              type: integer
+            totalRevenue:
+              type: number
+              format: float
+            winningVariant:
+              type: string
+              description: ID of the winning variant (if determined)
+            statisticalSignificance:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Statistical significance level (0-1)
+
+    # ============ Recommendation Schemas ============
+    BusinessGoals:
+      type: object
+      properties:
+        objective:
+          type: string
+          enum: [revenue, conversion, profit, market_share]
+          default: revenue
+          description: Primary business objective
+        minPrice:
+          type: number
+          format: float
+          minimum: 0
+          description: Minimum acceptable price
+        maxPrice:
+          type: number
+          format: float
+          minimum: 0
+          description: Maximum acceptable price
+        targetMargin:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Target profit margin (0-1)
+        competitorPrices:
+          type: array
+          items:
+            type: number
+            format: float
+          description: List of competitor prices for reference
+
+    PricingRecommendation:
+      type: object
+      required:
+        - currentPrice
+        - recommendedPrice
+        - confidence
+        - reasoning
+        - expectedImpact
+        - nextSteps
+      properties:
+        currentPrice:
+          type: number
+          format: float
+          description: Current price point
+          example: 4.99
+        recommendedPrice:
+          type: number
+          format: float
+          description: AI-recommended optimal price
+          example: 5.49
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Confidence level (0-100)
+          example: 85
+        reasoning:
+          type: array
+          items:
+            type: string
+          description: Explanations for the recommendation
+          example:
+            - "Higher price shows 12% better revenue with minimal conversion impact"
+            - "Price point $5.49 aligns with psychological pricing principles"
+        expectedImpact:
+          type: object
+          required:
+            - revenueChange
+            - conversionChange
+            - elasticity
+          properties:
+            revenueChange:
+              type: number
+              format: float
+              description: Expected revenue change percentage
+              example: 12.5
+            conversionChange:
+              type: number
+              format: float
+              description: Expected conversion rate change percentage
+              example: -3.2
+            elasticity:
+              type: number
+              format: float
+              description: Calculated price elasticity
+              example: -0.64
+        nextSteps:
+          type: array
+          items:
+            type: string
+          description: Recommended follow-up actions
+          example:
+            - "Run a follow-up experiment with $5.29 and $5.69 variants"
+            - "Monitor customer feedback for 2 weeks"
+
+    AnalyzeRequest:
+      type: object
+      properties:
+        experimentId:
+          type: string
+          description: Experiment ID to analyze (if available)
+        currentPrice:
+          type: number
+          format: float
+          minimum: 0
+          description: Current price for quick analysis
+        proposedPrice:
+          type: number
+          format: float
+          minimum: 0
+          description: Proposed new price
+        estimatedElasticity:
+          type: number
+          format: float
+          description: Estimated price elasticity (default -1.5)
+        businessGoals:
+          $ref: '#/components/schemas/BusinessGoals'
+
+    SimulateRequest:
+      type: object
+      required:
+        - currentPrice
+        - newPrice
+      properties:
+        currentPrice:
+          type: number
+          format: float
+          minimum: 0
+        newPrice:
+          type: number
+          format: float
+          minimum: 0
+        currentConversions:
+          type: integer
+          minimum: 0
+          default: 100
+        currentViews:
+          type: integer
+          minimum: 0
+          default: 1000
+        estimatedElasticity:
+          type: number
+          format: float
+          default: -1.5
+
+    SimulationResult:
+      type: object
+      properties:
+        currentPrice:
+          type: number
+          format: float
+        newPrice:
+          type: number
+          format: float
+        priceChangePercent:
+          type: number
+          format: float
+        estimatedElasticity:
+          type: number
+          format: float
+        simulation:
+          type: object
+          properties:
+            currentRevenue:
+              type: number
+              format: float
+            expectedNewRevenue:
+              type: number
+              format: float
+            revenueChangePercent:
+              type: number
+              format: float
+            currentConversions:
+              type: number
+            expectedNewConversions:
+              type: number
+            conversionChangePercent:
+              type: number
+              format: float
+            currentConversionRate:
+              type: number
+              format: float
+            expectedNewConversionRate:
+              type: number
+              format: float
+        recommendation:
+          type: string
+          enum: [proceed, reconsider]
+
+    # ============ Analytics Schemas ============
+    DashboardData:
+      type: object
+      properties:
+        activeExperiments:
+          type: integer
+        completedExperiments:
+          type: integer
+        totalRevenue:
+          type: number
+          format: float
+        avgConversionRate:
+          type: number
+          format: float
+        revenueImpact:
+          type: number
+          format: float
+        topPerformingExperiment:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            revenueImpact:
+              type: number
+              format: float
+        recentExperiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Experiment'
+
+    ElasticityAnalysis:
+      type: object
+      required:
+        - elasticity
+        - interpretation
+        - confidenceInterval
+        - sampleSize
+      properties:
+        elasticity:
+          type: number
+          format: float
+          description: Calculated price elasticity of demand
+          example: -1.2
+        interpretation:
+          type: string
+          enum: [elastic, inelastic, unit_elastic]
+          description: Economic interpretation
+        confidenceInterval:
+          type: object
+          properties:
+            lower:
+              type: number
+              format: float
+            upper:
+              type: number
+              format: float
+        sampleSize:
+          type: integer
+          description: Number of data points used
+
+    ExperimentAnalytics:
+      type: object
+      properties:
+        experimentId:
+          type: string
+        results:
+          $ref: '#/components/schemas/ExperimentResults'
+        elasticity:
+          $ref: '#/components/schemas/ElasticityAnalysis'
+        recommendation:
+          $ref: '#/components/schemas/PricingRecommendation'
+        insights:
+          type: array
+          items:
+            type: string
+          description: Key insights from the experiment
+
+    ExperimentComparison:
+      type: object
+      properties:
+        experiments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              conversionRate:
+                type: number
+                format: float
+              revenuePerView:
+                type: number
+                format: float
+              bestVariant:
+                type: string
+        bestOverall:
+          type: string
+          description: ID of the best performing experiment
+        insights:
+          type: array
+          items:
+            type: string
+
+    TimeSeriesData:
+      type: object
+      properties:
+        experimentId:
+          type: string
+        granularity:
+          type: string
+          enum: [hour, day, week]
+        dataPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              views:
+                type: integer
+              conversions:
+                type: integer
+              revenue:
+                type: number
+                format: float
+
+    # ============ Settings Schemas ============
+    IntegrationConfig:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TenantMode'
+        provider:
+          $ref: '#/components/schemas/ProviderType'
+        webhookUrl:
+          type: string
+          format: uri
+          nullable: true
+        apiKey:
+          type: string
+          nullable: true
+          description: Masked API key (for display)
+        baseUrl:
+          type: string
+          format: uri
+          nullable: true
+        effectiveMode:
+          $ref: '#/components/schemas/TenantMode'
+
+    UpdateIntegrationRequest:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TenantMode'
+        apiKey:
+          type: string
+          description: API key (required for BYOK mode)
+        baseUrl:
+          type: string
+          format: uri
+          description: Custom API base URL
+        provider:
+          $ref: '#/components/schemas/ProviderType'
+        webhookUrl:
+          type: string
+          format: uri
+
+    ValidateKeyRequest:
+      type: object
+      required:
+        - apiKey
+      properties:
+        apiKey:
+          type: string
+          description: API key to validate
+        baseUrl:
+          type: string
+          format: uri
+          description: Custom API base URL
+
+    ValidateKeyResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+
+    UsageSummary:
+      type: object
+      properties:
+        plan:
+          $ref: '#/components/schemas/PlanType'
+        currentUsage:
+          type: integer
+        usageLimit:
+          type: integer
+        percentUsed:
+          type: number
+          format: float
+        approaching:
+          type: boolean
+          description: True if approaching usage limit
+        summary:
+          type: object
+          properties:
+            signals:
+              type: integer
+            apiCalls:
+              type: integer
+            totalUsage:
+              type: integer
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              usage:
+                type: integer
+
+    BillingInfo:
+      type: object
+      properties:
+        currentPlan:
+          $ref: '#/components/schemas/PlanType'
+        billingPeriod:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        currentBill:
+          type: object
+          properties:
+            baseCost:
+              type: number
+              format: float
+            overageCharges:
+              type: number
+              format: float
+            totalAmount:
+              type: number
+              format: float
+            lineItems:
+              type: array
+              items:
+                type: object
+                properties:
+                  description:
+                    type: string
+                  amount:
+                    type: number
+                    format: float
+        availablePlans:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                $ref: '#/components/schemas/PlanType'
+              monthlyPrice:
+                type: number
+                format: float
+              includedUsage:
+                type: integer
+              overageRate:
+                type: number
+                format: float
+
+    EstimateCostRequest:
+      type: object
+      required:
+        - projectedUsage
+      properties:
+        projectedUsage:
+          type: integer
+          minimum: 0
+        plan:
+          $ref: '#/components/schemas/PlanType'
+
+    PlanUpgradeCheck:
+      type: object
+      properties:
+        targetPlan:
+          $ref: '#/components/schemas/PlanType'
+        allowed:
+          type: boolean
+        reason:
+          type: string
+        proratedAmount:
+          type: number
+          format: float
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ============ Experiments ============
+  /experiments:
+    post:
+      tags: [Experiments]
+      summary: Create a new pricing experiment
+      description: Create a new A/B pricing experiment with variants
+      operationId: createExperiment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExperimentRequest'
+            example:
+              name: "Latte Pricing Test"
+              description: "Testing $4.99 vs $5.49 for lattes"
+              variants:
+                - name: "control"
+                  price: 4.99
+                  weight: 50
+                - name: "experiment"
+                  price: 5.49
+                  weight: 50
+      responses:
+        '201':
+          description: Experiment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags: [Experiments]
+      summary: List all experiments
+      description: Get a list of all experiments for the authenticated tenant
+      operationId: listExperiments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ExperimentStatus'
+          description: Filter by experiment status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of experiments to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Offset for pagination
+      responses:
+        '200':
+          description: List of experiments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experiments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experiment'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /experiments/{id}:
+    get:
+      tags: [Experiments]
+      summary: Get experiment details
+      description: Get detailed information about a specific experiment
+      operationId: getExperiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Experiment ID
+      responses:
+        '200':
+          description: Experiment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags: [Experiments]
+      summary: Update experiment
+      description: Update experiment properties
+      operationId: updateExperiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExperimentRequest'
+      responses:
+        '200':
+          description: Experiment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags: [Experiments]
+      summary: Delete experiment
+      description: Delete an experiment (must be in draft or completed status)
+      operationId: deleteExperiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Experiment deleted
+        '400':
+          description: Cannot delete active experiment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /experiments/{id}/variants:
+    post:
+      tags: [Experiments]
+      summary: Add variant to experiment
+      description: Add a new pricing variant to an existing experiment
+      operationId: addVariant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddVariantRequest'
+      responses:
+        '201':
+          description: Variant added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentVariant'
+        '400':
+          description: Validation error or experiment is active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /experiments/{id}/activate:
+    post:
+      tags: [Experiments]
+      summary: Activate experiment
+      description: Start running an experiment
+      operationId: activateExperiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Experiment activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '400':
+          description: Cannot activate (already active or no variants)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /experiments/{id}/stop:
+    post:
+      tags: [Experiments]
+      summary: Stop experiment
+      description: Stop a running experiment
+      operationId: stopExperiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Experiment stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '400':
+          description: Experiment not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /experiments/{id}/results:
+    get:
+      tags: [Experiments]
+      summary: Get experiment results
+      description: Get metrics and results for an experiment
+      operationId: getExperimentResults
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Experiment results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResults'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============ Recommendations ============
+  /recommendations/analyze:
+    post:
+      tags: [Recommendations]
+      summary: Analyze pricing
+      description: Get pricing analysis and recommendations
+      operationId: analyzePricing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+      responses:
+        '200':
+          description: Pricing recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingRecommendation'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /recommendations/{experimentId}:
+    get:
+      tags: [Recommendations]
+      summary: Get recommendations for experiment
+      description: Get AI-powered pricing recommendations based on A/B test results
+      operationId: getRecommendations
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: objective
+          in: query
+          schema:
+            type: string
+            enum: [revenue, conversion, profit, market_share]
+            default: revenue
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: targetMargin
+          in: query
+          schema:
+            type: number
+            format: float
+      responses:
+        '200':
+          description: Pricing recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingRecommendation'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /recommendations/simulate:
+    post:
+      tags: [Recommendations]
+      summary: Simulate pricing change
+      description: Simulate the impact of a pricing change without real experiment data
+      operationId: simulatePricing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateRequest'
+      responses:
+        '200':
+          description: Simulation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============ Analytics ============
+  /analytics/dashboard:
+    get:
+      tags: [Analytics]
+      summary: Get dashboard data
+      description: Get overview dashboard data with key metrics
+      operationId: getDashboard
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+
+  /analytics/experiments/{id}:
+    get:
+      tags: [Analytics]
+      summary: Get experiment analytics
+      description: Get detailed analytics for a specific experiment
+      operationId: getExperimentAnalytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Experiment analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentAnalytics'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /analytics/elasticity:
+    get:
+      tags: [Analytics]
+      summary: Get elasticity analysis
+      description: Get price elasticity analysis for an experiment
+      operationId: getElasticityAnalysis
+      parameters:
+        - name: experimentId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Elasticity analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElasticityAnalysis'
+        '400':
+          description: Missing experimentId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /analytics/compare:
+    post:
+      tags: [Analytics]
+      summary: Compare experiments
+      description: Compare multiple experiments side by side
+      operationId: compareExperiments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - experimentIds
+              properties:
+                experimentIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 2
+                  maxItems: 10
+      responses:
+        '200':
+          description: Comparison results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentComparison'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /analytics/experiments/{id}/timeseries:
+    get:
+      tags: [Analytics]
+      summary: Get time series data
+      description: Get time series data for an experiment
+      operationId: getExperimentTimeSeries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week]
+            default: day
+      responses:
+        '200':
+          description: Time series data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSeriesData'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============ Settings ============
+  /settings/integration:
+    get:
+      tags: [Settings]
+      summary: Get integration config
+      description: Get current integration configuration (BYOK vs Managed)
+      operationId: getIntegrationConfig
+      responses:
+        '200':
+          description: Integration configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationConfig'
+
+    put:
+      tags: [Settings]
+      summary: Update integration config
+      description: Switch between BYOK and Managed mode
+      operationId: updateIntegrationConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIntegrationRequest'
+      responses:
+        '200':
+          description: Integration updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  mode:
+                    $ref: '#/components/schemas/TenantMode'
+                  provider:
+                    $ref: '#/components/schemas/ProviderType'
+        '400':
+          description: Validation error (e.g., missing API key for BYOK)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /settings/validate-key:
+    post:
+      tags: [Settings]
+      summary: Validate API key
+      description: Validate a customer's Paid.ai API key
+      operationId: validateApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateKeyRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateKeyResponse'
+        '400':
+          description: Missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /settings/usage:
+    get:
+      tags: [Settings]
+      summary: Get usage information
+      description: Get usage information and limits for the tenant
+      operationId: getUsage
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+          description: Number of days to include in usage summary
+      responses:
+        '200':
+          description: Usage information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageSummary'
+
+  /settings/billing:
+    get:
+      tags: [Settings]
+      summary: Get billing information
+      description: Get current billing information and available plans
+      operationId: getBilling
+      responses:
+        '200':
+          description: Billing information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingInfo'
+
+  /settings/billing/estimate:
+    post:
+      tags: [Settings]
+      summary: Estimate costs
+      description: Estimate costs for a given usage level
+      operationId: estimateCosts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateCostRequest'
+      responses:
+        '200':
+          description: Cost estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    $ref: '#/components/schemas/PlanType'
+                  projectedUsage:
+                    type: integer
+                  baseCost:
+                    type: number
+                    format: float
+                  overageCharges:
+                    type: number
+                    format: float
+                  totalCost:
+                    type: number
+                    format: float
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /settings/billing/upgrade:
+    post:
+      tags: [Settings]
+      summary: Check upgrade eligibility
+      description: Check if upgrade to a plan is allowed
+      operationId: checkUpgrade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetPlan
+              properties:
+                targetPlan:
+                  $ref: '#/components/schemas/PlanType'
+      responses:
+        '200':
+          description: Upgrade check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanUpgradeCheck'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /settings/billing/downgrade:
+    post:
+      tags: [Settings]
+      summary: Check downgrade eligibility
+      description: Check if downgrade to a plan is allowed
+      operationId: checkDowngrade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetPlan
+              properties:
+                targetPlan:
+                  $ref: '#/components/schemas/PlanType'
+      responses:
+        '200':
+          description: Downgrade check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanUpgradeCheck'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
