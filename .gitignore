@@ -53,3 +53,6 @@ yarn-error.log*
 out/
 *.tsbuildinfo
 next-env.d.ts
+
+# TypeScript build output
+dist/
