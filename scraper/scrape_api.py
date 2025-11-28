@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 
 # Optional import for Parse.bot client (only needed for parsebot method)
 try:
-    from parsebot_client import ParseBotClient
+    from parsebot_client import ParseBotClient, format_parsebot_result
     PARSEBOT_AVAILABLE = True
 except ImportError:
     PARSEBOT_AVAILABLE = False
@@ -383,20 +383,7 @@ def scrape_with_parsebot(url: str, api_key: Optional[str] = None) -> Dict[str, A
     client = ParseBotClient(api_key=api_key)
     result = client.scrape_api_documentation(url)
     
-    # Structure the result to match the expected format
-    scraped_data = {
-        "base_url": url,
-        "endpoints": result.get("endpoints", []),
-        "sections": result.get("sections", []),
-        "authentication": result.get("authentication", {}),
-        "metadata": result.get("metadata", {}),
-        "scraped_with": "parse.bot",
-    }
-    
-    if "examples" in result:
-        scraped_data["examples"] = result["examples"]
-    
-    return scraped_data
+    return format_parsebot_result(result, url)
 
 
 def main():

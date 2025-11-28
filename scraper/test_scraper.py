@@ -239,7 +239,7 @@ def test_parsebot_client_initialization():
         # Should raise ValueError without API key
         from parsebot_client import ParseBotClient
         try:
-            client = ParseBotClient()
+            ParseBotClient()
             assert False, "Should raise ValueError without API key"
         except ValueError as e:
             assert "API key is required" in str(e)
@@ -283,6 +283,59 @@ def test_parsebot_client_headers():
     print("\n✓ ParseBotClient headers test passed!")
 
 
+def test_format_parsebot_result():
+    """Test the format_parsebot_result helper function."""
+    print("\nTesting format_parsebot_result...")
+    
+    from parsebot_client import format_parsebot_result
+    
+    # Test with complete result
+    result = {
+        "endpoints": [{"method": "GET", "path": "/api/test"}],
+        "sections": [{"title": "Test Section"}],
+        "authentication": {"type": "bearer"},
+        "metadata": {"version": "1.0"},
+        "examples": [{"code": "curl example"}],
+    }
+    
+    formatted = format_parsebot_result(result, "https://example.com/api")
+    
+    assert formatted["base_url"] == "https://example.com/api"
+    assert formatted["scraped_with"] == "parse.bot"
+    assert formatted["endpoints"] == result["endpoints"]
+    assert formatted["sections"] == result["sections"]
+    assert formatted["authentication"] == result["authentication"]
+    assert formatted["metadata"] == result["metadata"]
+    assert formatted["examples"] == result["examples"]
+    print("✓ Complete result formatted correctly")
+    
+    # Test with minimal result
+    minimal_result = {}
+    formatted_minimal = format_parsebot_result(minimal_result, "https://example.com")
+    
+    assert formatted_minimal["endpoints"] == []
+    assert formatted_minimal["sections"] == []
+    assert formatted_minimal["authentication"] == {}
+    assert formatted_minimal["metadata"] == {}
+    assert "examples" not in formatted_minimal
+    print("✓ Minimal result handled correctly")
+    
+    print("\n✓ format_parsebot_result test passed!")
+
+
+def test_parsebot_scrape_path():
+    """Test that ParseBotClient uses correct API path."""
+    print("\nTesting ParseBotClient API path...")
+    
+    from parsebot_client import ParseBotClient
+    
+    assert ParseBotClient.SCRAPE_PATH == "/v1/scrape"
+    assert ParseBotClient.BASE_URL == "https://api.parse.bot"
+    
+    print("✓ API path configuration is correct")
+    print("\n✓ ParseBotClient API path test passed!")
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -296,6 +349,8 @@ def main():
         test_json_serialization()
         test_parsebot_client_initialization()
         test_parsebot_client_headers()
+        test_format_parsebot_result()
+        test_parsebot_scrape_path()
         
         print("\n" + "=" * 60)
         print("✓ ALL TESTS PASSED!")

@@ -41,13 +41,42 @@ Return the data in a structured JSON format with:
 - metadata: general API information
 """
 
+# HTTP status codes that are safe to retry
+RETRYABLE_STATUS_CODES = {500, 502, 503, 504, 429}
+
+
+def format_parsebot_result(result: Dict[str, Any], url: str) -> Dict[str, Any]:
+    """
+    Format Parse.bot API result into standardized structure.
+    
+    Args:
+        result: Raw result from Parse.bot API
+        url: Source URL that was scraped
+        
+    Returns:
+        Dictionary with standardized structure
+    """
+    scraped_data = {
+        "base_url": url,
+        "endpoints": result.get("endpoints", []),
+        "sections": result.get("sections", []),
+        "authentication": result.get("authentication", {}),
+        "metadata": result.get("metadata", {}),
+        "scraped_with": "parse.bot",
+    }
+    
+    if "examples" in result:
+        scraped_data["examples"] = result["examples"]
+    
+    return scraped_data
+
 
 class ParseBotClient:
     """Client for Parse.bot AI-powered web scraping API."""
 
-    # API endpoints
+    # API configuration
     BASE_URL = "https://api.parse.bot"
-    SCRAPE_ENDPOINT = "/v1/scrape"
+    SCRAPE_PATH = "/v1/scrape"
 
     # Request configuration
     REQUEST_TIMEOUT = 120  # Extended timeout for AI processing
@@ -94,8 +123,7 @@ class ParseBotClient:
             Dictionary containing the extracted data
 
         Raises:
-            requests.RequestException: If the API request fails
-            ValueError: If the response is invalid
+            requests.RequestException: If the API request fails after retries
         """
         payload = {
             "url": url,
@@ -109,27 +137,54 @@ class ParseBotClient:
         for attempt in range(self.MAX_RETRIES):
             try:
                 response = self.session.post(
-                    f"{self.BASE_URL}{self.SCRAPE_ENDPOINT}",
+                    f"{self.BASE_URL}{self.SCRAPE_PATH}",
                     json=payload,
                     timeout=self.REQUEST_TIMEOUT,
                 )
                 response.raise_for_status()
 
-                result = response.json()
+                try:
+                    result = response.json()
+                except (json.JSONDecodeError, ValueError) as e:
+                    last_error = "Invalid JSON response"
+                    print(
+                        f"Attempt {attempt + 1}/{self.MAX_RETRIES}: "
+                        "JSON decode error, retrying...",
+                        file=sys.stderr,
+                    )
+                    if attempt < self.MAX_RETRIES - 1:
+                        time.sleep(self.RETRY_DELAY * (attempt + 1))
+                    continue
+
                 return result
 
             except requests.exceptions.Timeout:
                 last_error = "Request timed out"
                 print(
                     f"Attempt {attempt + 1}/{self.MAX_RETRIES}: "
-                    f"Timeout, retrying...",
+                    "Timeout, retrying...",
                     file=sys.stderr,
                 )
-            except requests.exceptions.RequestException as e:
-                last_error = str(e)
+            except requests.exceptions.HTTPError as e:
+                status_code = e.response.status_code if e.response else 0
+                # Only retry on server errors, not client errors
+                if status_code in RETRYABLE_STATUS_CODES:
+                    last_error = f"Server error ({status_code})"
+                    print(
+                        f"Attempt {attempt + 1}/{self.MAX_RETRIES}: "
+                        f"Server error ({status_code}), retrying...",
+                        file=sys.stderr,
+                    )
+                else:
+                    # Don't retry client errors (4xx except 429)
+                    raise requests.exceptions.RequestException(
+                        f"API request failed with status {status_code}"
+                    )
+            except requests.exceptions.RequestException:
+                last_error = "Request failed"
                 print(
                     f"Attempt {attempt + 1}/{self.MAX_RETRIES}: "
-                    f"Request failed: {e}",
+                    "Request failed. (Details omitted for security)",
                     file=sys.stderr,
                 )
 
@@ -193,11 +248,11 @@ class ParseBotClient:
                 result = self.scrape(url, query)
                 result["source_url"] = url
                 results.append(result)
-            except Exception as e:
-                print(f"Error scraping {url}: {e}", file=sys.stderr)
+            except (requests.exceptions.RequestException, ValueError) as e:
+                print(f"Error scraping {url}: {type(e).__name__}", file=sys.stderr)
                 results.append({
                     "source_url": url,
-                    "error": str(e),
+                    "error": type(e).__name__,
                 })
 
             if i < len(urls) - 1 and delay_between_requests > 0:
@@ -225,24 +280,10 @@ def scrape_paid_ai_docs(api_key: Optional[str] = None) -> Dict[str, Any]:
 
     try:
         result = client.scrape_api_documentation(base_url)
+        return format_parsebot_result(result, base_url)
 
-        # Structure the result to match the expected format
-        scraped_data = {
-            "base_url": base_url,
-            "endpoints": result.get("endpoints", []),
-            "sections": result.get("sections", []),
-            "authentication": result.get("authentication", {}),
-            "metadata": result.get("metadata", {}),
-            "scraped_with": "parse.bot",
-        }
-
-        if "examples" in result:
-            scraped_data["examples"] = result["examples"]
-
-        return scraped_data
-
-    except Exception as e:
-        print(f"Error scraping with Parse.bot: {e}", file=sys.stderr)
+    except (requests.exceptions.RequestException, ValueError) as e:
+        print(f"Error scraping with Parse.bot: {type(e).__name__}", file=sys.stderr)
         raise
 
 
