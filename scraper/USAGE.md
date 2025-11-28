@@ -1,6 +1,14 @@
 # API Scraper Usage Examples
 
+## Scraping Methods
+
+The scraper supports two methods:
+1. **HTML parsing** (default) - Uses BeautifulSoup to parse HTML directly
+2. **Parse.bot AI** - Uses Parse.bot's AI-powered extraction (requires API key)
+
 ## Basic Usage
+
+### HTML Parsing Method (Default)
 
 Scrape the default Paid.ai API documentation:
 ```bash
@@ -9,6 +17,25 @@ python scrape_api.py
 
 This will create `paid_api_docs.json` in the current directory.
 
+### Parse.bot AI Method
+
+Use Parse.bot's AI-powered extraction for more accurate results:
+
+```bash
+# Set your API key
+export PARSE_BOT_API_KEY="your-api-key-here"
+
+# Run with Parse.bot method
+python scrape_api.py --method parsebot
+```
+
+Or use the dedicated Parse.bot client:
+
+```bash
+export PARSE_BOT_API_KEY="your-api-key-here"
+python parsebot_client.py --url https://docs.paid.ai/api-reference/
+```
+
 ## Advanced Usage
 
 ### Custom output file
@@ -16,9 +43,9 @@ This will create `paid_api_docs.json` in the current directory.
 python scrape_api.py --output my_api_docs.json
 ```
 
-### Limit number of sub-pages
+### Using Parse.bot with inline API key
 ```bash
-python scrape_api.py --max-subpages 5
+python scrape_api.py --method parsebot --api-key "your-api-key-here"
 ```
 
 ### Enable verbose output
@@ -36,13 +63,26 @@ python scrape_api.py --url https://docs.example.com/api/
 python scrape_api.py \
   --url https://docs.paid.ai/api-reference/ \
   --output paid_api_complete.json \
-  --max-subpages 20 \
+  --method parsebot \
   --verbose
+```
+
+### Parse.bot with Custom Query
+
+Use the Parse.bot client directly with a custom extraction query:
+
+```bash
+python parsebot_client.py \
+  --url https://example.com/docs \
+  --query "Extract all API endpoints with their methods, paths, and descriptions" \
+  --output custom_docs.json
 ```
 
 ## Output Format
 
-The scraper generates a JSON file with the following structure:
+### HTML Method Output
+
+The HTML scraper generates a JSON file with the following structure:
 
 ```json
 {
@@ -79,11 +119,44 @@ The scraper generates a JSON file with the following structure:
 }
 ```
 
+### Parse.bot Method Output
+
+When using the Parse.bot method, the output includes additional AI-extracted fields:
+
+```json
+{
+  "base_url": "https://docs.paid.ai/api-reference/",
+  "endpoints": [...],
+  "sections": [...],
+  "authentication": {
+    "type": "Bearer Token",
+    "description": "All API requests require a Bearer token..."
+  },
+  "metadata": {
+    "api_version": "v1",
+    "base_url": "https://api.agentpaid.io/api/v1"
+  },
+  "examples": [...],
+  "scraped_with": "parse.bot"
+}
+```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PARSE_BOT_API_KEY` | API key for Parse.bot service (required for `--method parsebot`) |
+
 ## Testing
 
 Run the test suite to verify the scraper functionality:
 ```bash
 python test_scraper.py
+```
+
+Or use pytest:
+```bash
+pytest test_scraper.py -v
 ```
 
 The test suite uses sample HTML to demonstrate:

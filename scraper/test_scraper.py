@@ -223,6 +223,66 @@ def test_parameter_extraction():
         print("⚠ No table found in sample HTML")
 
 
+def test_parsebot_client_initialization():
+    """Test ParseBotClient initialization and validation."""
+    print("\nTesting ParseBotClient initialization...")
+    
+    # Test that client requires API key
+    import os
+    original_key = os.environ.get('PARSE_BOT_API_KEY')
+    
+    try:
+        # Remove env var if present
+        if 'PARSE_BOT_API_KEY' in os.environ:
+            del os.environ['PARSE_BOT_API_KEY']
+        
+        # Should raise ValueError without API key
+        from parsebot_client import ParseBotClient
+        try:
+            client = ParseBotClient()
+            assert False, "Should raise ValueError without API key"
+        except ValueError as e:
+            assert "API key is required" in str(e)
+            print("✓ Correctly raises ValueError without API key")
+        
+        # Should accept API key as parameter
+        client = ParseBotClient(api_key="test-api-key")
+        assert client.api_key == "test-api-key"
+        print("✓ Accepts API key as parameter")
+        
+        # Should read from environment variable
+        os.environ['PARSE_BOT_API_KEY'] = "env-api-key"
+        client = ParseBotClient()
+        assert client.api_key == "env-api-key"
+        print("✓ Reads API key from environment variable")
+        
+    finally:
+        # Restore original env var
+        if original_key:
+            os.environ['PARSE_BOT_API_KEY'] = original_key
+        elif 'PARSE_BOT_API_KEY' in os.environ:
+            del os.environ['PARSE_BOT_API_KEY']
+    
+    print("\n✓ ParseBotClient initialization test passed!")
+
+
+def test_parsebot_client_headers():
+    """Test that ParseBotClient sets correct headers."""
+    print("\nTesting ParseBotClient headers...")
+    
+    from parsebot_client import ParseBotClient
+    client = ParseBotClient(api_key="test-key")
+    
+    headers = client.session.headers
+    assert "Authorization" in headers
+    assert headers["Authorization"] == "Bearer test-key"
+    assert headers["Content-Type"] == "application/json"
+    assert headers["Accept"] == "application/json"
+    
+    print("✓ Headers are correctly set")
+    print("\n✓ ParseBotClient headers test passed!")
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -234,6 +294,8 @@ def main():
         test_section_extraction()
         test_parameter_extraction()
         test_json_serialization()
+        test_parsebot_client_initialization()
+        test_parsebot_client_headers()
         
         print("\n" + "=" * 60)
         print("✓ ALL TESTS PASSED!")
@@ -241,6 +303,9 @@ def main():
         print("\nThe scraper is working correctly with sample data.")
         print("When network access to docs.paid.ai is available, it will")
         print("scrape the actual API documentation.")
+        print("\nTo use Parse.bot AI-powered scraping:")
+        print("  export PARSE_BOT_API_KEY='your-api-key'")
+        print("  python scrape_api.py --method parsebot")
         
         return 0
         
