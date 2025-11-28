@@ -81,8 +81,25 @@ function applyDefaultRateLimit(req: Request, res: Response, next: NextFunction):
   const now = Date.now();
   const windowMs = 60000;
 
-  // Use IP address as key
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  // Use IP address as key, with fallback to header-based identification
+  let ip = req.ip || req.socket.remoteAddress;
+  
+  // Check for X-Forwarded-For header (behind proxy)
+  if (!ip) {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (typeof forwardedFor === 'string') {
+      ip = forwardedFor.split(',')[0].trim();
+    }
+  }
+  
+  // If still no IP, reject the request
+  if (!ip) {
+    res.status(400).json({
+      error: 'Unable to identify request source for rate limiting',
+    });
+    return;
+  }
+  
   const key = `rate:ip:${ip}`;
   let record = rateLimitStore.get(key);
 

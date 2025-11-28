@@ -10,17 +10,33 @@ import { TenantConfig, ValidationError } from '../core/types';
 import { getTenant, updateTenant } from './tenant-manager';
 
 // Encryption configuration
-// In production, this should come from environment variables
 const ALGORITHM = 'aes-256-gcm';
-const ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_KEY || 
-  'default-dev-key-32-bytes-long!!'; // 32 bytes for AES-256
+
+/**
+ * Get encryption key from environment
+ * In production, this MUST be set via API_KEY_ENCRYPTION_KEY env variable
+ */
+function getEncryptionKey(): string {
+  const key = process.env.API_KEY_ENCRYPTION_KEY;
+  
+  if (!key && process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'API_KEY_ENCRYPTION_KEY must be set in production. ' +
+      'Generate a 32-character random string for this value.'
+    );
+  }
+  
+  // Use default only for development/testing
+  return key || 'default-dev-key-32-bytes-long!!';
+}
 
 /**
  * Encrypt a string value
  */
 function encrypt(text: string): string {
   const iv = randomBytes(16);
-  const key = Buffer.from(ENCRYPTION_KEY.padEnd(32).slice(0, 32));
+  const encryptionKey = getEncryptionKey();
+  const key = Buffer.from(encryptionKey.padEnd(32).slice(0, 32));
   const cipher = createCipheriv(ALGORITHM, key, iv);
   
   let encrypted = cipher.update(text, 'utf8', 'hex');
@@ -44,7 +60,8 @@ function decrypt(encryptedData: string): string {
   const iv = Buffer.from(parts[0], 'hex');
   const authTag = Buffer.from(parts[1], 'hex');
   const encrypted = parts[2];
-  const key = Buffer.from(ENCRYPTION_KEY.padEnd(32).slice(0, 32));
+  const encryptionKey = getEncryptionKey();
+  const key = Buffer.from(encryptionKey.padEnd(32).slice(0, 32));
 
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(authTag);

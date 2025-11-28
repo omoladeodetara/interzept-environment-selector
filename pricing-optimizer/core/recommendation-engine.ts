@@ -326,6 +326,16 @@ function calculateConfidence(
 
 /**
  * Quick analysis for a single price point comparison
+ * 
+ * @param currentPrice - Current price point
+ * @param proposedPrice - Proposed new price
+ * @param estimatedElasticity - Price elasticity estimate
+ *   Default: -1.5 (moderately elastic demand)
+ *   Typical ranges:
+ *   - -0.5 to -0.9: Inelastic (luxury goods, necessities)
+ *   - -1.0 to -1.5: Unit to moderately elastic (most consumer goods)
+ *   - -2.0+: Highly elastic (commodities, price-sensitive markets)
+ *   Source: Economic pricing theory, typical SaaS/consumer goods elasticity
  */
 export function quickAnalysis(
   currentPrice: number,
