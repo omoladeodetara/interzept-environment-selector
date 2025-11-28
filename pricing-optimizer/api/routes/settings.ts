@@ -117,7 +117,33 @@ router.post('/validate-key', async (req: Request, res: Response) => {
       throw new ValidationError('API key is required');
     }
 
+    // SSRF protection: Only allow requests to approved domains
+    const ALLOWED_DOMAINS = ['api.paid.ai', 'sandbox.paid.ai', 'staging.paid.ai'];
     const url = baseUrl || 'https://api.paid.ai/v1';
+    
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      
+      // Check if hostname matches allowed domains
+      const isAllowed = ALLOWED_DOMAINS.some(domain => 
+        hostname === domain || hostname.endsWith('.' + domain)
+      );
+      
+      if (!isAllowed) {
+        throw new ValidationError(
+          `Invalid base URL. Only the following domains are allowed: ${ALLOWED_DOMAINS.join(', ')}`
+        );
+      }
+      
+      // Enforce HTTPS
+      if (urlObj.protocol !== 'https:') {
+        throw new ValidationError('Base URL must use HTTPS');
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) throw error;
+      throw new ValidationError('Invalid base URL format');
+    }
 
     try {
       // Try to call the health endpoint with the provided key

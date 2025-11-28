@@ -162,9 +162,24 @@ export function applyPsychologicalPricing(price: number): number {
     return price;
   }
 
-  if (price < 10) {
-    // For low prices, use .99
-    return Math.floor(price) + 0.99;
+  // Handle sub-dollar prices (under $1.00)
+  // Keep them close to original to avoid dramatic price changes
+  if (price < 1) {
+    // Round to nearest 0.09 or 0.19, 0.29, etc.
+    const cents = Math.round(price * 100);
+    const base = Math.floor(cents / 10) * 10;
+    // Use .09 ending for sub-dollar prices
+    return Math.max(0.09, (base + 9) / 100);
+  } else if (price < 10) {
+    // For prices $1-$10, use .99 but ensure we don't increase price dramatically
+    // If the price is already close to an integer, use that integer - 0.01
+    const floor = Math.floor(price);
+    // Only apply .99 if it doesn't increase price by more than 50%
+    if (floor + 0.99 <= price * 1.5) {
+      return floor + 0.99;
+    }
+    // Otherwise, round down to nearest .49 or .99
+    return price < floor + 0.5 ? floor + 0.49 : floor + 0.99;
   } else if (price < 100) {
     // For medium prices, round to nearest .99
     return Math.round(price) - 0.01;

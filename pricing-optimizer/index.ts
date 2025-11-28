@@ -5,7 +5,6 @@
  * Provides a unified interface for both BYOK and Managed modes.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import {
   TenantMode,
   ProviderType,
@@ -59,7 +58,15 @@ export class PricingOptimizer {
       // Verify tenant exists
       getTenant(this.tenantId);
     } else {
-      const tenant = createTenant(config.tenantName || `tenant-${uuidv4().substring(0, 8)}`, {
+      // Require tenantName for new tenants to ensure identifiable names
+      if (!config.tenantName) {
+        throw new Error(
+          'tenantName is required when creating a new tenant. ' +
+          'Provide a descriptive name (e.g., company name, project name) for easier identification in logs and dashboards.'
+        );
+      }
+      
+      const tenant = createTenant(config.tenantName, {
         mode: config.mode,
         defaultProvider: config.provider?.type || 'paid-ai',
       });

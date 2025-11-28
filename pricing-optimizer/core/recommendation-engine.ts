@@ -328,13 +328,19 @@ function calculateConfidence(
  * 
  * @param currentPrice - Current price point
  * @param proposedPrice - Proposed new price
- * @param estimatedElasticity - Price elasticity estimate
- *   Default: -1.5 (moderately elastic demand)
- *   Typical ranges:
- *   - -0.5 to -0.9: Inelastic (luxury goods, necessities)
+ * @param estimatedElasticity - Price elasticity estimate (optional)
+ * 
+ * @warning Using the default elasticity value of -1.5 without real data from A/B tests
+ *          can lead to suboptimal pricing decisions. The default assumes moderately
+ *          elastic demand, which may not reflect your actual market conditions.
+ *          For best results, run an A/B test to measure your true price elasticity.
+ * 
+ * Default: -1.5 (moderately elastic demand)
+ * Typical ranges:
+ *   - -0.5 to -0.9: Inelastic (luxury goods, necessities, unique products)
  *   - -1.0 to -1.5: Unit to moderately elastic (most consumer goods)
  *   - -2.0+: Highly elastic (commodities, price-sensitive markets)
- *   Source: Economic pricing theory, typical SaaS/consumer goods elasticity
+ * Source: Economic pricing theory, typical SaaS/consumer goods elasticity
  */
 export function quickAnalysis(
   currentPrice: number,
@@ -345,7 +351,17 @@ export function quickAnalysis(
   expectedRevenueChange: number;
   recommendation: 'proceed' | 'caution' | 'reconsider';
   reason: string;
+  usingDefaultElasticity: boolean;
 } {
+  const usingDefaultElasticity = estimatedElasticity === -1.5;
+  
+  if (usingDefaultElasticity) {
+    console.warn(
+      '[RECOMMENDATION] Using default elasticity value (-1.5). ' +
+      'For more accurate recommendations, measure your actual price elasticity through A/B testing.'
+    );
+  }
+  
   const priceChange = (proposedPrice - currentPrice) / currentPrice;
   const conversionChange = priceChange * estimatedElasticity;
   const revenueChange = (1 + priceChange) * (1 + conversionChange) - 1;
@@ -364,10 +380,16 @@ export function quickAnalysis(
     reason = `Expected revenue decrease of ${(Math.abs(revenueChange) * 100).toFixed(1)}%`;
   }
 
+  // Add warning if using default elasticity
+  if (usingDefaultElasticity) {
+    reason += ' (Note: Using default elasticity - actual results may vary)';
+  }
+
   return {
     expectedConversionChange: conversionChange * 100,
     expectedRevenueChange: revenueChange * 100,
     recommendation,
     reason,
+    usingDefaultElasticity,
   };
 }

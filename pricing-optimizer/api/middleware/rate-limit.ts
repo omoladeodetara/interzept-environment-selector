@@ -20,6 +20,21 @@ const RATE_LIMITS: Record<PlanType, number> = {
 // In-memory rate limit tracking
 const rateLimitStore: Map<string, { count: number; resetTime: number }> = new Map();
 
+// IPv4 and IPv6 format validation
+const IPV4_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
+const IPV6_REGEX = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+
+/**
+ * Validate IP address format (basic check for IPv4/IPv6)
+ */
+function isValidIpFormat(ip: string): boolean {
+  // Handle IPv6-mapped IPv4 addresses (::ffff:192.168.1.1)
+  if (ip.startsWith('::ffff:')) {
+    ip = ip.substring(7);
+  }
+  return IPV4_REGEX.test(ip) || IPV6_REGEX.test(ip);
+}
+
 /**
  * Rate limiting middleware based on tenant plan
  */
@@ -81,18 +96,30 @@ function applyDefaultRateLimit(req: Request, res: Response, next: NextFunction):
   const now = Date.now();
   const windowMs = 60000;
 
-  // Use IP address as key, with fallback to header-based identification
+  // Use req.ip which respects Express's 'trust proxy' setting
+  // Note: Ensure app.set('trust proxy', 1) or similar is configured
+  // when running behind a reverse proxy (nginx, load balancer, etc.)
   let ip = req.ip || req.socket.remoteAddress;
   
-  // Check for X-Forwarded-For header (behind proxy)
+  // Fallback for edge cases, but log a warning
   if (!ip) {
+    console.warn(
+      '[RATE LIMIT] Could not determine client IP. ' +
+      'Ensure Express trust proxy is configured correctly.'
+    );
     const forwardedFor = req.headers['x-forwarded-for'];
     if (typeof forwardedFor === 'string') {
       ip = forwardedFor.split(',')[0].trim();
     }
   }
   
-  // If still no IP, reject the request
+  // Validate IP format (basic check for IPv4/IPv6)
+  if (ip && !isValidIpFormat(ip)) {
+    console.warn(`[RATE LIMIT] Invalid IP format detected: ${ip}`);
+    ip = undefined;
+  }
+  
+  // If still no valid IP, reject the request
   if (!ip) {
     res.status(400).json({
       error: 'Unable to identify request source for rate limiting',

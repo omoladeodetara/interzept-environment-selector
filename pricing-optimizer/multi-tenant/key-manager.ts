@@ -14,19 +14,30 @@ const ALGORITHM = 'aes-256-gcm';
 
 /**
  * Get encryption key from environment
- * In production, this MUST be set via API_KEY_ENCRYPTION_KEY env variable
+ * In production and staging, this MUST be set via API_KEY_ENCRYPTION_KEY env variable
  */
 function getEncryptionKey(): string {
   const key = process.env.API_KEY_ENCRYPTION_KEY;
+  const env = process.env.NODE_ENV || 'development';
   
-  if (!key && process.env.NODE_ENV === 'production') {
+  // Enforce encryption key in production and staging
+  if (!key && (env === 'production' || env === 'staging')) {
     throw new Error(
-      'API_KEY_ENCRYPTION_KEY must be set in production. ' +
+      'API_KEY_ENCRYPTION_KEY must be set in production and staging environments. ' +
       'Generate a 32-character random string for this value.'
     );
   }
   
-  // Use default only for development/testing
+  // Warn if using default key in any environment
+  if (!key) {
+    console.warn(
+      '[SECURITY WARNING] Using default encryption key. ' +
+      'This is only acceptable for local development. ' +
+      'Set API_KEY_ENCRYPTION_KEY environment variable for any shared environment.'
+    );
+  }
+  
+  // Use default only for local development/testing
   return key || 'default-dev-key-32-bytes-long!!';
 }
 
@@ -109,13 +120,39 @@ export function getApiKey(tenantId: string): { apiKey: string; baseUrl: string }
       apiKey: decryptedKey,
       baseUrl: tenant.paidApiBaseUrl || 'https://api.paid.ai/v1',
     };
-  } catch {
-    // If decryption fails, the key might not be encrypted (legacy data)
-    // In production, you'd want to handle this more carefully
-    return {
-      apiKey: tenant.paidApiKey,
-      baseUrl: tenant.paidApiBaseUrl || 'https://api.paid.ai/v1',
-    };
+  } catch (error) {
+    // Check if this looks like legacy unencrypted data (no colons = not encrypted format)
+    const isLegacyFormat = !tenant.paidApiKey.includes(':');
+    const env = process.env.NODE_ENV || 'development';
+    
+    if (isLegacyFormat) {
+      // Legacy unencrypted key - log warning and return as-is
+      console.warn(
+        `[SECURITY] Tenant ${tenantId} has unencrypted API key (legacy format). ` +
+        'Consider migrating to encrypted storage.'
+      );
+      
+      // In production, reject unencrypted keys
+      if (env === 'production') {
+        throw new Error(
+          'Unencrypted API keys are not allowed in production. ' +
+          'Please re-store the API key to encrypt it.'
+        );
+      }
+      
+      return {
+        apiKey: tenant.paidApiKey,
+        baseUrl: tenant.paidApiBaseUrl || 'https://api.paid.ai/v1',
+      };
+    }
+    
+    // Actual decryption failure - could indicate tampering or key rotation issue
+    console.error(
+      `[SECURITY] Decryption failed for tenant ${tenantId}. ` +
+      'This may indicate data corruption, tampering, or encryption key rotation. ' +
+      `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+    throw new Error('Failed to decrypt API key. Please contact support.');
   }
 }
 

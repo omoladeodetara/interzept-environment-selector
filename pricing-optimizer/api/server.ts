@@ -135,7 +135,17 @@ app.use((req, res) => {
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  // Sanitize error for logging - avoid exposing sensitive data
+  const sanitizedError = {
+    name: err.name,
+    message: err.message,
+    // Only include stack in development
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  };
+  
+  // Log sanitized error (avoid logging request body which may contain API keys)
+  console.error('Unhandled error:', sanitizedError);
+  
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined,
