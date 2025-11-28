@@ -21,6 +21,13 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+# Optional import for Parse.bot client (only needed for parsebot method)
+try:
+    from parsebot_client import ParseBotClient
+    PARSEBOT_AVAILABLE = True
+except ImportError:
+    PARSEBOT_AVAILABLE = False
+
 
 class PaidAPIDocScraper:
     """Scraper for Paid.ai API documentation."""
@@ -363,9 +370,15 @@ def scrape_with_parsebot(url: str, api_key: Optional[str] = None) -> Dict[str, A
         
     Returns:
         Dictionary containing scraped API documentation
+        
+    Raises:
+        ImportError: If parsebot_client module is not available
     """
-    # Import here to avoid circular imports and make Parse.bot optional
-    from parsebot_client import ParseBotClient
+    if not PARSEBOT_AVAILABLE:
+        raise ImportError(
+            "parsebot_client module not found. "
+            "Make sure parsebot_client.py is in the same directory."
+        )
     
     client = ParseBotClient(api_key=api_key)
     result = client.scrape_api_documentation(url)

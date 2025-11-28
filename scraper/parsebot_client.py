@@ -15,6 +15,33 @@ from typing import Any, Dict, List, Optional
 import requests
 
 
+# Query template for extracting API documentation
+API_DOCUMENTATION_QUERY = """
+Extract all API documentation from this page including:
+1. All API endpoints with their:
+   - HTTP method (GET, POST, PUT, DELETE, PATCH)
+   - Path/URL pattern
+   - Description
+   - Request parameters (name, type, required, description)
+   - Request body schema
+   - Response schema
+   - Response codes
+2. Authentication information
+3. Rate limiting information
+4. Any code examples
+5. API versioning information
+6. Base URL
+7. Section headers and navigation structure
+
+Return the data in a structured JSON format with:
+- endpoints: array of endpoint objects
+- authentication: authentication details
+- sections: documentation sections
+- examples: code examples (if available)
+- metadata: general API information
+"""
+
+
 class ParseBotClient:
     """Client for Parse.bot AI-powered web scraping API."""
 
@@ -131,30 +158,7 @@ class ParseBotClient:
         Returns:
             Dictionary containing structured API documentation
         """
-        query = """
-        Extract all API documentation from this page including:
-        1. All API endpoints with their:
-           - HTTP method (GET, POST, PUT, DELETE, PATCH)
-           - Path/URL pattern
-           - Description
-           - Request parameters (name, type, required, description)
-           - Request body schema
-           - Response schema
-           - Response codes
-        2. Authentication information
-        3. Rate limiting information
-        4. Any code examples
-        5. API versioning information
-        6. Base URL
-        7. Section headers and navigation structure
-
-        Return the data in a structured JSON format with:
-        - endpoints: array of endpoint objects
-        - authentication: authentication details
-        - sections: documentation sections
-        - examples: code examples (if available)
-        - metadata: general API information
-        """
+        query = API_DOCUMENTATION_QUERY
 
         if not include_examples:
             query = query.replace(
