@@ -274,8 +274,8 @@ def test_parsebot_client_headers():
     client = ParseBotClient(api_key="test-key")
     
     headers = client.session.headers
-    assert "Authorization" in headers
-    assert headers["Authorization"] == "Bearer test-key"
+    assert "X-API-Key" in headers
+    assert headers["X-API-Key"] == "test-key"
     assert headers["Content-Type"] == "application/json"
     assert headers["Accept"] == "application/json"
     
@@ -289,25 +289,29 @@ def test_format_parsebot_result():
     
     from parsebot_client import format_parsebot_result
     
-    # Test with complete result
-    result = {
-        "endpoints": [{"method": "GET", "path": "/api/test"}],
-        "sections": [{"title": "Test Section"}],
-        "authentication": {"type": "bearer"},
-        "metadata": {"version": "1.0"},
-        "examples": [{"code": "curl example"}],
+    # Test with 'apis' format (from extract_full_documentation)
+    result_with_apis = {
+        "apis": [
+            {
+                "name": "Get User Info",
+                "method": "GET",
+                "endpoint": "/user/info",
+                "description": "Retrieve user profile information",
+                "parameters": [{"name": "user_id", "type": "string", "required": True}],
+                "response_schema": {"type": "object"}
+            }
+        ]
     }
     
-    formatted = format_parsebot_result(result, "https://example.com/api")
+    formatted = format_parsebot_result(result_with_apis, "https://example.com/api")
     
     assert formatted["base_url"] == "https://example.com/api"
     assert formatted["scraped_with"] == "parse.bot"
-    assert formatted["endpoints"] == result["endpoints"]
-    assert formatted["sections"] == result["sections"]
-    assert formatted["authentication"] == result["authentication"]
-    assert formatted["metadata"] == result["metadata"]
-    assert formatted["examples"] == result["examples"]
-    print("✓ Complete result formatted correctly")
+    assert len(formatted["endpoints"]) == 1
+    assert formatted["endpoints"][0]["title"] == "Get User Info"
+    assert formatted["endpoints"][0]["method"] == "GET"
+    assert formatted["endpoints"][0]["path"] == "/user/info"
+    print("✓ APIs format converted correctly")
     
     # Test with minimal result
     minimal_result = {}
@@ -324,16 +328,24 @@ def test_format_parsebot_result():
 
 
 def test_parsebot_scrape_path():
-    """Test that ParseBotClient uses correct API path."""
-    print("\nTesting ParseBotClient API path...")
+    """Test that ParseBotClient uses correct API configuration."""
+    print("\nTesting ParseBotClient API configuration...")
     
-    from parsebot_client import ParseBotClient
+    from parsebot_client import ParseBotClient, DEFAULT_SCRAPER_ID
     
-    assert ParseBotClient.SCRAPE_PATH == "/v1/scrape"
     assert ParseBotClient.BASE_URL == "https://api.parse.bot"
+    assert DEFAULT_SCRAPER_ID == "5369961a-c9e0-4d5b-b711-756606e70e82"
     
-    print("✓ API path configuration is correct")
-    print("\n✓ ParseBotClient API path test passed!")
+    # Test that scraper_id is set correctly
+    client = ParseBotClient(api_key="test-key")
+    assert client.scraper_id == DEFAULT_SCRAPER_ID
+    
+    # Test custom scraper_id
+    client_custom = ParseBotClient(api_key="test-key", scraper_id="custom-id")
+    assert client_custom.scraper_id == "custom-id"
+    
+    print("✓ API configuration is correct")
+    print("\n✓ ParseBotClient API configuration test passed!")
 
 
 def main():

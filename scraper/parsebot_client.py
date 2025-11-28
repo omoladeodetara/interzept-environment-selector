@@ -15,31 +15,8 @@ from typing import Any, Dict, List, Optional
 import requests
 
 
-# Query template for extracting API documentation
-API_DOCUMENTATION_QUERY = """
-Extract all API documentation from this page including:
-1. All API endpoints with their:
-   - HTTP method (GET, POST, PUT, DELETE, PATCH)
-   - Path/URL pattern
-   - Description
-   - Request parameters (name, type, required, description)
-   - Request body schema
-   - Response schema
-   - Response codes
-2. Authentication information
-3. Rate limiting information
-4. Any code examples
-5. API versioning information
-6. Base URL
-7. Section headers and navigation structure
-
-Return the data in a structured JSON format with:
-- endpoints: array of endpoint objects
-- authentication: authentication details
-- sections: documentation sections
-- examples: code examples (if available)
-- metadata: general API information
-"""
+# Scraper ID for the documentation extraction scraper
+DEFAULT_SCRAPER_ID = "5369961a-c9e0-4d5b-b711-756606e70e82"
 
 # HTTP status codes that are safe to retry
 RETRYABLE_STATUS_CODES = {500, 502, 503, 504, 429}
@@ -56,9 +33,30 @@ def format_parsebot_result(result: Dict[str, Any], url: str) -> Dict[str, Any]:
     Returns:
         Dictionary with standardized structure
     """
+    # Handle the 'apis' format from extract_full_documentation
+    apis = result.get("apis", [])
+    
+    # Convert apis to endpoints format
+    endpoints = []
+    for api in apis:
+        endpoint = {
+            "title": api.get("name", ""),
+            "method": api.get("method", ""),
+            "path": api.get("endpoint", ""),
+            "description": api.get("description", ""),
+            "parameters": api.get("parameters", []),
+            "responses": [],
+            "response_schema": api.get("response_schema", {}),
+        }
+        endpoints.append(endpoint)
+    
+    # If no apis but endpoints exist directly
+    if not endpoints and "endpoints" in result:
+        endpoints = result.get("endpoints", [])
+    
     scraped_data = {
         "base_url": url,
-        "endpoints": result.get("endpoints", []),
+        "endpoints": endpoints,
         "sections": result.get("sections", []),
         "authentication": result.get("authentication", {}),
         "metadata": result.get("metadata", {}),
@@ -76,20 +74,21 @@ class ParseBotClient:
 
     # API configuration
     BASE_URL = "https://api.parse.bot"
-    SCRAPE_PATH = "/v1/scrape"
-
+    
     # Request configuration
     REQUEST_TIMEOUT = 120  # Extended timeout for AI processing
     MAX_RETRIES = 3
     RETRY_DELAY = 2  # seconds
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, scraper_id: Optional[str] = None):
         """
         Initialize the Parse.bot client.
 
         Args:
             api_key: Parse.bot API key. If not provided, reads from
                      PARSE_BOT_API_KEY environment variable.
+            scraper_id: Parse.bot scraper ID. If not provided, uses the default
+                       documentation extraction scraper.
         """
         self.api_key = api_key or os.environ.get("PARSE_BOT_API_KEY")
         if not self.api_key:
@@ -97,47 +96,41 @@ class ParseBotClient:
                 "Parse.bot API key is required. Set PARSE_BOT_API_KEY "
                 "environment variable or pass api_key parameter."
             )
+        
+        self.scraper_id = scraper_id or DEFAULT_SCRAPER_ID
 
         self.session = requests.Session()
         self.session.headers.update({
-            "Authorization": f"Bearer {self.api_key}",
+            "X-API-Key": self.api_key,
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
 
-    def scrape(
+    def _make_request(
         self,
-        url: str,
-        query: str,
-        variables: Optional[Dict[str, Any]] = None,
+        endpoint: str,
+        payload: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
-        Scrape a website using Parse.bot's AI extraction.
+        Make a request to a Parse.bot scraper endpoint with retry logic.
 
         Args:
-            url: The URL to scrape
-            query: Natural language description of what data to extract
-            variables: Optional variables to pass to the scraper
+            endpoint: The scraper endpoint name (e.g., 'extract_full_documentation')
+            payload: The request payload
 
         Returns:
-            Dictionary containing the extracted data
+            Dictionary containing the response data
 
         Raises:
             requests.RequestException: If the API request fails after retries
         """
-        payload = {
-            "url": url,
-            "query": query,
-        }
-
-        if variables:
-            payload["variables"] = variables
-
+        url = f"{self.BASE_URL}/scraper/{self.scraper_id}/{endpoint}"
+        
         last_error = None
         for attempt in range(self.MAX_RETRIES):
             try:
                 response = self.session.post(
-                    f"{self.BASE_URL}{self.SCRAPE_PATH}",
+                    url,
                     json=payload,
                     timeout=self.REQUEST_TIMEOUT,
                 )
@@ -145,7 +138,7 @@ class ParseBotClient:
 
                 try:
                     result = response.json()
-                except (json.JSONDecodeError, ValueError) as e:
+                except (json.JSONDecodeError, ValueError):
                     last_error = "Invalid JSON response"
                     print(
                         f"Attempt {attempt + 1}/{self.MAX_RETRIES}: "
@@ -195,47 +188,77 @@ class ParseBotClient:
             f"Failed after {self.MAX_RETRIES} attempts: {last_error}"
         )
 
-    def scrape_api_documentation(
-        self,
-        url: str,
-        include_examples: bool = True,
-    ) -> Dict[str, Any]:
+    def fetch_documentation_page(self, url: str) -> Dict[str, Any]:
         """
-        Scrape API documentation from a URL.
+        Retrieve the raw HTML content of a documentation page.
 
-        This method uses a specialized query for extracting API documentation
-        including endpoints, parameters, and examples.
+        Args:
+            url: The full URL of the documentation page to fetch.
+
+        Returns:
+            Dictionary with fetched_url and html_content
+        """
+        return self._make_request("fetch_documentation_page", {"url": url})
+
+    def parse_api_list(self, html_content: str) -> Dict[str, Any]:
+        """
+        Parse HTML content to extract a list of available endpoints.
+
+        Args:
+            html_content: Raw HTML content of a documentation page.
+
+        Returns:
+            Dictionary with apis list containing endpoint, name, summary
+        """
+        return self._make_request("parse_api_list", {"html_content": html_content})
+
+    def extract_api_details(self, html_content: str) -> Dict[str, Any]:
+        """
+        Extract detailed information about a specific endpoint.
+
+        Args:
+            html_content: Raw HTML content of the endpoint's documentation page.
+
+        Returns:
+            Dictionary with endpoint details including method, parameters, response_schema
+        """
+        return self._make_request("extract_api_details", {"html_content": html_content})
+
+    def extract_full_documentation(self, base_url: str) -> Dict[str, Any]:
+        """
+        Extract all endpoints and their detailed documentation from the main API reference.
+
+        Args:
+            base_url: The main documentation URL containing the API reference.
+
+        Returns:
+            Dictionary with apis list containing all endpoints and their details
+        """
+        return self._make_request("extract_full_documentation", {"base_url": base_url})
+
+    def scrape_api_documentation(self, url: str, include_examples: bool = True) -> Dict[str, Any]:
+        """
+        Scrape API documentation from a URL using the extract_full_documentation endpoint.
 
         Args:
             url: The API documentation URL to scrape
-            include_examples: Whether to include code examples
+            include_examples: Whether to include code examples (not used with this method)
 
         Returns:
             Dictionary containing structured API documentation
         """
-        query = API_DOCUMENTATION_QUERY
-
-        if not include_examples:
-            query = query.replace(
-                "4. Any code examples\n", ""
-            ).replace(
-                "- examples: code examples (if available)\n", ""
-            )
-
-        return self.scrape(url, query)
+        return self.extract_full_documentation(url)
 
     def scrape_multiple_pages(
         self,
         urls: List[str],
-        query: str,
         delay_between_requests: float = 1.0,
     ) -> List[Dict[str, Any]]:
         """
-        Scrape multiple pages with the same query.
+        Scrape multiple documentation pages.
 
         Args:
             urls: List of URLs to scrape
-            query: Natural language query to apply to each page
             delay_between_requests: Delay between requests in seconds
 
         Returns:
@@ -245,7 +268,7 @@ class ParseBotClient:
         for i, url in enumerate(urls):
             print(f"Scraping page {i + 1}/{len(urls)}: {url}")
             try:
-                result = self.scrape(url, query)
+                result = self.extract_full_documentation(url)
                 result["source_url"] = url
                 results.append(result)
             except (requests.exceptions.RequestException, ValueError) as e:
