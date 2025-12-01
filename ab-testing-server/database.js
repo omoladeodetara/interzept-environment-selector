@@ -57,6 +57,11 @@ pool.on('error', (err) => {
  * @returns {Promise<Object>} Created tenant
  */
 async function createTenant({ name, email, mode, paidApiKey = null, plan = 'free', metadata = {} }) {
+  // SECURITY NOTE: In production, encrypt paidApiKey before storage
+  // Example using pgcrypto:
+  //   const encryptedKey = paidApiKey ? `pgp_sym_encrypt('${paidApiKey}', '${process.env.ENCRYPTION_KEY}')` : null;
+  // Or use application-level encryption with a library like crypto or a KMS service
+  
   const query = `
     INSERT INTO tenants (name, email, mode, paid_api_key, plan, metadata)
     VALUES ($1, $2, $3, $4, $5, $6)

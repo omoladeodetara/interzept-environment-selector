@@ -72,11 +72,19 @@
     }
     
     // Generate new user ID
-    const userId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    // Use crypto.randomUUID() if available (modern browsers), otherwise fallback
+    let userId;
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      userId = 'user_' + crypto.randomUUID();
+    } else {
+      // Fallback for older browsers
+      userId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+    }
     
     // Store in cookie
     const maxAge = LP.config.cookieMaxAge;
-    document.cookie = cookieName + '=' + userId + '; path=/; max-age=' + maxAge + '; SameSite=Lax';
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = cookieName + '=' + userId + '; path=/; max-age=' + maxAge + '; SameSite=Lax' + secure;
     
     if (LP.config.debug) {
       console.log('[LastPrice] Created new user ID:', userId);
