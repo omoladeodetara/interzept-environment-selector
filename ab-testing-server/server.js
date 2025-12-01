@@ -13,6 +13,8 @@ const config = require('./config');
 const abTesting = require('./ab-testing');
 const signals = require('./signals');
 const jale = require('../jale');
+const db = require('./database');
+const tenantRoutes = require('./tenants');
 
 const app = express();
 
@@ -40,12 +42,224 @@ if (config.nodeEnv === 'development') {
 /**
  * Health check endpoint
  */
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', async (req, res) => {
+  // Test database connection
+  const dbHealthy = await db.testConnection().catch(() => false);
+  
+  res.json({ 
+    status: dbHealthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    database: dbHealthy ? 'connected' : 'disconnected'
+  });
 });
 
 /**
- * Get pricing page with A/B test variant assignment
+ * Tenant management routes
+ * Mounted at /api/tenants
+ */
+app.use('/api/tenants', tenantRoutes);
+
+/**
+ * Tenant-aware pricing endpoint
+ * GET /api/experiments/:experimentId/pricing
+ * 
+ * This is the new multi-tenant endpoint that supports BYOK and Managed modes
+ */
+app.get('/api/experiments/:experimentId/pricing', async (req, res) => {
+  try {
+    const { experimentId } = req.params;
+    const { userId, tenantId } = req.query;
+    
+    // Validate inputs
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ error: 'userId query parameter is required' });
+    }
+    
+    // Lookup experiment (supports both UUID and key)
+    let experiment;
+    if (tenantId) {
+      // If tenantId provided, lookup by key
+      const tenant = await db.getTenant(tenantId);
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      experiment = await db.getExperimentByKey(tenantId, experimentId);
+    } else {
+      // Try to lookup by UUID (backward compatibility)
+      experiment = await db.getExperiment(experimentId);
+    }
+    
+    if (!experiment) {
+      return res.status(404).json({ error: 'Experiment not found' });
+    }
+    
+    // Get or create assignment
+    let assignment = await db.getAssignment(experiment.id, userId);
+    
+    if (!assignment) {
+      // Assign variant using deterministic algorithm
+      const variant = abTesting.assignVariant(userId, experimentId);
+      assignment = await db.createAssignment(experiment.id, userId, variant);
+    }
+    
+    // Get variant details from experiment
+    const variantData = experiment.variants.find(v => v.name === assignment.variant);
+    
+    if (!variantData) {
+      // Fallback to first variant if not found
+      variantData = experiment.variants[0];
+    }
+    
+    // Record view
+    await db.recordView(experiment.id, userId, assignment.variant);
+    
+    // Emit signal to Paid.ai (non-blocking)
+    // Use tenant's API key if BYOK mode
+    if (tenantId) {
+      const tenant = await db.getTenant(tenantId);
+      signals.emitPricingViewSignal(userId, assignment.variant, experimentId, tenant?.paid_api_key)
+        .catch(error => {
+          console.error('Failed to emit pricing view signal:', error.message);
+        });
+    } else {
+      signals.emitPricingViewSignal(userId, assignment.variant, experimentId)
+        .catch(error => {
+          console.error('Failed to emit pricing view signal:', error.message);
+        });
+    }
+    
+    res.json({
+      userId,
+      experimentId: experiment.key,
+      variant: assignment.variant,
+      pricing: {
+        plan: variantData.name.charAt(0).toUpperCase() + variantData.name.slice(1),
+        price: variantData.price,
+        features: ['Feature A', 'Feature B', 'Feature C'] // Customize as needed
+      }
+    });
+  } catch (error) {
+    console.error('Error in /api/experiments/:experimentId/pricing:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Tenant-aware conversion endpoint
+ * POST /api/experiments/:experimentId/convert
+ */
+app.post('/api/experiments/:experimentId/convert', async (req, res) => {
+  try {
+    const { experimentId } = req.params;
+    const { userId, tenantId, revenue } = req.body;
+    
+    // Validate inputs
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    // Lookup experiment
+    let experiment;
+    if (tenantId) {
+      const tenant = await db.getTenant(tenantId);
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      experiment = await db.getExperimentByKey(tenantId, experimentId);
+    } else {
+      experiment = await db.getExperiment(experimentId);
+    }
+    
+    if (!experiment) {
+      return res.status(404).json({ error: 'Experiment not found' });
+    }
+    
+    // Get assignment
+    const assignment = await db.getAssignment(experiment.id, userId);
+    
+    if (!assignment) {
+      return res.status(404).json({ 
+        error: 'No variant assignment found for this user and experiment' 
+      });
+    }
+    
+    // Get variant price if revenue not provided
+    const variantData = experiment.variants.find(v => v.name === assignment.variant);
+    const conversionRevenue = revenue || variantData?.price || 0;
+    
+    // Record conversion
+    await db.recordConversion(
+      experiment.id,
+      userId,
+      assignment.variant,
+      conversionRevenue
+    );
+    
+    // Emit conversion signal to Paid.ai (non-blocking)
+    if (tenantId) {
+      const tenant = await db.getTenant(tenantId);
+      signals.emitConversionSignal(userId, assignment.variant, experimentId, tenant?.paid_api_key)
+        .catch(error => {
+          console.error('Failed to emit conversion signal:', error.message);
+        });
+    } else {
+      signals.emitConversionSignal(userId, assignment.variant, experimentId)
+        .catch(error => {
+          console.error('Failed to emit conversion signal:', error.message);
+        });
+    }
+    
+    res.json({
+      success: true,
+      userId,
+      experimentId: experiment.key,
+      variant: assignment.variant,
+      revenue: conversionRevenue
+    });
+  } catch (error) {
+    console.error('Error in /api/experiments/:experimentId/convert:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Get experiment results
+ * GET /api/experiments/:experimentId/results
+ */
+app.get('/api/experiments/:experimentId/results', async (req, res) => {
+  try {
+    const { experimentId } = req.params;
+    
+    // Try to lookup experiment (supports both UUID and key with tenant context)
+    let experiment = await db.getExperiment(experimentId);
+    
+    if (!experiment) {
+      // Try old format lookup
+      const results = abTesting.getExperimentResults(experimentId);
+      return res.json(results);
+    }
+    
+    // Get results from database
+    const results = await db.getExperimentResults(experiment.id);
+    
+    res.json(results);
+  } catch (error) {
+    console.error('Error in /api/experiments/:experimentId/results:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * Legacy /api/pricing endpoint (backward compatibility)
  * 
  * This endpoint assigns users to a variant and emits a signal to Paid.ai
  * tracking which pricing they saw.
@@ -389,30 +603,44 @@ if (require.main === module) {
     console.log(`API Documentation: http://localhost:${config.port}/api-docs`);
     console.log('='.repeat(50));
     console.log('\nAvailable endpoints:');
-    console.log('  GET  /api/pricing - Get pricing with A/B test variant');
-    console.log('  POST /api/convert - Simulate a conversion');
-    console.log('  POST /api/jale/optimize - Get pricing recommendation from jale');
-    console.log('  POST /webhooks/paid - Paid.ai webhook endpoint');
-    console.log('  GET  /api/experiments/:experimentId/results - Get experiment results');
+    console.log('  Tenant Management:');
+    console.log('    POST /api/tenants - Create a new tenant');
+    console.log('    GET  /api/tenants - List all tenants');
+    console.log('    GET  /api/tenants/:id - Get tenant details');
+    console.log('    POST /api/tenants/:id/experiments - Create experiment for tenant');
+    console.log('  Experiments:');
+    console.log('    GET  /api/experiments/:id/pricing - Get pricing with variant (tenant-aware)');
+    console.log('    POST /api/experiments/:id/convert - Record conversion (tenant-aware)');
+    console.log('    GET  /api/experiments/:id/results - Get experiment results');
+    console.log('  Legacy (backward compatibility):');
+    console.log('    GET  /api/pricing - Get pricing with A/B test variant');
+    console.log('    POST /api/convert - Simulate a conversion');
+    console.log('  Optimization:');
+    console.log('    POST /api/jale/optimize - Get pricing recommendation from jale');
+    console.log('  Webhooks:');
+    console.log('    POST /webhooks/paid - Paid.ai webhook endpoint');
     if (config.nodeEnv === 'development') {
-      console.log('  GET  /api/debug/assignments - View all assignments (dev only)');
+      console.log('  Debug:');
+      console.log('    GET  /api/debug/assignments - View all assignments (dev only)');
     }
     console.log('='.repeat(50));
   });
 
   // Graceful shutdown
-  process.on('SIGTERM', () => {
+  process.on('SIGTERM', async () => {
     console.log('\nSIGTERM received, shutting down gracefully...');
-    server.close(() => {
-      console.log('Server closed');
+    server.close(async () => {
+      await db.close();
+      console.log('Server and database connections closed');
       process.exit(0);
     });
   });
 
-  process.on('SIGINT', () => {
+  process.on('SIGINT', async () => {
     console.log('\nSIGINT received, shutting down gracefully...');
-    server.close(() => {
-      console.log('Server closed');
+    server.close(async () => {
+      await db.close();
+      console.log('Server and database connections closed');
       process.exit(0);
     });
   });
