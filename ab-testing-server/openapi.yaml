@@ -27,6 +27,8 @@ servers:
 tags:
   - name: Health
     description: Service health check
+  - name: Tenants
+    description: Tenant management (BYOK and Managed modes)
   - name: Experiments
     description: A/B testing experiment operations
   - name: Optimization
@@ -58,6 +60,433 @@ paths:
                     type: string
                     format: date-time
                     example: '2024-01-15T10:30:00.000Z'
+
+  /api/tenants:
+    post:
+      summary: Create a new tenant
+      description: |
+        Create a new tenant account with either Managed or BYOK (Bring Your Own Key) mode.
+        In Managed mode, the platform handles Paid.ai integration. In BYOK mode, the tenant
+        provides their own Paid.ai API key.
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTenantRequest'
+      responses:
+        '201':
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Tenant with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List tenants
+      description: Get a list of all tenants (admin only)
+      tags:
+        - Tenants
+      parameters:
+        - name: mode
+          in: query
+          description: Filter by mode
+          schema:
+            type: string
+            enum: [managed, byok]
+        - name: plan
+          in: query
+          description: Filter by plan tier
+          schema:
+            type: string
+            enum: [free, starter, pro, enterprise]
+        - name: limit
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Offset for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tenants/{tenantId}:
+    get:
+      summary: Get tenant details
+      description: Retrieve information about a specific tenant
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update tenant
+      description: Update tenant settings (mode, API key, plan, etc.)
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTenantRequest'
+      responses:
+        '200':
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete tenant
+      description: Delete a tenant and all associated data
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tenant deleted successfully
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tenants/{tenantId}/experiments:
+    post:
+      summary: Create experiment for tenant
+      description: Create a new A/B testing experiment for a specific tenant
+      tags:
+        - Tenants
+        - Experiments
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExperimentRequest'
+      responses:
+        '201':
+          description: Experiment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List tenant experiments
+      description: Get all experiments for a specific tenant
+      tags:
+        - Tenants
+        - Experiments
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by experiment status
+          schema:
+            type: string
+            enum: [draft, active, paused, completed]
+      responses:
+        '200':
+          description: List of experiments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experiments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experiment'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/pricing:
+    get:
+      summary: Get pricing with variant assignment
+      description: |
+        Tenant-aware pricing endpoint. Assigns a user to an A/B test variant and returns 
+        the corresponding pricing. Uses the tenant's mode (BYOK or Managed) to determine
+        which Paid.ai API key to use for signal emission.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Experiment identifier
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: Unique identifier for the user
+          required: true
+          schema:
+            type: string
+            example: user_123
+        - name: tenantId
+          in: query
+          description: Tenant UUID (required for multi-tenant setups)
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pricing returned with variant assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/convert:
+    post:
+      summary: Record conversion for experiment
+      description: |
+        Records a conversion event for a user in an experiment. Uses tenant context
+        to determine the correct Paid.ai API key for signal emission.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Experiment identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  description: User identifier from the pricing request
+                  example: user_123
+                tenantId:
+                  type: string
+                  format: uuid
+                  description: Tenant UUID
+                revenue:
+                  type: number
+                  format: float
+                  description: Optional revenue amount
+                  example: 39.99
+      responses:
+        '200':
+          description: Conversion tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No variant assignment found for user or experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/pricing:
     get:
@@ -305,6 +734,256 @@ paths:
 
 components:
   schemas:
+    # ============ Tenant Schemas ============
+    Tenant:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - mode
+        - plan
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique tenant identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Tenant company name
+          example: "Acme Corporation"
+        email:
+          type: string
+          format: email
+          description: Tenant contact email
+          example: "admin@acme.com"
+        mode:
+          type: string
+          enum: [managed, byok]
+          description: Integration mode (managed uses platform key, byok uses tenant's key)
+          example: "byok"
+        paidApiKey:
+          type: string
+          description: Masked Paid.ai API key (only shown for BYOK mode)
+          example: "sk_test_...abc123"
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          description: Subscription plan tier
+          example: "pro"
+        webhookSecret:
+          type: string
+          description: Secret for webhook signature verification (masked)
+          example: "whsec_...xyz789"
+        createdAt:
+          type: string
+          format: date-time
+          description: Tenant creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional tenant metadata
+
+    CreateTenantRequest:
+      type: object
+      required:
+        - name
+        - email
+        - mode
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Tenant company name
+          example: "Acme Corporation"
+        email:
+          type: string
+          format: email
+          description: Tenant contact email
+          example: "admin@acme.com"
+        mode:
+          type: string
+          enum: [managed, byok]
+          description: Integration mode
+          example: "managed"
+        paidApiKey:
+          type: string
+          description: Paid.ai API key (required for BYOK mode)
+          example: "sk_live_abc123..."
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          default: "free"
+          description: Subscription plan tier
+          example: "free"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional tenant metadata
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Tenant company name
+        mode:
+          type: string
+          enum: [managed, byok]
+          description: Integration mode
+        paidApiKey:
+          type: string
+          description: Paid.ai API key (for updating BYOK mode key)
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          description: Subscription plan tier
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional tenant metadata
+
+    Experiment:
+      type: object
+      required:
+        - id
+        - tenantId
+        - key
+        - name
+        - variants
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique experiment identifier
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant who owns this experiment
+        key:
+          type: string
+          description: Experiment key/identifier
+          example: "pricing_test_001"
+        name:
+          type: string
+          description: Human-readable experiment name
+          example: "Premium Plan Pricing Test"
+        description:
+          type: string
+          description: Experiment description
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Variant name
+                example: "control"
+              price:
+                type: number
+                format: float
+                description: Price for this variant
+                example: 29.99
+              weight:
+                type: integer
+                minimum: 0
+                maximum: 100
+                description: Traffic allocation percentage
+                example: 50
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+          description: Experiment status
+          example: "active"
+        startDate:
+          type: string
+          format: date-time
+          description: Experiment start date
+        endDate:
+          type: string
+          format: date-time
+          description: Experiment end date
+        targetSampleSize:
+          type: integer
+          description: Target number of samples before concluding
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    CreateExperimentRequest:
+      type: object
+      required:
+        - key
+        - name
+        - variants
+      properties:
+        key:
+          type: string
+          pattern: '^[a-z0-9_]+$'
+          description: Experiment key (lowercase, numbers, underscores only)
+          example: "pricing_test_001"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Experiment name
+          example: "Premium Plan Pricing Test"
+        description:
+          type: string
+          maxLength: 1000
+          description: Experiment description
+        variants:
+          type: array
+          minItems: 2
+          maxItems: 10
+          items:
+            type: object
+            required:
+              - name
+              - price
+            properties:
+              name:
+                type: string
+                description: Variant name
+                example: "control"
+              price:
+                type: number
+                format: float
+                minimum: 0
+                description: Price for this variant
+                example: 29.99
+              weight:
+                type: integer
+                minimum: 0
+                maximum: 100
+                default: 50
+                description: Traffic allocation percentage
+        targetSampleSize:
+          type: integer
+          minimum: 1
+          description: Target number of samples
+
+    # ============ Pricing and Conversion Schemas ============
     PricingResponse:
       type: object
       properties:
