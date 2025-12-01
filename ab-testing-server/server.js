@@ -103,7 +103,7 @@ app.get('/api/experiments/:experimentId/pricing', async (req, res) => {
     }
     
     // Get variant details from experiment
-    const variantData = experiment.variants.find(v => v.name === assignment.variant);
+    let variantData = experiment.variants.find(v => v.name === assignment.variant);
     
     if (!variantData) {
       // Fallback to first variant if not found
@@ -629,19 +629,27 @@ if (require.main === module) {
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('\nSIGTERM received, shutting down gracefully...');
-    server.close(async () => {
-      await db.close();
-      console.log('Server and database connections closed');
-      process.exit(0);
+    server.close(() => {
+      db.close().then(() => {
+        console.log('Server and database connections closed');
+        process.exit(0);
+      }).catch((err) => {
+        console.error('Error closing database:', err);
+        process.exit(1);
+      });
     });
   });
 
   process.on('SIGINT', async () => {
     console.log('\nSIGINT received, shutting down gracefully...');
-    server.close(async () => {
-      await db.close();
-      console.log('Server and database connections closed');
-      process.exit(0);
+    server.close(() => {
+      db.close().then(() => {
+        console.log('Server and database connections closed');
+        process.exit(0);
+      }).catch((err) => {
+        console.error('Error closing database:', err);
+        process.exit(1);
+      });
     });
   });
 }

@@ -76,9 +76,16 @@
     let userId;
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
       userId = 'user_' + crypto.randomUUID();
+    } else if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      // Fallback using getRandomValues for older browsers
+      const array = new Uint32Array(4);
+      window.crypto.getRandomValues(array);
+      userId = 'user_' + Date.now() + '_' + Array.from(array).map(n => n.toString(16)).join('');
     } else {
-      // Fallback for older browsers
-      userId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+      // Fallback for very old browsers: increase random range to reduce collisions
+      const rand1 = Math.floor(Math.random() * 1e9);
+      const rand2 = Math.floor(Math.random() * 1e9);
+      userId = 'user_' + Date.now() + '_' + rand1 + '_' + rand2;
     }
     
     // Store in cookie

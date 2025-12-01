@@ -220,7 +220,7 @@ SELECT
   COALESCE(SUM(c.revenue), 0) AS total_revenue,
   CASE 
     WHEN COUNT(DISTINCT v.id) > 0 
-    THEN CAST(COUNT(DISTINCT c.id) AS NUMERIC) / COUNT(DISTINCT v.id)
+    THEN CAST(COUNT(DISTINCT c.id) AS NUMERIC) / NULLIF(COUNT(DISTINCT v.id), 0)
     ELSE 0
   END AS conversion_rate,
   CASE

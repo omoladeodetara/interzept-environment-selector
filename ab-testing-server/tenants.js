@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Name is required and must be a non-empty string' });
     }
     
-    if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || typeof email !== 'string' || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
       return res.status(400).json({ error: 'Valid email is required' });
     }
     
@@ -72,8 +72,8 @@ router.post('/', async (req, res) => {
     }
     
     res.status(500).json({ 
-      error: 'Failed to create tenant',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'Failed to create tenant'
+      // Error details omitted for security
     });
   }
 });
@@ -362,13 +362,16 @@ router.get('/:tenantId/experiments', async (req, res) => {
 
 /**
  * Mask API key for display
- * Shows only first 8 and last 4 characters
+ * Shows only prefix (e.g., 'sk_') and last 4 characters for security
  */
 function maskApiKey(apiKey) {
-  if (!apiKey || apiKey.length < 12) {
+  if (!apiKey || apiKey.length < 8) {
     return '***';
   }
-  return apiKey.slice(0, 8) + '...' + apiKey.slice(-4);
+  // Extract common prefix pattern (e.g., 'sk_live_', 'sk_test_')
+  const prefixMatch = apiKey.match(/^(sk_[a-zA-Z0-9]*_?)/);
+  const prefix = prefixMatch ? prefixMatch[1] : '';
+  return prefix + '***...' + apiKey.slice(-4);
 }
 
 /**

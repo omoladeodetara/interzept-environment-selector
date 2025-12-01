@@ -21,20 +21,29 @@ const config = {
   password: process.env.DB_PASSWORD || '',
   max: parseInt(process.env.DB_POOL_MAX) || 20,
   idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT) || 30000,
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT) || 2000,
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT) || 10000,
 };
 
-// Create connection pool
-const pool = new Pool(config.connectionString ? { connectionString: config.connectionString } : {
-  host: config.host,
-  port: config.port,
-  database: config.database,
-  user: config.user,
-  password: config.password,
-  max: config.max,
-  idleTimeoutMillis: config.idleTimeoutMillis,
-  connectionTimeoutMillis: config.connectionTimeoutMillis,
-});
+// Create connection pool with consistent configuration
+const poolConfig = config.connectionString
+  ? {
+      connectionString: config.connectionString,
+      max: config.max,
+      idleTimeoutMillis: config.idleTimeoutMillis,
+      connectionTimeoutMillis: config.connectionTimeoutMillis,
+    }
+  : {
+      host: config.host,
+      port: config.port,
+      database: config.database,
+      user: config.user,
+      password: config.password,
+      max: config.max,
+      idleTimeoutMillis: config.idleTimeoutMillis,
+      connectionTimeoutMillis: config.connectionTimeoutMillis,
+    };
+
+const pool = new Pool(poolConfig);
 
 // Handle pool errors
 pool.on('error', (err) => {
@@ -113,27 +122,31 @@ async function getTenantByEmail(email) {
  * @returns {Promise<Object>} Tenants and pagination info
  */
 async function listTenants({ mode, plan, limit = 20, offset = 0 } = {}) {
-  let query = 'SELECT * FROM tenants WHERE 1=1';
-  const values = [];
+  let whereClause = 'WHERE 1=1';
+  const whereValues = [];
   let paramCount = 0;
   
   if (mode) {
-    values.push(mode);
-    query += ` AND mode = $${++paramCount}`;
+    whereValues.push(mode);
+    whereClause += ` AND mode = $${++paramCount}`;
   }
   
   if (plan) {
-    values.push(plan);
-    query += ` AND plan = $${++paramCount}`;
+    whereValues.push(plan);
+    whereClause += ` AND plan = $${++paramCount}`;
   }
   
-  query += ' ORDER BY created_at DESC';
+  // Main query
+  let query = `SELECT * FROM tenants ${whereClause} ORDER BY created_at DESC`;
   query += ` LIMIT $${++paramCount} OFFSET $${++paramCount}`;
-  values.push(limit, offset);
+  const queryValues = [...whereValues, limit, offset];
+  
+  // Count query with same filters
+  const countQuery = `SELECT COUNT(*) FROM tenants ${whereClause}`;
   
   const [tenantsResult, countResult] = await Promise.all([
-    pool.query(query, values),
-    pool.query('SELECT COUNT(*) FROM tenants')
+    pool.query(query, queryValues),
+    pool.query(countQuery, whereValues)
   ]);
   
   return {
@@ -386,18 +399,18 @@ async function recordView(experimentId, userId, variant, metadata = {}) {
  * @param {string} userId - User identifier
  * @param {string} variant - Variant for this conversion
  * @param {number} revenue - Revenue amount
- * @param {string} [paidOrderId=null] - External order ID
  * @param {Object} [metadata={}] - Additional metadata
+ * @param {string} [paidOrderId=null] - External order ID
  * @returns {Promise<Object>} Conversion record
  */
-async function recordConversion(experimentId, userId, variant, revenue, paidOrderId = null, metadata = {}) {
+async function recordConversion(experimentId, userId, variant, revenue, metadata = {}, paidOrderId = null) {
   const query = `
-    INSERT INTO conversions (experiment_id, user_id, variant, revenue, paid_order_id, metadata)
+    INSERT INTO conversions (experiment_id, user_id, variant, revenue, metadata, paid_order_id)
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
   `;
   
-  const result = await pool.query(query, [experimentId, userId, variant, revenue, paidOrderId, metadata]);
+  const result = await pool.query(query, [experimentId, userId, variant, revenue, metadata, paidOrderId]);
   return result.rows[0];
 }
 
