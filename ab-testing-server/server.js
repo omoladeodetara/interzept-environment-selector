@@ -6,6 +6,7 @@
  */
 
 const express = require('express');
+const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
@@ -24,6 +25,31 @@ const openApiDocument = YAML.load(path.join(__dirname, 'openapi.yaml'));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS middleware using cors package
+const corsOptions = {
+  origin: config.nodeEnv === 'development' 
+    ? 'http://localhost:3002'
+    : (req, callback) => {
+        const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+          ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+          : [];
+        
+        // If no origins configured in production, allow no CORS (same as before)
+        if (allowedOrigins.length === 0) {
+          callback(null, false);
+        } else if (allowedOrigins.includes(req.header('Origin'))) {
+          callback(null, true);
+        } else {
+          callback(null, false);
+        }
+      },
+  credentials: config.nodeEnv === 'production', // Only enable credentials in production
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Swagger UI for API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument, {
