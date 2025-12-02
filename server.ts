@@ -18,6 +18,7 @@ import experimentsDelegate from './api-delegates/experiments';
 import pricingDelegate from './api-delegates/pricing';
 import webhooksDelegate from './api-delegates/webhooks';
 import healthDelegate from './api-delegates/health';
+import legacyDelegate from './api-delegates/legacy';
 
 const app: Express = express();
 
@@ -72,6 +73,7 @@ app.use('/health', healthDelegate);
 app.use('/api/tenants', tenantsDelegate);
 app.use('/api/experiments', experimentsDelegate);
 app.use('/api', pricingDelegate);
+app.use('/api', legacyDelegate); // Legacy routes
 app.use('/webhooks', webhooksDelegate);
 app.get('/api/debug/assignments', healthDelegate); // Debug endpoint
 
@@ -115,6 +117,9 @@ if (require.main === module) {
     console.log('    GET  /api/experiments/:id/definition - Get experiment definition and variants');
     console.log('    POST /api/experiments/:id/convert - Record conversion (tenant-aware)');
     console.log('    GET  /api/experiments/:id/results - Get experiment results');
+    console.log('  Legacy (backward compatibility):');
+    console.log('    GET  /api/pricing - Get pricing with A/B test variant');
+    console.log('    POST /api/convert - Simulate a conversion');
     console.log('  Optimization:');
     console.log('    POST /api/jale/optimize - Get pricing recommendation from jale');
     console.log('    POST /api/jale/propose-variant - Propose a new variant for an experiment');
