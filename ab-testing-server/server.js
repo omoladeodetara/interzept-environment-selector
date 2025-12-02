@@ -6,6 +6,7 @@
  */
 
 const express = require('express');
+const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
@@ -25,40 +26,30 @@ const openApiDocument = YAML.load(path.join(__dirname, 'openapi.yaml'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware
-if (config.nodeEnv === 'development') {
-  // Development CORS: allow localhost frontend
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3002');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    next();
-  });
-} else {
-  // Production CORS: use environment variable for allowed origins
-  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
-    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
-    : [];
-  
-  if (allowedOrigins.length > 0) {
-    app.use((req, res, next) => {
-      const origin = req.headers.origin;
-      if (origin && allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin);
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        res.header('Access-Control-Allow-Credentials', 'true');
-      }
-      if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-      }
-      next();
-    });
-  }
-}
+// CORS middleware using cors package
+const corsOptions = {
+  origin: config.nodeEnv === 'development' 
+    ? 'http://localhost:3002'
+    : (req, callback) => {
+        const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+          ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+          : [];
+        
+        if (allowedOrigins.length === 0) {
+          // No CORS configured for production
+          callback(new Error('CORS origin not configured'), false);
+        } else if (allowedOrigins.includes(req.header('Origin'))) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'), false);
+        }
+      },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Swagger UI for API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument, {
