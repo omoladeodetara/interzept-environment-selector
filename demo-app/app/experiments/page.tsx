@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { sampleExperiments } from "@/lib/sample-data";
 import { apiClient, Experiment } from "@/lib/api-client";
 
-// Use the first tenant from the database for now
-const DEFAULT_TENANT_ID = "989a5aea-aaa8-47cc-8429-d6c5f4174070"; // Demo Company
+// Use environment variable for tenant ID, fallback to demo value for local development
+const DEFAULT_TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || "989a5aea-aaa8-47cc-8429-d6c5f4174070"; // Demo Company
 
 export default function ExperimentsPage() {
   const [experiments, setExperiments] = useState<any[]>(sampleExperiments);

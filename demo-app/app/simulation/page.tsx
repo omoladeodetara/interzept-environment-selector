@@ -9,8 +9,9 @@ import { apiClient } from "@/lib/api-client";
 // Coffee shop agent simulation
 // This demonstrates an agent-run business that uses dynamic pricing
 
-const DEFAULT_TENANT_ID = "989a5aea-aaa8-47cc-8429-d6c5f4174070";
-const EXPERIMENT_KEY = "premium_pricing_test";
+// Use environment variables for configuration, with fallback for local development
+const DEFAULT_TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || "989a5aea-aaa8-47cc-8429-d6c5f4174070";
+const EXPERIMENT_KEY = process.env.NEXT_PUBLIC_DEFAULT_EXPERIMENT_KEY || "premium_pricing_test";
 
 interface SimulationState {
   orderCount: number;
@@ -32,17 +33,17 @@ export default function SimulationPage() {
   });
   
   const [log, setLog] = useState<string[]>([]);
-  const [userId, setUserId] = useState<string>("");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Generate a random user ID for this session
-    setUserId(`agent_${Math.random().toString(36).substring(2, 15)}`);
-    
     // Cleanup on unmount
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, []);
@@ -51,7 +52,7 @@ export default function SimulationPage() {
     setLog((prev) => [...prev.slice(-9), `[${new Date().toLocaleTimeString()}] ${message}`]);
   };
 
-  const fetchPricing = async () => {
+  const fetchPricing = async (userId: string) => {
     try {
       addLog("☕ Agent requesting coffee price from Elo...");
       const response = await apiClient.getPricing(EXPERIMENT_KEY, userId, DEFAULT_TENANT_ID);
@@ -72,8 +73,11 @@ export default function SimulationPage() {
 
   const simulateOrder = async () => {
     try {
+      // Generate a new unique user ID for each order to demonstrate A/B testing
+      const userId = `agent_${Math.random().toString(36).substring(2, 15)}`;
+      
       // Fetch pricing
-      const pricing = await fetchPricing();
+      const pricing = await fetchPricing(userId);
       
       setState((prev) => ({ ...prev, orderCount: prev.orderCount + 1 }));
       
@@ -108,6 +112,12 @@ export default function SimulationPage() {
   };
 
   const startAutoSimulation = () => {
+    // Prevent starting multiple simulations
+    if (state.isSimulating) {
+      addLog("⚠️ Simulation already running");
+      return;
+    }
+    
     setState((prev) => ({ ...prev, isSimulating: true }));
     addLog("🚀 Starting automatic simulation...");
     
@@ -116,7 +126,7 @@ export default function SimulationPage() {
     }, 3000); // Order every 3 seconds
 
     // Stop after 30 seconds
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -232,7 +242,7 @@ export default function SimulationPage() {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            User ID: <code className="bg-muted px-2 py-1 rounded">{userId}</code>
+            Each order uses a unique user ID to demonstrate A/B testing with different variant assignments.
           </p>
         </CardContent>
       </Card>

@@ -6,6 +6,10 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
+/**
+ * Server-side Tenant representation (includes sensitive fields)
+ * This should only be used on the server side.
+ */
 export interface Tenant {
   id: string;
   name: string;
@@ -19,11 +23,26 @@ export interface Tenant {
   metadata: Record<string, any>;
 }
 
+/**
+ * Client-side Tenant representation (omits sensitive fields)
+ * Use this for displaying tenant information in the UI.
+ */
+export interface TenantResponse {
+  id: string;
+  name: string;
+  email: string;
+  mode: 'managed' | 'byok';
+  plan: 'free' | 'starter' | 'pro' | 'enterprise';
+  created_at: string;
+  updated_at: string;
+  metadata: Record<string, any>;
+}
+
 export interface CreateTenantRequest {
   name: string;
   email: string;
   mode: 'managed' | 'byok';
-  paidApiKey?: string;
+  paid_api_key?: string;
   plan?: 'free' | 'starter' | 'pro' | 'enterprise';
 }
 
@@ -135,7 +154,7 @@ class ApiClient {
   // TENANT OPERATIONS
   // ============================================================================
 
-  async listTenants(): Promise<{ tenants: Tenant[]; pagination: Pagination }> {
+  async listTenants(): Promise<{ tenants: TenantResponse[]; pagination: Pagination }> {
     const response = await fetch(`${this.baseUrl}/api/tenants`);
     if (!response.ok) {
       throw new Error(`Failed to list tenants: ${response.statusText}`);
@@ -143,7 +162,7 @@ class ApiClient {
     return response.json();
   }
 
-  async getTenant(tenantId: string): Promise<Tenant> {
+  async getTenant(tenantId: string): Promise<TenantResponse> {
     const response = await fetch(`${this.baseUrl}/api/tenants/${tenantId}`);
     if (!response.ok) {
       throw new Error(`Failed to get tenant: ${response.statusText}`);
@@ -151,7 +170,7 @@ class ApiClient {
     return response.json();
   }
 
-  async createTenant(data: CreateTenantRequest): Promise<Tenant> {
+  async createTenant(data: CreateTenantRequest): Promise<TenantResponse> {
     const response = await fetch(`${this.baseUrl}/api/tenants`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -25,8 +25,9 @@ const openApiDocument = YAML.load(path.join(__dirname, 'openapi.yaml'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware for development
+// CORS middleware
 if (config.nodeEnv === 'development') {
+  // Development CORS: allow localhost frontend
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'http://localhost:3002');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -36,6 +37,27 @@ if (config.nodeEnv === 'development') {
     }
     next();
   });
+} else {
+  // Production CORS: use environment variable for allowed origins
+  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
+    : [];
+  
+  if (allowedOrigins.length > 0) {
+    app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      if (origin && allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
+      if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+      }
+      next();
+    });
+  }
 }
 
 // Swagger UI for API documentation
