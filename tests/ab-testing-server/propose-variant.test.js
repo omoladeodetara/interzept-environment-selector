@@ -10,6 +10,7 @@ const request = require('supertest');
 jest.mock('../../ab-testing-server/database', () => ({
   getExperiment: jest.fn(),
   getExperimentByKey: jest.fn(),
+  getTenant: jest.fn(),
   updateExperiment: jest.fn(),
   testConnection: jest.fn().mockResolvedValue(true),
   close: jest.fn().mockResolvedValue(undefined),
@@ -121,6 +122,7 @@ describe('POST /api/jale/propose-variant', () => {
   });
 
   it('should support tenantId for experiment lookup', async () => {
+    db.getTenant.mockResolvedValue({ id: '123e4567-e89b-12d3-a456-426614174001', name: 'Test Tenant' });
     db.getExperimentByKey.mockResolvedValue(mockExperiment);
     db.updateExperiment.mockResolvedValue(mockUpdatedExperiment);
 
@@ -135,6 +137,7 @@ describe('POST /api/jale/propose-variant', () => {
       .expect(200);
 
     expect(response.body.success).toBe(true);
+    expect(db.getTenant).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174001');
     expect(db.getExperimentByKey).toHaveBeenCalledWith(
       '123e4567-e89b-12d3-a456-426614174001',
       'pricing_test_001'
@@ -224,6 +227,22 @@ describe('POST /api/jale/propose-variant', () => {
       .expect(404);
 
     expect(response.body.error).toBe('Experiment not found');
+  });
+
+  it('should return 404 when tenant not found', async () => {
+    db.getTenant.mockResolvedValue(null);
+
+    const response = await request(app)
+      .post('/api/jale/propose-variant')
+      .send({
+        experimentId: 'pricing_test_001',
+        tenantId: 'nonexistent-tenant',
+        price: 34.99
+      })
+      .expect('Content-Type', /json/)
+      .expect(404);
+
+    expect(response.body.error).toBe('Tenant not found');
   });
 
   it('should handle database errors gracefully', async () => {

@@ -233,9 +233,15 @@ app.post('/api/experiments/:experimentId/convert', async (req, res) => {
  * @param {string} experimentId - Experiment UUID or key
  * @param {string} tenantId - Optional tenant ID for key-based lookup
  * @returns {Promise<Object|null>} Experiment or null if not found
+ * @throws {Error} If tenantId is provided but tenant doesn't exist
  */
 async function lookupExperiment(experimentId, tenantId) {
   if (tenantId) {
+    // Validate tenant exists before looking up experiment
+    const tenant = await db.getTenant(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
     return await db.getExperimentByKey(tenantId, experimentId);
   } else {
     return await db.getExperiment(experimentId);
@@ -273,6 +279,10 @@ app.get('/api/experiments/:experimentId/definition', async (req, res) => {
       metadata: experiment.metadata
     });
   } catch (error) {
+    // Handle tenant not found error
+    if (error.message === 'Tenant not found') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
     console.error('Error in /api/experiments/:experimentId/definition:', error);
     res.status(500).json({ 
       error: 'Internal server error',
@@ -673,6 +683,10 @@ app.post('/api/jale/propose-variant', async (req, res) => {
       }
     });
   } catch (error) {
+    // Handle tenant not found error
+    if (error.message === 'Tenant not found') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
     console.error('Error in /api/jale/propose-variant:', error);
     res.status(500).json({ 
       error: 'Internal server error',

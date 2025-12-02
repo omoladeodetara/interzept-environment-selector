@@ -10,6 +10,7 @@ const request = require('supertest');
 jest.mock('../../ab-testing-server/database', () => ({
   getExperiment: jest.fn(),
   getExperimentByKey: jest.fn(),
+  getTenant: jest.fn(),
   testConnection: jest.fn().mockResolvedValue(true),
   close: jest.fn().mockResolvedValue(undefined),
 }));
@@ -81,6 +82,7 @@ describe('GET /api/experiments/:experimentId/definition', () => {
   });
 
   it('should return experiment definition when experimentId is key with tenantId', async () => {
+    db.getTenant.mockResolvedValue({ id: '123e4567-e89b-12d3-a456-426614174001', name: 'Test Tenant' });
     db.getExperimentByKey.mockResolvedValue(mockExperiment);
 
     const response = await request(app)
@@ -91,6 +93,7 @@ describe('GET /api/experiments/:experimentId/definition', () => {
 
     expect(response.body.experimentId).toBe('pricing_test_001');
     expect(response.body.variants).toHaveLength(2);
+    expect(db.getTenant).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174001');
     expect(db.getExperimentByKey).toHaveBeenCalledWith(
       '123e4567-e89b-12d3-a456-426614174001',
       'pricing_test_001'
@@ -106,6 +109,18 @@ describe('GET /api/experiments/:experimentId/definition', () => {
       .expect(404);
 
     expect(response.body).toHaveProperty('error', 'Experiment not found');
+  });
+
+  it('should return 404 when tenant not found', async () => {
+    db.getTenant.mockResolvedValue(null);
+
+    const response = await request(app)
+      .get('/api/experiments/pricing_test_001/definition')
+      .query({ tenantId: 'nonexistent-tenant' })
+      .expect('Content-Type', /json/)
+      .expect(404);
+
+    expect(response.body).toHaveProperty('error', 'Tenant not found');
   });
 
   it('should handle database errors gracefully', async () => {
