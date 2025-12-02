@@ -229,6 +229,20 @@ app.post('/api/experiments/:experimentId/convert', async (req, res) => {
 });
 
 /**
+ * Helper function to lookup experiment by ID or key
+ * @param {string} experimentId - Experiment UUID or key
+ * @param {string} tenantId - Optional tenant ID for key-based lookup
+ * @returns {Promise<Object|null>} Experiment or null if not found
+ */
+async function lookupExperiment(experimentId, tenantId) {
+  if (tenantId) {
+    return await db.getExperimentByKey(tenantId, experimentId);
+  } else {
+    return await db.getExperiment(experimentId);
+  }
+}
+
+/**
  * Get experiment definition (variants and configuration)
  * GET /api/experiments/:experimentId/definition
  * 
@@ -239,13 +253,7 @@ app.get('/api/experiments/:experimentId/definition', async (req, res) => {
     const { experimentId } = req.params;
     const { tenantId } = req.query;
     
-    // Lookup experiment (supports both UUID and key)
-    let experiment;
-    if (tenantId) {
-      experiment = await db.getExperimentByKey(tenantId, experimentId);
-    } else {
-      experiment = await db.getExperiment(experimentId);
-    }
+    const experiment = await lookupExperiment(experimentId, tenantId);
     
     if (!experiment) {
       return res.status(404).json({ error: 'Experiment not found' });
@@ -619,25 +627,28 @@ app.post('/api/jale/propose-variant', async (req, res) => {
       });
     }
     
-    // Lookup experiment
-    let experiment;
-    if (tenantId) {
-      experiment = await db.getExperimentByKey(tenantId, experimentId);
-    } else {
-      experiment = await db.getExperiment(experimentId);
-    }
+    const experiment = await lookupExperiment(experimentId, tenantId);
     
     if (!experiment) {
       return res.status(404).json({ error: 'Experiment not found' });
     }
     
-    // Generate variant label if not provided
-    const variantLabel = label || `variant_${experiment.variants.length + 1}`;
+    // Generate variant label if not provided, ensuring uniqueness
+    let variantLabel = label;
+    if (!variantLabel) {
+      // Find next available variant number that doesn't conflict with existing names
+      const existingNames = new Set(experiment.variants.map(v => v.name));
+      let counter = experiment.variants.length + 1;
+      do {
+        variantLabel = `variant_${counter}`;
+        counter++;
+      } while (existingNames.has(variantLabel));
+    }
     
-    // Create new variant object
+    // Create new variant object using shorthand property syntax
     const newVariant = {
       name: variantLabel,
-      price: price,
+      price,
       weight: 0.0, // New variants start with 0 weight until activated
       metadata: metadata || {}
     };
