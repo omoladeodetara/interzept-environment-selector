@@ -44,7 +44,7 @@ const corsOptions = {
           callback(null, false);
         }
       },
-  credentials: config.nodeEnv !== 'development', // Only enable credentials in production
+  credentials: config.nodeEnv === 'production', // Only enable credentials in production
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
