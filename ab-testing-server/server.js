@@ -35,16 +35,16 @@ const corsOptions = {
           ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
           : [];
         
+        // If no origins configured in production, allow no CORS (same as before)
         if (allowedOrigins.length === 0) {
-          // No CORS configured for production
-          callback(new Error('CORS origin not configured'), false);
+          callback(null, false);
         } else if (allowedOrigins.includes(req.header('Origin'))) {
           callback(null, true);
         } else {
-          callback(new Error('Not allowed by CORS'), false);
+          callback(null, false);
         }
       },
-  credentials: true,
+  credentials: config.nodeEnv !== 'development', // Only enable credentials in production
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
