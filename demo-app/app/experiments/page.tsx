@@ -1,11 +1,55 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { sampleExperiments } from "@/lib/sample-data";
+import { apiClient, Experiment } from "@/lib/api-client";
+
+// Use the first tenant from the database for now
+const DEFAULT_TENANT_ID = "989a5aea-aaa8-47cc-8429-d6c5f4174070"; // Demo Company
 
 export default function ExperimentsPage() {
-  const experiments = sampleExperiments;
+  const [experiments, setExperiments] = useState<any[]>(sampleExperiments);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchExperiments() {
+      try {
+        setLoading(true);
+        const data = await apiClient.listExperiments(DEFAULT_TENANT_ID);
+        // Map the API response to match the sample data format
+        const mapped = data.map((exp: Experiment) => ({
+          id: exp.id,
+          tenantId: exp.tenant_id,
+          key: exp.key,
+          name: exp.name,
+          description: exp.description,
+          status: exp.status,
+          variants: exp.variants.map((v, idx) => ({
+            id: `v${idx + 1}`,
+            name: v.name,
+            price: v.price,
+            weight: v.weight,
+          })),
+          startDate: exp.start_date,
+          endDate: exp.end_date,
+          createdAt: exp.created_at,
+        }));
+        setExperiments(mapped.length > 0 ? mapped : sampleExperiments);
+      } catch (err) {
+        console.error("Failed to fetch experiments:", err);
+        setError("Failed to load experiments. Showing sample data.");
+        setExperiments(sampleExperiments);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchExperiments();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -20,6 +64,18 @@ export default function ExperimentsPage() {
           <Link href="/experiments/new">Create Experiment</Link>
         </Button>
       </div>
+
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="text-center py-8 text-muted-foreground">
+          Loading experiments...
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-2">
