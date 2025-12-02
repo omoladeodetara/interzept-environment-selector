@@ -229,6 +229,69 @@ app.post('/api/experiments/:experimentId/convert', async (req, res) => {
 });
 
 /**
+ * Helper function to lookup experiment by ID or key
+ * @param {string} experimentId - Experiment UUID or key
+ * @param {string} tenantId - Optional tenant ID for key-based lookup
+ * @returns {Promise<Object|null>} Experiment or null if not found
+ * @throws {Error} If tenantId is provided but tenant doesn't exist
+ */
+async function lookupExperiment(experimentId, tenantId) {
+  if (tenantId) {
+    // Validate tenant exists before looking up experiment
+    const tenant = await db.getTenant(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    return await db.getExperimentByKey(tenantId, experimentId);
+  } else {
+    return await db.getExperiment(experimentId);
+  }
+}
+
+/**
+ * Get experiment definition (variants and configuration)
+ * GET /api/experiments/:experimentId/definition
+ * 
+ * Returns experiment details including variants for jale to use
+ */
+app.get('/api/experiments/:experimentId/definition', async (req, res) => {
+  try {
+    const { experimentId } = req.params;
+    const { tenantId } = req.query;
+    
+    const experiment = await lookupExperiment(experimentId, tenantId);
+    
+    if (!experiment) {
+      return res.status(404).json({ error: 'Experiment not found' });
+    }
+    
+    // Return experiment definition with variants
+    res.json({
+      experimentId: experiment.key,
+      id: experiment.id,
+      name: experiment.name,
+      description: experiment.description,
+      status: experiment.status,
+      variants: experiment.variants,
+      targetSampleSize: experiment.target_sample_size,
+      startDate: experiment.start_date,
+      endDate: experiment.end_date,
+      metadata: experiment.metadata
+    });
+  } catch (error) {
+    // Handle tenant not found error
+    if (error.message === 'Tenant not found') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    console.error('Error in /api/experiments/:experimentId/definition:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
  * Get experiment results
  * GET /api/experiments/:experimentId/results
  */
@@ -551,6 +614,88 @@ app.post('/api/jale/optimize', async (req, res) => {
 });
 
 /**
+ * Propose a new variant for an experiment
+ * POST /api/jale/propose-variant
+ * 
+ * Allows jale to propose a new variant to be added to an experiment.
+ * This can be used after jale's optimization to create a new test variant.
+ */
+app.post('/api/jale/propose-variant', async (req, res) => {
+  try {
+    const { experimentId, tenantId, price, label, metadata } = req.body;
+    
+    // Validate required fields
+    if (!experimentId || typeof experimentId !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid or missing experimentId' 
+      });
+    }
+    
+    if (!price || typeof price !== 'number' || price <= 0) {
+      return res.status(400).json({ 
+        error: 'Invalid or missing price (must be a positive number)' 
+      });
+    }
+    
+    const experiment = await lookupExperiment(experimentId, tenantId);
+    
+    if (!experiment) {
+      return res.status(404).json({ error: 'Experiment not found' });
+    }
+    
+    // Generate variant label if not provided, ensuring uniqueness
+    let variantLabel = label;
+    if (!variantLabel) {
+      // Find next available variant number that doesn't conflict with existing names
+      const existingNames = new Set(experiment.variants.map(v => v.name));
+      let counter = experiment.variants.length + 1;
+      do {
+        variantLabel = `variant_${counter}`;
+        counter++;
+      } while (existingNames.has(variantLabel));
+    }
+    
+    // Create new variant object using shorthand property syntax
+    const newVariant = {
+      name: variantLabel,
+      price,
+      weight: 0.0, // New variants start with 0 weight until activated
+      metadata: metadata || {}
+    };
+    
+    // Add to experiment variants
+    const updatedVariants = [...experiment.variants, newVariant];
+    
+    // Update experiment in database
+    const updatedExperiment = await db.updateExperiment(experiment.id, {
+      variants: updatedVariants
+    });
+    
+    res.json({
+      success: true,
+      experimentId: experiment.key,
+      variant: newVariant,
+      message: `Variant '${variantLabel}' proposed successfully`,
+      experiment: {
+        id: updatedExperiment.id,
+        key: updatedExperiment.key,
+        variants: updatedExperiment.variants
+      }
+    });
+  } catch (error) {
+    // Handle tenant not found error
+    if (error.message === 'Tenant not found') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    console.error('Error in /api/jale/propose-variant:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: config.nodeEnv === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
  * Get all experiment assignments (for debugging/testing)
  */
 app.get('/api/debug/assignments', (req, res) => {
@@ -610,6 +755,7 @@ if (require.main === module) {
     console.log('    POST /api/tenants/:id/experiments - Create experiment for tenant');
     console.log('  Experiments:');
     console.log('    GET  /api/experiments/:id/pricing - Get pricing with variant (tenant-aware)');
+    console.log('    GET  /api/experiments/:id/definition - Get experiment definition and variants');
     console.log('    POST /api/experiments/:id/convert - Record conversion (tenant-aware)');
     console.log('    GET  /api/experiments/:id/results - Get experiment results');
     console.log('  Legacy (backward compatibility):');
@@ -617,6 +763,7 @@ if (require.main === module) {
     console.log('    POST /api/convert - Simulate a conversion');
     console.log('  Optimization:');
     console.log('    POST /api/jale/optimize - Get pricing recommendation from jale');
+    console.log('    POST /api/jale/propose-variant - Propose a new variant for an experiment');
     console.log('  Webhooks:');
     console.log('    POST /webhooks/paid - Paid.ai webhook endpoint');
     if (config.nodeEnv === 'development') {

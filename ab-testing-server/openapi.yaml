@@ -586,6 +586,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/experiments/{experimentId}/definition:
+    get:
+      summary: Get experiment definition and variants
+      description: |
+        Retrieves the experiment configuration including all variants with their prices
+        and weights. This endpoint is used by jale to read experiment variants for
+        optimization calculations.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Unique identifier for the experiment (UUID or key)
+          schema:
+            type: string
+            example: pricing_test_001
+        - name: tenantId
+          in: query
+          required: false
+          description: Tenant ID for multi-tenant key lookup
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Experiment definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentDefinition'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/experiments/{experimentId}/results:
     get:
       summary: Get experiment results
@@ -648,6 +692,47 @@ paths:
                 $ref: '#/components/schemas/JaleOptimizeResponse'
         '400':
           description: Invalid request body (missing or invalid experimentId)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/jale/propose-variant:
+    post:
+      summary: Propose a new variant for an experiment
+      description: |
+        Allows jale to propose a new pricing variant to be added to an existing experiment.
+        This can be used after jale's optimization to create a new test variant based on
+        recommendations. The new variant starts with zero weight until explicitly activated.
+      tags:
+        - Optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeVariantRequest'
+      responses:
+        '200':
+          description: Variant proposed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposeVariantResponse'
+        '400':
+          description: Invalid request body (missing or invalid experimentId or price)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
           content:
             application/json:
               schema:
@@ -1192,6 +1277,152 @@ components:
           format: float
           description: Expected revenue at this price
           example: 3598.80
+
+    ExperimentDefinition:
+      type: object
+      properties:
+        experimentId:
+          type: string
+          description: Experiment key identifier
+          example: pricing_test_001
+        id:
+          type: string
+          format: uuid
+          description: Experiment UUID
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: Human-readable experiment name
+          example: Pricing Experiment 1
+        description:
+          type: string
+          description: Experiment description
+          example: Testing two price points
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+          description: Current experiment status
+          example: active
+        variants:
+          type: array
+          description: List of experiment variants with prices
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: control
+              price:
+                type: number
+                format: float
+                example: 29.99
+              weight:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.5
+              metadata:
+                type: object
+                additionalProperties: true
+        targetSampleSize:
+          type: integer
+          description: Target sample size for the experiment
+          example: 1000
+        startDate:
+          type: string
+          format: date-time
+          description: Experiment start date
+        endDate:
+          type: string
+          format: date-time
+          description: Experiment end date
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional experiment metadata
+
+    ProposeVariantRequest:
+      type: object
+      required:
+        - experimentId
+        - price
+      properties:
+        experimentId:
+          type: string
+          description: Unique identifier for the experiment (UUID or key)
+          example: pricing_test_001
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant ID for multi-tenant key lookup
+          example: 123e4567-e89b-12d3-a456-426614174001
+        price:
+          type: number
+          format: float
+          description: Price for the new variant
+          minimum: 0
+          exclusiveMinimum: true
+          example: 34.99
+        label:
+          type: string
+          description: Optional label for the variant (auto-generated if not provided)
+          example: premium
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for the variant
+          example:
+            source: jale
+            confidence: 0.85
+
+    ProposeVariantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the variant was successfully proposed
+          example: true
+        experimentId:
+          type: string
+          description: Experiment key identifier
+          example: pricing_test_001
+        variant:
+          type: object
+          description: The newly proposed variant
+          properties:
+            name:
+              type: string
+              example: variant_3
+            price:
+              type: number
+              format: float
+              example: 34.99
+            weight:
+              type: number
+              format: float
+              example: 0.0
+            metadata:
+              type: object
+              additionalProperties: true
+        message:
+          type: string
+          description: Success message
+          example: "Variant 'variant_3' proposed successfully"
+        experiment:
+          type: object
+          description: Updated experiment details
+          properties:
+            id:
+              type: string
+              format: uuid
+            key:
+              type: string
+            variants:
+              type: array
+              items:
+                type: object
+
 
     Error:
       type: object
