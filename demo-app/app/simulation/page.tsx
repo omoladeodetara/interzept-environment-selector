@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,10 +33,18 @@ export default function SimulationPage() {
   
   const [log, setLog] = useState<string[]>([]);
   const [userId, setUserId] = useState<string>("");
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Generate a random user ID for this session
     setUserId(`agent_${Math.random().toString(36).substring(2, 15)}`);
+    
+    // Cleanup on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   const addLog = (message: string) => {
@@ -103,13 +111,16 @@ export default function SimulationPage() {
     setState((prev) => ({ ...prev, isSimulating: true }));
     addLog("🚀 Starting automatic simulation...");
     
-    const interval = setInterval(async () => {
+    intervalRef.current = setInterval(async () => {
       await simulateOrder();
     }, 3000); // Order every 3 seconds
 
     // Stop after 30 seconds
     setTimeout(() => {
-      clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       setState((prev) => ({ ...prev, isSimulating: false }));
       addLog("⏹️ Automatic simulation stopped");
     }, 30000);

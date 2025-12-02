@@ -118,6 +118,12 @@ export interface OptimizeResponse {
   }>;
 }
 
+export interface Pagination {
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -129,7 +135,7 @@ class ApiClient {
   // TENANT OPERATIONS
   // ============================================================================
 
-  async listTenants(): Promise<{ tenants: Tenant[]; pagination: any }> {
+  async listTenants(): Promise<{ tenants: Tenant[]; pagination: Pagination }> {
     const response = await fetch(`${this.baseUrl}/api/tenants`);
     if (!response.ok) {
       throw new Error(`Failed to list tenants: ${response.statusText}`);
