@@ -30,6 +30,12 @@ export default function RootLayout({
                     Experiments
                   </Link>
                   <Link
+                    href="/simulation"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Simulation
+                  </Link>
+                  <Link
                     href="/recommendations"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
