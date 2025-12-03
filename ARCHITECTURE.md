@@ -54,8 +54,8 @@ last-price/
 ├── specs/                       # Test specifications
 ├── public/                      # Static assets
 │
-├── demo-app/                    # Frontend (Oja) - Next.js app
-└── ui/                          # Component library
+├── demo-app/                    # Example demo app - pricing experiment showcase
+└── ui/                          # Component library (for Oja and other UIs)
 ```
 
 ## Core Components
@@ -244,7 +244,7 @@ The main entry point that:
 - **Database**: PostgreSQL 12+
 - **HTTP Client**: Axios
 - **API Documentation**: Swagger/OpenAPI 3.0
-- **Frontend**: Next.js 16 (demo-app)
+- **Frontend**: Next.js 16 (ui library, demo-app)
 
 ## Multi-Tenancy
 

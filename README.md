@@ -26,7 +26,9 @@ last-price/
 ├── api-delegates/        # HTTP route handlers
 ├── models/               # TypeScript type definitions
 ├── utils/                # Shared utilities
-└── migrations/           # Database schema
+├── migrations/           # Database schema
+├── ui/                   # Component library (for Oja and other UIs)
+└── demo-app/             # Example demo app (one of many possible demos)
 ```
 
 **Key Benefits:**
@@ -37,6 +39,30 @@ last-price/
 - 🚀 **Simple Deployment**: Single server process
 
 **[📖 Read the Architecture Documentation →](ARCHITECTURE.md)**
+
+### System Components
+
+**Last Price Platform** - The core A/B testing and pricing optimization platform that provides:
+- REST APIs for managing experiments and pricing
+- Database for storing experiment data
+- Integration with billing platforms (e.g., Paid.ai)
+- Optimization algorithms (Elo, Jale)
+
+**Oja** - The administrative UI for Last Price (planned/to be implemented):
+- Web interface for managing experiments
+- Dashboard for viewing analytics
+- Settings for configuring integrations
+- Built using the UI component library
+
+**Demo Apps** - Example applications that demonstrate Last Price usage:
+- `demo-app/` - Pricing experiment showcase
+- Other demos (e.g., "coffee pouring simulator", etc.) can be added to show different use cases
+- These are separate applications that integrate with Last Price via APIs
+
+**Your Applications** - Business owners, developers, and agent creators build their own apps:
+- Custom software that uses Last Price for pricing experiments
+- Integration via Last Price REST APIs
+- Optional: Use Oja UI for administration alongside their own apps
 
 ## 🎨 UI Component Library
 
@@ -307,11 +333,11 @@ The variant that maximizes your target metric (usually revenue or conversions wh
 - [Webhooks Guide](https://docs.paid.ai/webhooks)
 - [Authentication](https://docs.paid.ai/authentication)
 
-## UI Component Library & Demo
+## UI Component Library & Oja Admin Interface
 
-This repository includes a complete **UI component library** that demonstrates how to build modern, accessible pricing and analytics interfaces using **shadcn/ui** patterns and **Tailwind CSS**.
+This repository includes a complete **UI component library** that provides the foundation for building modern, accessible pricing and analytics interfaces using **shadcn/ui** patterns and **Tailwind CSS**.
 
-### What's Included
+### Component Library (`/ui`)
 
 The `/ui` directory contains:
 
@@ -325,7 +351,7 @@ The `/ui` directory contains:
 - **Fully responsive** mobile-first design
 - **Accessible** WCAG 2.1 AA compliant
 
-### Running the UI Demo
+### Running the UI Component Demo
 
 ```bash
 # Navigate to UI directory
@@ -339,6 +365,31 @@ npm run dev
 
 # Open http://localhost:3000
 ```
+
+### Oja - Administrative UI (Planned)
+
+**Oja** is the planned administrative web interface for managing the Last Price platform. It will provide:
+
+- **Experiment Management** - Create, configure, and monitor pricing experiments
+- **Analytics Dashboard** - View comprehensive experiment results and metrics
+- **Tenant Administration** - Manage multi-tenant settings (BYOK vs Managed mode)
+- **API Configuration** - Configure integrations with billing platforms
+- **Usage Monitoring** - Track platform usage and performance
+
+Oja will be built using the `/ui` component library and will serve as the primary management interface for users who prefer a graphical interface over API-only interaction. Business owners, developers, and agent creators can choose to:
+
+1. **Use Oja UI** - Manage experiments through the web interface
+2. **Use APIs directly** - Integrate Last Price into their own applications
+3. **Use both** - Administer via Oja while their apps use the APIs
+
+### Demo Applications vs. Oja
+
+- **Oja** = Administrative UI for Last Price platform
+- **Demo Apps** = Example applications showing how to integrate Last Price
+  - `demo-app/` - Pricing experiment showcase
+  - Future demos - "coffee pouring simulator", agent marketplace, etc.
+
+Demo apps are separate applications that business owners would build for their specific use cases, integrating with Last Price via APIs.
 
 ### Documentation
 
@@ -410,12 +461,16 @@ The server will start at http://localhost:3000
 
 ### Running the Demo App
 
+The demo app is an example application that demonstrates how to integrate Last Price into a real-world scenario. It showcases pricing experiment features and can serve as a reference implementation for building your own applications.
+
 ```bash
 cd demo-app
 npm install
 npm run dev
 # Open http://localhost:3002
 ```
+
+**Note:** This is one of several demo applications. Additional demos (such as a "coffee pouring simulator" or other domain-specific examples) can be created to demonstrate different use cases. Each demo is a separate application that uses the Last Price platform APIs.
 
 ## Conclusion: Traditional Wisdom Meets Modern Analytics
 

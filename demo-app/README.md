@@ -1,15 +1,50 @@
-# Demo App
+# Demo App - Pricing Experiment Showcase
 
-A reference implementation demonstrating the Pricing Optimizer's features.
+An example application demonstrating how to integrate the Last Price platform into a real-world pricing experiment scenario.
 
 ## Overview
 
-This demo application showcases:
+This demo application is **one of several possible demo applications** that showcase the Last Price Pricing Optimizer's features. It serves as a reference implementation for developers building their own applications that use Last Price.
+
+**Important:** This is NOT the administrative UI for Last Price. The administrative UI (Oja) is a separate application. This demo app represents how business owners, developers, and agent creators would build their own applications that integrate with Last Price via APIs.
+
+### What This Demo Showcases
 
 - **Dashboard** - Overview of experiments and key metrics
 - **Experiments** - Create, view, and manage A/B pricing tests
 - **Recommendations** - AI-powered pricing suggestions
 - **Settings** - Configure BYOK vs Managed mode
+
+### Use Cases for Demo Apps
+
+Demo applications like this one serve multiple purposes:
+
+1. **Reference Implementation** - Show developers how to integrate Last Price APIs
+2. **Use Case Examples** - Demonstrate specific scenarios (e.g., SaaS pricing, coffee shop simulator, agent marketplace, etc.)
+3. **Testing & Validation** - Validate Last Price features in realistic contexts
+4. **Educational** - Help new users understand the platform capabilities
+
+## Relationship to Last Price Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│         Last Price Platform                  │
+│   (Core APIs, DB, Optimization Engine)       │
+└──────────────────┬──────────────────────────┘
+                   │
+        ┌──────────┴──────────┬──────────────────┐
+        │                     │                   │
+   ┌────▼────┐         ┌──────▼──────┐    ┌──────▼──────┐
+   │   Oja   │         │  demo-app   │    │  Your App   │
+   │ (Admin  │         │  (Example)  │    │  (Custom)   │
+   │   UI)   │         │             │    │             │
+   └─────────┘         └─────────────┘    └─────────────┘
+```
+
+- **Last Price Platform**: Core platform providing APIs and services
+- **Oja**: Administrative UI for managing Last Price (to be implemented separately)
+- **demo-app**: This example application (one of many possible demos)
+- **Your App**: Your own custom application that integrates with Last Price
 
 ## Getting Started
 

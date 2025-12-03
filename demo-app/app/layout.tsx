@@ -3,8 +3,8 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pricing Optimizer Demo",
-  description: "Demo application for the Hybrid Multi-Tenant Pricing Optimizer",
+  title: "Last Price Demo - Pricing Experiment Showcase",
+  description: "Example demo application showcasing Last Price platform integration",
 };
 
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
             <div className="container mx-auto px-4">
               <nav className="flex items-center justify-between h-16">
                 <Link href="/" className="font-bold text-xl text-primary">
-                  Pricing Optimizer
+                  Last Price Demo
                 </Link>
                 <div className="flex items-center gap-6">
                   <Link
@@ -55,7 +55,7 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-            <p>Pricing Optimizer Demo App • Built with Next.js 16 + React 19</p>
+            <p>Last Price Demo App • Example Integration • Built with Next.js 16 + React 19</p>
           </footer>
         </div>
       </body>

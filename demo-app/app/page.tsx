@@ -12,11 +12,11 @@ export default function Home() {
       {/* Hero Section */}
       <section className="text-center py-12">
         <h1 className="text-4xl font-bold tracking-tight mb-4">
-          Hybrid Multi-Tenant Pricing Optimizer
+          Last Price Demo: Pricing Experiment Showcase
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Optimize your pricing strategy with A/B testing, AI-powered recommendations, 
-          and flexible BYOK or Managed mode integration.
+          An example application demonstrating Last Price integration for A/B testing, 
+          AI-powered recommendations, and flexible BYOK or Managed mode.
         </p>
         <div className="flex gap-4 justify-center">
           <Button asChild size="lg">
