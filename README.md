@@ -426,9 +426,12 @@ import { AnalyticsDashboard } from "@/components/analytics-dashboard"
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/omoladeodetara/last-price.git
+# Clone the repository (including submodules)
+git clone --recurse-submodules https://github.com/omoladeodetara/last-price.git
 cd last-price
+
+# If you already cloned without submodules, initialize them:
+# git submodule update --init --recursive
 
 # Install dependencies
 npm install
