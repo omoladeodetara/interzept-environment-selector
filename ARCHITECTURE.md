@@ -1,383 +1,396 @@
-# Oja, Elo, Jale, and Demo App - Architecture Implementation
+# Last Price - Modular Monolith Architecture
 
-This document describes the complete architecture of the Last Price pricing optimizer platform, consisting of four main components:
+This document describes the architecture of the Last Price pricing optimizer platform after restructuring to a modular monolith pattern.
 
-## Components Overview
+## Architecture Overview
 
-### 1. **Oja (Owner UI)** - Demo App
-Location: `/demo-app`  
-Port: `http://localhost:3002`
+Last Price follows a **modular monolith** architecture, organizing code into well-defined modules while maintaining a single deployable unit. This approach provides:
 
-The business-owner interface for managing the pricing optimization platform.
+- **Clear module boundaries**: Each module has a specific responsibility
+- **Independent development**: Modules can be developed and tested in isolation
+- **Easier testing**: Mock dependencies at module boundaries
+- **Future flexibility**: Modules can be extracted to microservices if needed
+- **Simpler deployment**: Single server process reduces operational complexity
 
-**Features**:
-- Tenant management (BYOK vs Managed mode)
-- Experiment creation and management
-- Real-time experiment viewing
-- Agent business simulation
-- Pricing recommendations interface
-- Settings and billing dashboard
+## Directory Structure
 
-**Tech Stack**:
-- Next.js 16 with App Router
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- shadcn/ui components
+```
+last-price/
+├── server.ts                    # Main server entry point
+├── package.json                 # Root dependencies and scripts
+├── tsconfig.json                # TypeScript configuration
+├── openapi.yaml                 # API specification
+├── .env.example                 # Environment variables template
+│
+├── packages/                    # Internal modules (business logic)
+│   ├── elo/                     # A/B Testing module
+│   │   ├── index.ts             # Variant assignment, tracking, results
+│   │   └── README.md            # Module documentation
+│   └── jale/                    # Pricing Engine module
+│       ├── index.ts             # Elasticity, recommendations, simulation
+│       └── README.md            # Module documentation
+│
+├── services/                    # Service layer (infrastructure)
+│   ├── database.ts              # PostgreSQL database access
+│   └── signals.ts               # Paid.ai Signals API integration
+│
+├── api-delegates/               # HTTP route handlers
+│   ├── tenants.ts               # Tenant management endpoints
+│   ├── experiments.ts           # Experiment endpoints
+│   ├── pricing.ts               # Pricing optimization endpoints
+│   ├── webhooks.ts              # Webhook handlers
+│   └── health.ts                # Health check and debug endpoints
+│
+├── models/                      # Type definitions
+│   └── types.ts                 # Core TypeScript interfaces
+│
+├── utils/                       # Utility functions
+│   └── config.ts                # Configuration management
+│
+├── migrations/                  # Database migrations
+│   └── schema.sql               # PostgreSQL schema
+│
+├── docs/                        # Documentation
+├── specs/                       # Test specifications
+├── public/                      # Static assets
+│
+├── demo-app/                    # Frontend (Oja) - Next.js app
+└── ui/                          # Component library
+```
 
-### 2. **Elo (A/B Testing Server)** - ab-testing-server
-Location: `/ab-testing-server`  
-Port: `http://localhost:3000`
+## Core Components
 
-The backend A/B testing engine that handles variant assignment, tracking, and Paid.ai integration.
+### 1. Packages (Business Logic Modules)
 
-**Key Features**:
-- Multi-tenant isolation
-- Deterministic variant assignment
+#### **Elo (A/B Testing)**
+Location: `packages/elo/`
+
+The A/B testing engine that handles variant assignment and tracking.
+
+**Responsibilities:**
+- Deterministic variant assignment (control/experiment)
 - View and conversion tracking
-- Tenant-aware Paid.ai signal emission
-- Webhook processing
-- OpenAPI 3.0 specification
+- Results aggregation and statistics
+- Experiment analytics
 
-**API Endpoints**:
-- Tenant management: `/api/tenants/*`
-- Experiment management: `/api/tenants/:id/experiments`
-- Pricing: `/api/experiments/:id/pricing`
-- Conversion: `/api/experiments/:id/convert`
-- Results: `/api/experiments/:id/results`
-- Optimization: `/api/jale/optimize`
-- Webhooks: `/webhooks/paid`
+**Key Functions:**
+- `assignVariant(userId, experimentId)` - Assign user to variant
+- `trackConversion(userId, experimentId, data)` - Record conversion
+- `getExperimentResults(experimentId)` - Get aggregated results
 
-**Database**: PostgreSQL with 7 tables for multi-tenant data
-
-### 3. **Jale (Pricing Engine)** - jale
-Location: `/jale`
+#### **Jale (Pricing Engine)**
+Location: `packages/jale/`
 
 The pricing optimization and recommendation engine.
 
-**Features**:
-- Elasticity computation
-- Experiment result analysis
-- Price recommendation generation
-- Simulation and confidence scoring
-- Linear interpolation for conversion estimation
+**Responsibilities:**
+- Elasticity computation from experiment data
+- Revenue simulation for candidate prices
+- Price recommendations based on objectives
+- Confidence scoring
 
-**Integration**: Called via `/api/jale/optimize` endpoint in Elo
+**Key Functions:**
+- `recommendPrice(options)` - Generate pricing recommendations
+- `estimateCvForPrice(observed, price)` - Estimate conversion rate
+- `simulateRevenueForCandidates(results, candidates)` - Simulate revenue
 
-### 4. **Demo (Agent Business Simulation)** - Simulation Page
-Location: `/demo-app/app/simulation`
+### 2. Services (Infrastructure Layer)
 
-A reference implementation showing how an AI agent-run business integrates with the platform.
+#### **Database Service**
+Location: `services/database.ts`
 
-**Example**: Coffee shop agent that:
-- Requests dynamic pricing per customer
-- Simulates purchase decisions based on price sensitivity
-- Records conversions
-- Tracks metrics in real-time
+Handles all PostgreSQL database operations.
 
-## Quick Start
+**Operations:**
+- Tenant CRUD (create, read, update, delete)
+- Experiment management
+- Assignment tracking
+- View and conversion recording
+- Usage metrics
+- Results aggregation
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL 12+
-- npm or yarn
+#### **Signals Service**
+Location: `services/signals.ts`
 
-### Step 1: Database Setup
+Integrates with Paid.ai's Signals API.
 
-```bash
-# Start PostgreSQL
-sudo service postgresql start
+**Operations:**
+- Emit A/B test signals
+- Track pricing view events
+- Track conversion events
+- Support for tenant-specific API keys (BYOK mode)
 
-# Create database
-sudo -u postgres psql -c "CREATE DATABASE lastprice;"
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+### 3. API Delegates (HTTP Layer)
 
-# Apply schema
-sudo -u postgres psql -d lastprice -f db/schema.sql
+API delegates handle HTTP routing, validation, and response formatting.
+
+#### **Tenants Delegate**
+Location: `api-delegates/tenants.ts`
+
+Endpoints: `/api/tenants/*`
+
+- Create/list/get/update/delete tenants
+- Create experiments for tenants
+- Multi-tenant isolation
+
+#### **Experiments Delegate**
+Location: `api-delegates/experiments.ts`
+
+Endpoints: `/api/experiments/*`
+
+- Get pricing with variant assignment
+- Record conversions
+- Get experiment definitions
+- Get experiment results
+
+#### **Pricing Delegate**
+Location: `api-delegates/pricing.ts`
+
+Endpoints: `/api/jale/*`
+
+- Get pricing recommendations (Jale integration)
+- Propose new variants
+
+#### **Webhooks Delegate**
+Location: `api-delegates/webhooks.ts`
+
+Endpoints: `/webhooks/*`
+
+- Handle Paid.ai webhook events
+- Process subscription/payment events
+- Link webhooks to experiments
+
+#### **Health Delegate**
+Location: `api-delegates/health.ts`
+
+Endpoints: `/health`, `/api/debug/*`
+
+- Health check (database status)
+- Debug endpoints (development only)
+
+### 4. Models
+
+Location: `models/types.ts`
+
+TypeScript interfaces and types for:
+- Tenant, Experiment, Variant
+- Assignment, View, Conversion
+- ExperimentResults, VariantMetrics
+- PricingRecommendation
+- Config
+
+### 5. Main Server
+
+Location: `server.ts`
+
+The main entry point that:
+- Configures Express middleware
+- Loads OpenAPI specification
+- Mounts API delegates
+- Handles graceful shutdown
+- Serves Swagger UI documentation
+
+## Data Flow
+
+### Experiment Flow
+
+```
+1. User Request → server.ts
+   ↓
+2. API Delegate (experiments.ts) → Validates request
+   ↓
+3. Database Service → Gets/creates assignment
+   ↓
+4. Elo Package → Assigns variant (if needed)
+   ↓
+5. Database Service → Records view
+   ↓
+6. Signals Service → Emits to Paid.ai (async)
+   ↓
+7. Response → Returns pricing with variant
 ```
 
-### Step 2: Start Elo (ab-testing-server)
-
-```bash
-cd ab-testing-server
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env and set:
-# DB_PASSWORD=postgres
-# PAID_API_KEY=your_key_here
-
-# Start server
-node server.js
-```
-
-Server will be available at `http://localhost:3000`
-
-### Step 3: Start Oja (demo-app)
-
-```bash
-cd demo-app
-
-# Install dependencies
-npm install
-
-# The .env.local file should already contain:
-# NEXT_PUBLIC_API_URL=http://localhost:3000
-
-# Start Next.js app
-npm run dev
-```
-
-App will be available at `http://localhost:3002`
-
-### Step 4: Test the Platform
-
-1. **View Experiments**: Navigate to `http://localhost:3002/experiments`
-2. **Run Simulation**: Navigate to `http://localhost:3002/simulation`
-3. **Click "Simulate Single Order"** to test the complete flow
-4. **Watch the activity log** to see API calls in real-time
-
-## API Flow Diagram
+### Conversion Flow
 
 ```
-User/Agent
-    │
-    ├──→ GET /api/experiments/:id/pricing?userId=X&tenantId=Y
-    │    (Elo assigns variant, records view, emits Paid.ai signal)
-    │    ← Returns: { userId, experimentId, variant, pricing }
-    │
-    ├──→ POST /api/experiments/:id/convert
-    │    { userId, tenantId, revenue }
-    │    (Elo records conversion, emits Paid.ai signal)
-    │    ← Returns: { success, userId, variant, revenue }
-    │
-    └──→ POST /api/jale/optimize
-         { experimentId, objective, candidates }
-         (Jale analyzes results, returns recommendation)
-         ← Returns: { recommendedPrice, expectedRevenue, confidence, simulation }
+1. Conversion Event → experiments.ts
+   ↓
+2. Database Service → Records conversion
+   ↓
+3. Signals Service → Emits conversion to Paid.ai
+   ↓
+4. Response → Confirms conversion
 ```
 
-## Architecture Diagram
+### Optimization Flow
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                 Oja (Owner UI)                      │
-│           Next.js 16 + React 19                     │
-│                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐         │
-│  │ Tenants  │  │Experiments│  │Simulation│         │
-│  └──────────┘  └──────────┘  └──────────┘         │
-└───────────────────────┬─────────────────────────────┘
-                        │ HTTP REST API
-                        │
-┌───────────────────────▼─────────────────────────────┐
-│          Elo (A/B Testing Server)                   │
-│             Express.js + PostgreSQL                 │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐  │
-│  │ Multi-Tenant Database (PostgreSQL)           │  │
-│  │ • tenants                                    │  │
-│  │ • experiments                                │  │
-│  │ • assignments                                │  │
-│  │ • views                                      │  │
-│  │ • conversions                                │  │
-│  │ • usage                                      │  │
-│  │ • recommendations                            │  │
-│  └──────────────────────────────────────────────┘  │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐  │
-│  │ Paid.ai Integration                          │  │
-│  │ • Tenant-aware signal emission               │  │
-│  │ • BYOK vs Managed mode support               │  │
-│  │ • Webhook processing                         │  │
-│  └──────────────────────────────────────────────┘  │
-└───────────────────────┬─────────────────────────────┘
-                        │
-┌───────────────────────▼─────────────────────────────┐
-│              Jale (Pricing Engine)                  │
-│                     Node.js                         │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐  │
-│  │ • Elasticity computation                     │  │
-│  │ • Experiment analysis                        │  │
-│  │ • Price recommendations                      │  │
-│  │ • Confidence scoring                         │  │
-│  └──────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+1. Optimization Request → pricing.ts
+   ↓
+2. Jale Package → Fetches experiment data
+   ↓
+3. Jale Package → Simulates revenue for candidates
+   ↓
+4. Jale Package → Selects best price
+   ↓
+5. Response → Returns recommendation
 ```
 
-## Tenant Modes
+## Technology Stack
+
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript 5.3+
+- **Framework**: Express.js 4.x
+- **Database**: PostgreSQL 12+
+- **HTTP Client**: Axios
+- **API Documentation**: Swagger/OpenAPI 3.0
+- **Frontend**: Next.js 16 (demo-app)
+
+## Multi-Tenancy
+
+The platform supports two tenant modes:
 
 ### Managed Mode
 - Platform provides Paid.ai integration
-- Single API key for all managed tenants
-- Simplified setup
-- Lower barrier to entry
+- Shared API key for all tenants
+- Simpler setup, faster onboarding
 
-**Configuration**:
-```json
-{
-  "name": "Demo Company",
-  "email": "demo@example.com",
-  "mode": "managed",
-  "plan": "starter"
-}
-```
-
-### BYOK (Bring Your Own Key) Mode
+### BYOK Mode (Bring Your Own Key)
 - Tenant provides their own Paid.ai API key
-- Direct billing relationship with Paid.ai
-- Full data control
-- Enterprise-friendly
+- Full data isolation
+- Enterprise use case
 
-**Configuration**:
-```json
-{
-  "name": "Enterprise Corp",
-  "email": "admin@enterprise.com",
-  "mode": "byok",
-  "paidApiKey": "sk_live_...",
-  "plan": "enterprise"
-}
-```
+## Database Schema
 
-## API Examples
+Tables:
+- `tenants` - Tenant accounts
+- `experiments` - A/B test experiments
+- `assignments` - User variant assignments
+- `views` - Pricing page views
+- `conversions` - Subscription/purchase events
+- `usage` - Usage metrics per tenant
 
-### Create a Tenant
+## Configuration
+
+Environment variables (see `.env.example`):
+
 ```bash
-curl -X POST http://localhost:3000/api/tenants \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "My Company",
-    "email": "admin@mycompany.com",
-    "mode": "managed",
-    "plan": "free"
-  }'
-```
+# Required
+PAID_API_KEY=your_paid_api_key
 
-### Create an Experiment
-```bash
-curl -X POST http://localhost:3000/api/tenants/TENANT_ID/experiments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key": "pricing_test_001",
-    "name": "Premium Plan Test",
-    "description": "Testing $29.99 vs $39.99",
-    "variants": [
-      { "name": "control", "price": 29.99, "weight": 50 },
-      { "name": "experiment", "price": 39.99, "weight": 50 }
-    ],
-    "status": "active"
-  }'
-```
+# Optional
+PORT=3000
+NODE_ENV=development
+PAID_API_BASE_URL=https://api.paid.ai/v1
 
-### Get Pricing (Agent Request)
-```bash
-curl "http://localhost:3000/api/experiments/pricing_test_001/pricing?userId=user_123&tenantId=TENANT_ID"
-```
+# Database
+DATABASE_URL=postgres://user:password@localhost:5432/lastprice
+# Or individual DB_* variables
 
-### Record Conversion
-```bash
-curl -X POST http://localhost:3000/api/experiments/pricing_test_001/convert \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "user_123",
-    "tenantId": "TENANT_ID",
-    "revenue": 39.99
-  }'
-```
+# Webhooks
+WEBHOOK_SECRET=your_webhook_secret
+ENABLE_WEBHOOK_VERIFICATION=false
 
-### Get Recommendations
-```bash
-curl -X POST http://localhost:3000/api/jale/optimize \
-  -H "Content-Type: application/json" \
-  -d '{
-    "experimentId": "pricing_test_001",
-    "objective": "revenue"
-  }'
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3002
 ```
 
 ## Development
 
-### Running Tests
-```bash
-# ab-testing-server
-cd ab-testing-server
-npm test
+### Setup
 
-# demo-app
-cd demo-app
-npm run lint
+```bash
+# Install dependencies
+npm install
+
+# Setup database
+psql -d lastprice -f migrations/schema.sql
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Build TypeScript
 npm run build
+
+# Start server
+npm run dev
 ```
 
-### API Documentation
-OpenAPI specification available at: `http://localhost:3000/api-docs`
+### Build and Run
 
-### Database Migrations
-Schema is in `/db/schema.sql`. For updates:
-1. Modify schema.sql
-2. Create migration script
-3. Apply with `psql -d lastprice -f migration.sql`
-
-## Security Considerations
-
-### Production Checklist
-- [ ] Enable API key encryption in database
-- [ ] Implement webhook signature verification
-- [ ] Add JWT authentication
-- [ ] Configure rate limiting
-- [ ] Enable HTTPS for all connections
-- [ ] Use environment-specific secrets
-- [ ] Configure CORS for production domains
-- [ ] Set up monitoring and alerting
-- [ ] Implement database backups
-- [ ] Use prepared statements (already done)
-
-### Current Security Features
-- ✅ Parameterized SQL queries (prevents SQL injection)
-- ✅ Input validation on all endpoints
-- ✅ API key masking in responses
-- ✅ Secure cookie flags
-- ✅ CORS restricted to specific origin (development)
-
-## Troubleshooting
-
-### Database Connection Failed
 ```bash
-# Check PostgreSQL is running
-sudo service postgresql status
+# Development (with hot reload)
+npm run dev
 
-# Check password is set
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+# Production build
+npm run build
+npm start
+
+# Type checking only
+npm run type-check
 ```
 
-### CORS Errors
-- Ensure ab-testing-server is running on port 3000
-- Ensure demo-app is running on port 3002
-- Check CORS origin in server.js matches demo-app URL
+## API Documentation
 
-### Experiments Not Loading
-- Check browser console for errors
-- Verify API client is configured with correct base URL
-- Test API directly: `curl http://localhost:3000/health`
+Interactive API documentation is available at:
+- Development: http://localhost:3000/api-docs
+- Uses OpenAPI 3.0 specification from `openapi.yaml`
 
-## Next Steps
+## Testing Strategy
 
-1. **Tenant Onboarding**: Build wizard for new tenant signup
-2. **Experiment Creation UI**: Form to create experiments
-3. **Recommendations Dashboard**: Display and accept recommendations
-4. **Analytics**: Real-time charts and statistical significance
-5. **BYOK Flow**: Complete tenant API key management
-6. **Usage Dashboard**: Track signals, API calls, billing
+- **Unit Tests**: Test packages (elo, jale) in isolation
+- **Integration Tests**: Test API delegates with mock services
+- **End-to-End Tests**: Test full request/response cycles
+- **Database Tests**: Test database service with test database
 
-## Contributing
+## Comparison to Previous Architecture
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+### Before (Scattered Structure)
+```
+last-price/
+├── ab-testing-server/  ← Everything in one place
+│   ├── server.js
+│   ├── ab-testing.js
+│   ├── database.js
+│   ├── signals.js
+│   └── tenants.js
+├── jale/              ← Separate, tightly coupled
+│   └── index.js
+└── db/                ← Database schema separate
+    └── schema.sql
+```
 
-## License
+Problems:
+- Mixed concerns (routing, logic, data access)
+- Hard to test in isolation
+- Unclear dependencies
+- JavaScript (no type safety)
 
-See [LICENSE](../LICENSE) for details.
+### After (Modular Monolith)
+```
+last-price/
+├── server.ts          ← Entry point
+├── packages/          ← Business logic modules
+│   ├── elo/
+│   └── jale/
+├── services/          ← Infrastructure
+├── api-delegates/     ← HTTP layer
+├── models/            ← Types
+└── migrations/        ← Database
+```
+
+Benefits:
+- Clear separation of concerns
+- Independent module development
+- Easy to test
+- TypeScript type safety
+- Single deployment unit
+- Future microservices option
+
+## References
+
+- [Modular Monolith Pattern](https://www.kamilgrzybek.com/blog/posts/modular-monolith-primer)
+- [TypeScript Best Practices](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)
+- [Express.js Best Practices](https://expressjs.com/en/advanced/best-practice-performance.html)
+- [PostgreSQL Best Practices](https://wiki.postgresql.org/wiki/Don't_Do_This)

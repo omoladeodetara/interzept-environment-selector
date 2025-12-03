@@ -1,0 +1,1442 @@
+openapi: 3.0.3
+info:
+  title: A/B Testing Server for Pricing Experiments
+  description: |
+    Server for conducting A/B testing experiments on pricing strategies using Paid.ai integration.
+    
+    This server provides endpoints for:
+    - Assigning users to experiment variants
+    - Tracking pricing page views and conversions
+    - Processing Paid.ai webhook events
+    - Analyzing experiment results
+    
+    **Architecture**: The system uses deterministic SHA-256 hashing to ensure consistent user-to-variant mapping,
+    emits signals to Paid.ai's Signals API for event tracking, and provides real-time analytics.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Tenants
+    description: Tenant management (BYOK and Managed modes)
+  - name: Experiments
+    description: A/B testing experiment operations
+  - name: Optimization
+    description: Jale pricing optimization endpoints
+  - name: Webhooks
+    description: Paid.ai webhook integration
+  - name: Debug
+    description: Debugging and development endpoints
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API service is running
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00.000Z'
+
+  /api/tenants:
+    post:
+      summary: Create a new tenant
+      description: |
+        Create a new tenant account with either Managed or BYOK (Bring Your Own Key) mode.
+        In Managed mode, the platform handles Paid.ai integration. In BYOK mode, the tenant
+        provides their own Paid.ai API key.
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTenantRequest'
+      responses:
+        '201':
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Tenant with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List tenants
+      description: Get a list of all tenants (admin only)
+      tags:
+        - Tenants
+      parameters:
+        - name: mode
+          in: query
+          description: Filter by mode
+          schema:
+            type: string
+            enum: [managed, byok]
+        - name: plan
+          in: query
+          description: Filter by plan tier
+          schema:
+            type: string
+            enum: [free, starter, pro, enterprise]
+        - name: limit
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Offset for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tenants/{tenantId}:
+    get:
+      summary: Get tenant details
+      description: Retrieve information about a specific tenant
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update tenant
+      description: Update tenant settings (mode, API key, plan, etc.)
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTenantRequest'
+      responses:
+        '200':
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete tenant
+      description: Delete a tenant and all associated data
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tenant deleted successfully
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/tenants/{tenantId}/experiments:
+    post:
+      summary: Create experiment for tenant
+      description: Create a new A/B testing experiment for a specific tenant
+      tags:
+        - Tenants
+        - Experiments
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExperimentRequest'
+      responses:
+        '201':
+          description: Experiment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Experiment'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List tenant experiments
+      description: Get all experiments for a specific tenant
+      tags:
+        - Tenants
+        - Experiments
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          description: Tenant UUID
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by experiment status
+          schema:
+            type: string
+            enum: [draft, active, paused, completed]
+      responses:
+        '200':
+          description: List of experiments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  experiments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Experiment'
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/pricing:
+    get:
+      summary: Get pricing with variant assignment
+      description: |
+        Tenant-aware pricing endpoint. Assigns a user to an A/B test variant and returns 
+        the corresponding pricing. Uses the tenant's mode (BYOK or Managed) to determine
+        which Paid.ai API key to use for signal emission.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Experiment identifier
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: Unique identifier for the user
+          required: true
+          schema:
+            type: string
+            example: user_123
+        - name: tenantId
+          in: query
+          description: Tenant UUID (required for multi-tenant setups)
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pricing returned with variant assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/convert:
+    post:
+      summary: Record conversion for experiment
+      description: |
+        Records a conversion event for a user in an experiment. Uses tenant context
+        to determine the correct Paid.ai API key for signal emission.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Experiment identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  description: User identifier from the pricing request
+                  example: user_123
+                tenantId:
+                  type: string
+                  format: uuid
+                  description: Tenant UUID
+                revenue:
+                  type: number
+                  format: float
+                  description: Optional revenue amount
+                  example: 39.99
+      responses:
+        '200':
+          description: Conversion tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No variant assignment found for user or experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/pricing:
+    get:
+      summary: Get pricing with variant assignment
+      description: |
+        Assigns a user to an A/B test variant (control or experiment) and returns the corresponding pricing.
+        The assignment is deterministic based on userId and experimentId, ensuring consistency across sessions.
+        Also emits a signal to Paid.ai tracking the pricing view event.
+      tags:
+        - Experiments
+      parameters:
+        - name: userId
+          in: query
+          description: Unique identifier for the user
+          required: false
+          schema:
+            type: string
+            example: user_123
+        - name: experimentId
+          in: query
+          description: Unique identifier for the experiment
+          required: false
+          schema:
+            type: string
+            example: pricing_test_001
+            default: pricing_test_001
+      responses:
+        '200':
+          description: Pricing returned with variant assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/convert:
+    post:
+      summary: Track a conversion event
+      description: |
+        Records a conversion (subscription/purchase) for a user in an experiment.
+        The user must have been previously assigned to a variant via the /api/pricing endpoint.
+        Emits a conversion signal to Paid.ai for tracking.
+      tags:
+        - Experiments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - experimentId
+              properties:
+                userId:
+                  type: string
+                  description: User identifier from the pricing request
+                  example: user_123
+                experimentId:
+                  type: string
+                  description: Experiment identifier
+                  example: pricing_test_001
+      responses:
+        '200':
+          description: Conversion tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No variant assignment found for user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/definition:
+    get:
+      summary: Get experiment definition and variants
+      description: |
+        Retrieves the experiment configuration including all variants with their prices
+        and weights. This endpoint is used by jale to read experiment variants for
+        optimization calculations.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Unique identifier for the experiment (UUID or key)
+          schema:
+            type: string
+            example: pricing_test_001
+        - name: tenantId
+          in: query
+          required: false
+          description: Tenant ID for multi-tenant key lookup
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Experiment definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentDefinition'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/experiments/{experimentId}/results:
+    get:
+      summary: Get experiment results
+      description: |
+        Retrieves comprehensive analytics and statistics for an A/B test experiment,
+        including view counts, conversion rates, revenue metrics, and ARPU by variant.
+      tags:
+        - Experiments
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          description: Unique identifier for the experiment
+          schema:
+            type: string
+            example: pricing_test_001
+      responses:
+        '200':
+          description: Experiment results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResults'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/jale/optimize:
+    post:
+      summary: Get pricing recommendation from jale optimization
+      description: |
+        Calls the jale service to recommend an optimal price based on experiment data.
+        Uses historical conversion and revenue data to simulate expected outcomes for candidate prices.
+        
+        The endpoint analyzes experiment results and returns a recommended price along with
+        confidence score and revenue simulation data.
+      tags:
+        - Optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JaleOptimizeRequest'
+      responses:
+        '200':
+          description: Pricing recommendation returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JaleOptimizeResponse'
+        '400':
+          description: Invalid request body (missing or invalid experimentId)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/jale/propose-variant:
+    post:
+      summary: Propose a new variant for an experiment
+      description: |
+        Allows jale to propose a new pricing variant to be added to an existing experiment.
+        This can be used after jale's optimization to create a new test variant based on
+        recommendations. The new variant starts with zero weight until explicitly activated.
+      tags:
+        - Optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeVariantRequest'
+      responses:
+        '200':
+          description: Variant proposed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposeVariantResponse'
+        '400':
+          description: Invalid request body (missing or invalid experimentId or price)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /webhooks/paid:
+    post:
+      summary: Paid.ai webhook endpoint
+      description: |
+        Receives webhook events from Paid.ai about subscriptions, payments, and other billing events.
+        Links these events to A/B test experiments for conversion tracking.
+        
+        **Security**: In production, webhook signatures should be verified using the WEBHOOK_SECRET.
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        '400':
+          description: Invalid webhook payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid webhook signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/debug/assignments:
+    get:
+      summary: Get all experiment assignments
+      description: |
+        Returns all current experiment assignments for debugging purposes.
+        Only available in development mode.
+      tags:
+        - Debug
+      responses:
+        '200':
+          description: Assignments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 10
+                  assignments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Assignment'
+        '403':
+          description: Endpoint only available in development mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    # ============ Tenant Schemas ============
+    Tenant:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - mode
+        - plan
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique tenant identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Tenant company name
+          example: "Acme Corporation"
+        email:
+          type: string
+          format: email
+          description: Tenant contact email
+          example: "admin@acme.com"
+        mode:
+          type: string
+          enum: [managed, byok]
+          description: Integration mode (managed uses platform key, byok uses tenant's key)
+          example: "byok"
+        paidApiKey:
+          type: string
+          description: Masked Paid.ai API key (only shown for BYOK mode)
+          example: "sk_test_...abc123"
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          description: Subscription plan tier
+          example: "pro"
+        webhookSecret:
+          type: string
+          description: Secret for webhook signature verification (masked)
+          example: "whsec_...xyz789"
+        createdAt:
+          type: string
+          format: date-time
+          description: Tenant creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional tenant metadata
+
+    CreateTenantRequest:
+      type: object
+      required:
+        - name
+        - email
+        - mode
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Tenant company name
+          example: "Acme Corporation"
+        email:
+          type: string
+          format: email
+          description: Tenant contact email
+          example: "admin@acme.com"
+        mode:
+          type: string
+          enum: [managed, byok]
+          description: Integration mode
+          example: "managed"
+        paidApiKey:
+          type: string
+          description: Paid.ai API key (required for BYOK mode)
+          example: "sk_live_abc123..."
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          default: "free"
+          description: Subscription plan tier
+          example: "free"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional tenant metadata
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Tenant company name
+        mode:
+          type: string
+          enum: [managed, byok]
+          description: Integration mode
+        paidApiKey:
+          type: string
+          description: Paid.ai API key (for updating BYOK mode key)
+        plan:
+          type: string
+          enum: [free, starter, pro, enterprise]
+          description: Subscription plan tier
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional tenant metadata
+
+    Experiment:
+      type: object
+      required:
+        - id
+        - tenantId
+        - key
+        - name
+        - variants
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique experiment identifier
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant who owns this experiment
+        key:
+          type: string
+          description: Experiment key/identifier
+          example: "pricing_test_001"
+        name:
+          type: string
+          description: Human-readable experiment name
+          example: "Premium Plan Pricing Test"
+        description:
+          type: string
+          description: Experiment description
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Variant name
+                example: "control"
+              price:
+                type: number
+                format: float
+                description: Price for this variant
+                example: 29.99
+              weight:
+                type: integer
+                minimum: 0
+                maximum: 100
+                description: Traffic allocation percentage
+                example: 50
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+          description: Experiment status
+          example: "active"
+        startDate:
+          type: string
+          format: date-time
+          description: Experiment start date
+        endDate:
+          type: string
+          format: date-time
+          description: Experiment end date
+        targetSampleSize:
+          type: integer
+          description: Target number of samples before concluding
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    CreateExperimentRequest:
+      type: object
+      required:
+        - key
+        - name
+        - variants
+      properties:
+        key:
+          type: string
+          pattern: '^[a-z0-9_]+$'
+          description: Experiment key (lowercase, numbers, underscores only)
+          example: "pricing_test_001"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Experiment name
+          example: "Premium Plan Pricing Test"
+        description:
+          type: string
+          maxLength: 1000
+          description: Experiment description
+        variants:
+          type: array
+          minItems: 2
+          maxItems: 10
+          items:
+            type: object
+            required:
+              - name
+              - price
+            properties:
+              name:
+                type: string
+                description: Variant name
+                example: "control"
+              price:
+                type: number
+                format: float
+                minimum: 0
+                description: Price for this variant
+                example: 29.99
+              weight:
+                type: integer
+                minimum: 0
+                maximum: 100
+                default: 50
+                description: Traffic allocation percentage
+        targetSampleSize:
+          type: integer
+          minimum: 1
+          description: Target number of samples
+
+    # ============ Pricing and Conversion Schemas ============
+    PricingResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: user_123
+        experimentId:
+          type: string
+          example: pricing_test_001
+        variant:
+          type: string
+          enum: [control, experiment]
+          example: experiment
+        pricing:
+          type: object
+          properties:
+            plan:
+              type: string
+              example: Premium
+            price:
+              type: number
+              format: float
+              example: 39.99
+            features:
+              type: array
+              items:
+                type: string
+              example: ['Feature A', 'Feature B', 'Feature C', 'Feature D']
+
+    ConversionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        userId:
+          type: string
+          example: user_123
+        experimentId:
+          type: string
+          example: pricing_test_001
+        variant:
+          type: string
+          enum: [control, experiment]
+          example: experiment
+        revenue:
+          type: number
+          format: float
+          example: 39.99
+
+    ExperimentResults:
+      type: object
+      properties:
+        experimentId:
+          type: string
+          example: pricing_test_001
+        control:
+          $ref: '#/components/schemas/VariantMetrics'
+        experiment:
+          $ref: '#/components/schemas/VariantMetrics'
+        summary:
+          type: object
+          properties:
+            totalViews:
+              type: integer
+              example: 100
+            totalConversions:
+              type: integer
+              example: 25
+            totalRevenue:
+              type: string
+              example: '749.75'
+            conversionRateDiff:
+              type: string
+              example: '5.00%'
+            revenuePerUserDiff:
+              type: string
+              example: '10.00'
+
+    VariantMetrics:
+      type: object
+      properties:
+        views:
+          type: integer
+          example: 50
+        conversions:
+          type: integer
+          example: 12
+        revenue:
+          type: string
+          example: '359.88'
+        conversionRate:
+          type: string
+          example: '24.00%'
+        arpu:
+          type: string
+          example: '29.99'
+
+    WebhookEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          example: subscription.created
+        data:
+          type: object
+          properties:
+            customer_id:
+              type: string
+              example: user_123
+            amount:
+              type: number
+              format: float
+              example: 29.99
+            metadata:
+              type: object
+              properties:
+                experiment_id:
+                  type: string
+                  example: pricing_test_001
+
+    Assignment:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: user_123
+        experimentId:
+          type: string
+          example: pricing_test_001
+        variant:
+          type: string
+          enum: [control, experiment]
+          example: control
+
+    JaleOptimizeRequest:
+      type: object
+      required:
+        - experimentId
+      properties:
+        experimentId:
+          type: string
+          description: Unique identifier for the experiment to optimize
+          example: pricing_test_001
+        objective:
+          type: string
+          description: Optimization objective (revenue, conversion, or profit)
+          enum: [revenue, conversion, profit]
+          default: revenue
+          example: revenue
+        candidates:
+          type: array
+          description: Optional list of candidate prices to evaluate
+          items:
+            type: number
+            format: float
+          example: [19.99, 29.99, 39.99, 49.99]
+        lookbackDays:
+          type: integer
+          description: Number of days of historical data to consider
+          minimum: 1
+          default: 30
+          example: 30
+
+    JaleOptimizeResponse:
+      type: object
+      properties:
+        recommendedPrice:
+          type: number
+          format: float
+          description: The recommended optimal price
+          example: 35.99
+        expectedRevenue:
+          type: number
+          format: float
+          description: Expected revenue at the recommended price
+          example: 1799.50
+        confidence:
+          type: number
+          format: float
+          description: Confidence score for the recommendation (0-1)
+          minimum: 0
+          maximum: 1
+          example: 0.5
+        simulation:
+          type: array
+          description: Revenue simulation results for all candidate prices
+          items:
+            $ref: '#/components/schemas/PriceSimulation'
+
+    PriceSimulation:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+          description: Candidate price point
+          example: 29.99
+        estimatedCv:
+          type: number
+          format: float
+          description: Estimated conversion rate at this price
+          example: 0.12
+        expectedRevenue:
+          type: number
+          format: float
+          description: Expected revenue at this price
+          example: 3598.80
+
+    ExperimentDefinition:
+      type: object
+      properties:
+        experimentId:
+          type: string
+          description: Experiment key identifier
+          example: pricing_test_001
+        id:
+          type: string
+          format: uuid
+          description: Experiment UUID
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          description: Human-readable experiment name
+          example: Pricing Experiment 1
+        description:
+          type: string
+          description: Experiment description
+          example: Testing two price points
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+          description: Current experiment status
+          example: active
+        variants:
+          type: array
+          description: List of experiment variants with prices
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: control
+              price:
+                type: number
+                format: float
+                example: 29.99
+              weight:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.5
+              metadata:
+                type: object
+                additionalProperties: true
+        targetSampleSize:
+          type: integer
+          description: Target sample size for the experiment
+          example: 1000
+        startDate:
+          type: string
+          format: date-time
+          description: Experiment start date
+        endDate:
+          type: string
+          format: date-time
+          description: Experiment end date
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional experiment metadata
+
+    ProposeVariantRequest:
+      type: object
+      required:
+        - experimentId
+        - price
+      properties:
+        experimentId:
+          type: string
+          description: Unique identifier for the experiment (UUID or key)
+          example: pricing_test_001
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant ID for multi-tenant key lookup
+          example: 123e4567-e89b-12d3-a456-426614174001
+        price:
+          type: number
+          format: float
+          description: Price for the new variant
+          minimum: 0
+          exclusiveMinimum: true
+          example: 34.99
+        label:
+          type: string
+          description: Optional label for the variant (auto-generated if not provided)
+          example: premium
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for the variant
+          example:
+            source: jale
+            confidence: 0.85
+
+    ProposeVariantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the variant was successfully proposed
+          example: true
+        experimentId:
+          type: string
+          description: Experiment key identifier
+          example: pricing_test_001
+        variant:
+          type: object
+          description: The newly proposed variant
+          properties:
+            name:
+              type: string
+              example: variant_3
+            price:
+              type: number
+              format: float
+              example: 34.99
+            weight:
+              type: number
+              format: float
+              example: 0.0
+            metadata:
+              type: object
+              additionalProperties: true
+        message:
+          type: string
+          description: Success message
+          example: "Variant 'variant_3' proposed successfully"
+        experiment:
+          type: object
+          description: Updated experiment details
+          properties:
+            id:
+              type: string
+              format: uuid
+            key:
+              type: string
+            variants:
+              type: array
+              items:
+                type: object
+
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Invalid request parameters
+        message:
+          type: string
+          example: userId must be a non-empty string
+
+  securitySchemes:
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: x-paid-signature
+      description: HMAC signature for webhook verification

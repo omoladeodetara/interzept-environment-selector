@@ -5,11 +5,38 @@
 This repository provides a complete **educational resource and working implementation** for conducting pricing experiments. While the examples use [Paid.ai](https://paid.ai)'s infrastructure, the concepts and patterns apply to any billing platform (Stripe, Chargebee, Paddle, etc.). It includes:
 
 - 📚 **Comprehensive Guide**: Detailed explanation of A/B testing concepts and implementation strategies
-- 🖥️ **Production-Ready Server**: Express.js backend with example API integration ([`/ab-testing-server`](ab-testing-server/))
+- 🏗️ **Modular Monolith Architecture**: TypeScript-based server with clear module boundaries
+- 🖥️ **Production-Ready Server**: Express.js backend with OpenAPI specification
 - 🎨 **Modern UI Library**: Next.js component library with shadcn/ui patterns ([`/ui`](ui/))
 - 🔍 **API Documentation Scraper**: Tool for researching API documentation ([`/scraper`](scraper/))
 
 **Note:** The examples in this repository use Paid.ai as a demonstration platform, but the patterns and architecture can be adapted to work with any billing infrastructure (Stripe, Chargebee, Paddle, Lago, etc.).
+
+## 🏗️ Modular Monolith Architecture
+
+The Last Price server follows a **modular monolith** pattern for clean code organization while maintaining deployment simplicity:
+
+```
+last-price/
+├── server.ts              # Main entry point
+├── packages/              # Business logic modules
+│   ├── elo/              # A/B Testing engine
+│   └── jale/             # Pricing optimization engine
+├── services/             # Infrastructure layer (database, signals)
+├── api-delegates/        # HTTP route handlers
+├── models/               # TypeScript type definitions
+├── utils/                # Shared utilities
+└── migrations/           # Database schema
+```
+
+**Key Benefits:**
+- 🎯 **Clear Boundaries**: Each module has a specific responsibility
+- 🧪 **Testable**: Mock dependencies at module boundaries
+- 🔒 **Type Safe**: Full TypeScript with strict checking
+- 📈 **Scalable**: Extract modules to microservices if needed
+- 🚀 **Simple Deployment**: Single server process
+
+**[📖 Read the Architecture Documentation →](ARCHITECTURE.md)**
 
 ## 🎨 UI Component Library
 
@@ -338,6 +365,58 @@ import { AnalyticsDashboard } from "@/components/analytics-dashboard"
 <AnalyticsDashboard results={experimentData} />
 ```
 
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 12+
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/omoladeodetara/last-price.git
+cd last-price
+
+# Install dependencies
+npm install
+
+# Setup database
+sudo -u postgres psql -c "CREATE DATABASE lastprice;"
+sudo -u postgres psql -d lastprice -f migrations/schema.sql
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your Paid.ai API key and database credentials
+
+# Build TypeScript
+npm run build
+
+# Start development server
+npm run dev
+```
+
+The server will start at http://localhost:3000
+
+### Available Endpoints
+
+- **Health Check**: `GET /health`
+- **API Documentation**: `GET /api-docs` (Swagger UI)
+- **Tenants**: `POST /api/tenants`, `GET /api/tenants`, etc.
+- **Experiments**: `GET /api/experiments/:id/pricing`, `POST /api/experiments/:id/convert`
+- **Optimization**: `POST /api/jale/optimize`
+- **Webhooks**: `POST /webhooks/paid`
+
+### Running the Demo App
+
+```bash
+cd demo-app
+npm install
+npm run dev
+# Open http://localhost:3002
+```
+
 ## Conclusion: Traditional Wisdom Meets Modern Analytics
 
 The Nigerian marketplace teaches us that finding the right price is never a guess—it's discovered through patient negotiation, keen observation, and willingness to adapt. Modern A/B testing embodies this same wisdom at scale. Where a vendor adjusts prices based on customer reactions throughout the day, businesses now adjust pricing strategies based on thousands of data points collected through systematic experimentation.
@@ -352,7 +431,7 @@ This repository includes OpenAPI 3.0 specifications for API-first development:
 
 | Specification | Location | Description |
 |--------------|----------|-------------|
-| A/B Testing Server | [`ab-testing-server/openapi.yaml`](ab-testing-server/openapi.yaml) | A/B testing experiment endpoints |
+| Last Price API | [`openapi.yaml`](openapi.yaml) | Main server API (tenants, experiments, pricing) |
 | Paid.ai API | [`paid-api/openapi.yaml`](paid-api/openapi.yaml) | Paid.ai platform API reference |
 
 Use these specifications to:
@@ -360,6 +439,12 @@ Use these specifications to:
 - Generate server stubs for new implementations
 - Validate API requests and responses
 - Explore the API via Swagger UI at `/api-docs`
+
+**Development Server:**
+```bash
+npm run dev
+# Open http://localhost:3000/api-docs for interactive API documentation
+```
 
 ## Contributing
 
