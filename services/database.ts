@@ -5,7 +5,7 @@
  * It handles tenant management, experiments, assignments, views, conversions, and usage tracking.
  */
 
-import { Pool, QueryResult } from 'pg';
+import { Pool } from 'pg';
 import {
   Tenant,
   Experiment,
@@ -178,7 +178,7 @@ export async function updateTenant(tenantId: string, updates: Partial<Tenant>): 
 export async function deleteTenant(tenantId: string): Promise<boolean> {
   const query = 'DELETE FROM tenants WHERE id = $1';
   const result = await pool.query(query, [tenantId]);
-  return result.rowCount! > 0;
+  return (result.rowCount ?? 0) > 0;
 }
 
 // ============================================================================
@@ -275,7 +275,7 @@ export async function updateExperiment(experimentId: string, updates: Partial<Ex
 export async function deleteExperiment(experimentId: string): Promise<boolean> {
   const query = 'DELETE FROM experiments WHERE id = $1';
   const result = await pool.query(query, [experimentId]);
-  return result.rowCount! > 0;
+  return (result.rowCount ?? 0) > 0;
 }
 
 // ============================================================================

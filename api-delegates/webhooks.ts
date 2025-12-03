@@ -31,6 +31,9 @@ router.post('/paid', async (req: Request, res: Response) => {
       }
       
       // TODO: Implement actual signature verification based on Paid.ai's webhook signature scheme
+      // SECURITY WARNING: This endpoint should not be exposed to production without proper
+      // signature verification implemented. Set ENABLE_WEBHOOK_VERIFICATION=true only after
+      // implementing the verification logic below.
       console.error('Webhook signature verification is enabled but not yet implemented');
       return res.status(501).json({ 
         error: 'Webhook signature verification not implemented',

@@ -109,7 +109,7 @@ export async function recommendPrice(options: {
   candidates?: number[] | null;
   lookbackDays?: number;
 }): Promise<PricingRecommendation> {
-  const { experimentId, objective = 'revenue', candidates = null, lookbackDays = 30 } = options;
+  const { experimentId, objective = 'revenue', candidates = null } = options;
   
   if (!experimentId) throw new Error('experimentId is required');
 

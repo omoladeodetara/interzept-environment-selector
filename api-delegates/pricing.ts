@@ -81,16 +81,25 @@ router.post('/jale/propose-variant', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Experiment not found' });
     }
     
+    // Check existing variant names
+    const existingNames = new Set(experiment.variants.map((v: any) => v.name));
+    
     // Generate variant label if not provided, ensuring uniqueness
     let variantLabel = label;
     if (!variantLabel) {
       // Find next available variant number that doesn't conflict with existing names
-      const existingNames = new Set(experiment.variants.map((v: any) => v.name));
       let counter = experiment.variants.length + 1;
       do {
         variantLabel = `variant_${counter}`;
         counter++;
       } while (existingNames.has(variantLabel));
+    } else {
+      // Validate that provided label doesn't already exist
+      if (existingNames.has(variantLabel)) {
+        return res.status(400).json({ 
+          error: `Variant with name '${variantLabel}' already exists` 
+        });
+      }
     }
     
     // Create new variant object

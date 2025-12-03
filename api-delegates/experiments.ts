@@ -125,6 +125,11 @@ router.post('/:experimentId/convert', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'userId is required' });
     }
     
+    // Validate revenue if provided
+    if (revenue !== undefined && (typeof revenue !== 'number' || revenue < 0 || !isFinite(revenue))) {
+      return res.status(400).json({ error: 'Revenue must be a positive number' });
+    }
+    
     // Lookup experiment
     let experiment;
     if (tenantId) {

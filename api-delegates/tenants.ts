@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import * as db from '@services/database';
+import config from '@utils/config';
 
 const router = Router();
 
@@ -136,7 +137,7 @@ router.get('/', async (req: Request, res: Response) => {
     console.error('Error listing tenants:', error);
     res.status(500).json({ 
       error: 'Failed to list tenants',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: config.nodeEnv === 'development' ? error.message : undefined
     });
   }
 });
@@ -170,7 +171,7 @@ router.get('/:tenantId', async (req: Request, res: Response) => {
     console.error('Error getting tenant:', error);
     res.status(500).json({ 
       error: 'Failed to get tenant',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: config.nodeEnv === 'development' ? error.message : undefined
     });
   }
 });
@@ -228,7 +229,7 @@ router.patch('/:tenantId', async (req: Request, res: Response) => {
     console.error('Error updating tenant:', error);
     res.status(500).json({ 
       error: 'Failed to update tenant',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: config.nodeEnv === 'development' ? error.message : undefined
     });
   }
 });
@@ -257,7 +258,7 @@ router.delete('/:tenantId', async (req: Request, res: Response) => {
     console.error('Error deleting tenant:', error);
     res.status(500).json({ 
       error: 'Failed to delete tenant',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: config.nodeEnv === 'development' ? error.message : undefined
     });
   }
 });
@@ -324,7 +325,7 @@ router.post('/:tenantId/experiments', async (req: Request, res: Response) => {
     
     res.status(500).json({ 
       error: 'Failed to create experiment',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: config.nodeEnv === 'development' ? error.message : undefined
     });
   }
 });
@@ -361,7 +362,7 @@ router.get('/:tenantId/experiments', async (req: Request, res: Response) => {
     console.error('Error listing experiments:', error);
     res.status(500).json({ 
       error: 'Failed to list experiments',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: config.nodeEnv === 'development' ? error.message : undefined
     });
   }
 });
