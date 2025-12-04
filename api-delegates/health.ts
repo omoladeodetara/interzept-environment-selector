@@ -30,14 +30,14 @@ router.get('/', async (req: Request, res: Response) => {
  * GET /api/debug/assignments
  * Get all experiment assignments (for debugging/testing)
  */
-router.get('/debug/assignments', (req: Request, res: Response) => {
+router.get('/debug/assignments', async (req: Request, res: Response) => {
   if (config.nodeEnv !== 'development') {
     return res.status(403).json({ 
       error: 'This endpoint is only available in development mode' 
     });
   }
   
-  const assignments = elo.getAllAssignments();
+  const assignments = await elo.getAllAssignments();
   res.json({ 
     count: assignments.length,
     assignments 

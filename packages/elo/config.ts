@@ -6,11 +6,10 @@
  */
 
 import dotenv from 'dotenv';
-import { Config } from '@models/types';
 
 dotenv.config();
 
-// Check if we're running in test environment
+// Check if we're in test mode
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
 
 // Validate required environment variables (skip in test environment)
@@ -23,7 +22,20 @@ if (missingEnvVars.length > 0 && !isTestEnv) {
   process.exit(1);
 }
 
-const config: Config = {
+export interface AppConfig {
+  paidApiKey: string;
+  paidApiBaseUrl: string;
+  port: number;
+  nodeEnv: string;
+  webhookSecret: string | null;
+  enableWebhookVerification: boolean;
+  experimentDefaults: {
+    controlWeight: number;
+    experimentWeight: number;
+  };
+}
+
+const config: AppConfig = {
   // Paid.ai API Configuration
   paidApiKey: process.env.PAID_API_KEY || (isTestEnv ? 'test-api-key' : ''),
   paidApiBaseUrl: process.env.PAID_API_BASE_URL || 'https://api.paid.ai/v1',
@@ -33,14 +45,12 @@ const config: Config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   
   // Webhook Configuration (optional, for production use)
-  webhookSecret: process.env.WEBHOOK_SECRET || '',
+  webhookSecret: process.env.WEBHOOK_SECRET || null,
   // Enable webhook signature verification (requires webhookSecret)
-  // Defaults to false for development/testing. Set to 'true' or '1' to enable for production
   enableWebhookVerification: process.env.ENABLE_WEBHOOK_VERIFICATION === 'true' || process.env.ENABLE_WEBHOOK_VERIFICATION === '1',
   
   // A/B Testing Configuration
   experimentDefaults: {
-    // Default split: 50% control, 50% experiment
     controlWeight: 0.5,
     experimentWeight: 0.5
   }

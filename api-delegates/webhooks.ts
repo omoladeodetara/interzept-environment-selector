@@ -71,7 +71,7 @@ router.post('/paid', async (req: Request, res: Response) => {
       
       // Track conversion
       try {
-        elo.trackConversion(
+        await elo.trackConversion(
           customerId,
           experimentId,
           {
@@ -81,7 +81,7 @@ router.post('/paid', async (req: Request, res: Response) => {
         );
         
         // Get variant for logging purposes only
-        const variant = elo.getExperimentVariant(customerId, experimentId);
+        const variant = await elo.getExperimentVariant(customerId, experimentId);
         console.log(`Tracked conversion from webhook: user=${customerId}, variant=${variant}, revenue=${amount}`);
       } catch (conversionError: any) {
         console.warn(`Failed to track conversion: ${conversionError.message}`);

@@ -63,7 +63,7 @@ router.get('/:experimentId/pricing', async (req: Request, res: Response) => {
     
     if (!assignment) {
       // Assign variant using deterministic algorithm
-      const variant = elo.assignVariant(userId, experimentId);
+      const variant = await elo.assignVariant(userId, experimentId);
       assignment = await db.createAssignment(experiment.id, userId, variant);
     }
     
@@ -251,7 +251,7 @@ router.get('/:experimentId/results', async (req: Request, res: Response) => {
     
     if (!experiment) {
       // Try old format lookup
-      const results = elo.getExperimentResults(experimentId);
+      const results = await elo.getExperimentResults(experimentId);
       return res.json(results);
     }
     
