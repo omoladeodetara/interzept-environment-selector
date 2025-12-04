@@ -70,6 +70,8 @@ This repository now includes a **production-ready UI component library** built w
 
 **[📚 View UI Component Library Documentation →](UI_COMPONENT_LIBRARY.md)**
 
+> **Note**: The `/shadcn-ui` submodule contains the original [shadcn/ui source repository](https://github.com/omoladeodetara/ui.git) as a reference and inspiration for the UI components in the `/ui` directory. It's included as a Git submodule to allow easy access to the latest shadcn/ui patterns when developing or updating components.
+
 ### Quick Start
 
 ```bash
@@ -426,9 +428,12 @@ import { AnalyticsDashboard } from "@/components/analytics-dashboard"
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/omoladeodetara/last-price.git
+# Clone the repository with submodules
+git clone --recurse-submodules https://github.com/omoladeodetara/last-price.git
 cd last-price
+
+# Or if you already cloned without submodules, initialize them:
+git submodule update --init --remote
 
 # Install dependencies
 npm install
