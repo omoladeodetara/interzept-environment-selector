@@ -6,11 +6,11 @@ This repository uses Git submodules to include external repositories as dependen
 
 ## Active Submodules
 
-### `/shadcn-ui` - shadcn/ui Source Repository
+### `/shadcn-ui` - shadcn/ui Reference Repository
 
 - **URL**: https://github.com/omoladeodetara/ui.git
-- **Purpose**: Contains the original shadcn/ui component library source code as a reference and inspiration
-- **Usage**: The `/ui` directory in this repository contains our custom UI implementation based on shadcn/ui patterns. The submodule provides access to the latest upstream shadcn/ui code for reference when developing or updating components.
+- **Purpose**: Contains a shadcn/ui reference implementation that serves as inspiration for component development
+- **Usage**: The `/ui` directory in this repository contains our custom UI implementation based on shadcn/ui patterns. The submodule provides access to reference shadcn/ui code and patterns for guidance when developing or updating components.
 
 ## Working with Submodules
 

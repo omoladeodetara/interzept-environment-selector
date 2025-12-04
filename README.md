@@ -70,7 +70,7 @@ This repository now includes a **production-ready UI component library** built w
 
 **[📚 View UI Component Library Documentation →](UI_COMPONENT_LIBRARY.md)**
 
-> **Note**: The `/shadcn-ui` submodule contains the original [shadcn/ui source repository](https://github.com/omoladeodetara/ui.git) as a reference and inspiration for the UI components in the `/ui` directory. It's included as a Git submodule to allow easy access to the latest shadcn/ui patterns when developing or updating components.
+> **Note**: The `/shadcn-ui` submodule contains a [shadcn/ui reference repository](https://github.com/omoladeodetara/ui.git) that serves as inspiration for the UI components in the `/ui` directory. It's included as a Git submodule to allow easy access to shadcn/ui patterns and examples when developing or updating components.
 
 ### Quick Start
 
