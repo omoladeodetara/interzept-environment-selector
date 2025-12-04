@@ -818,11 +818,11 @@ export async function recommendPrice(options: RecommendPriceOptions): Promise<Ad
         views: controlViews,
         conversions: results.control.conversions || 0,
         revenue: results.control.revenue || 0,
-        conversionRate: controlViews > 0 ? (results.control.conversions || 0) / controlViews : 0,
+        conversionRate: (results.control.conversions || 0) / controlViews,
         averageOrderValue: (results.control.conversions || 0) > 0
           ? (results.control.revenue || 0) / (results.control.conversions || 1)
           : controlPrice,
-        revenuePerView: controlViews > 0 ? (results.control.revenue || 0) / controlViews : 0
+        revenuePerView: (results.control.revenue || 0) / controlViews
       },
       {
         variantId: 'experiment',
@@ -831,11 +831,11 @@ export async function recommendPrice(options: RecommendPriceOptions): Promise<Ad
         views: experimentViews,
         conversions: results.experiment.conversions || 0,
         revenue: results.experiment.revenue || 0,
-        conversionRate: experimentViews > 0 ? (results.experiment.conversions || 0) / experimentViews : 0,
+        conversionRate: (results.experiment.conversions || 0) / experimentViews,
         averageOrderValue: (results.experiment.conversions || 0) > 0
           ? (results.experiment.revenue || 0) / (results.experiment.conversions || 1)
           : experimentPrice,
-        revenuePerView: experimentViews > 0 ? (results.experiment.revenue || 0) / experimentViews : 0
+        revenuePerView: (results.experiment.revenue || 0) / experimentViews
       }
     ];
 
