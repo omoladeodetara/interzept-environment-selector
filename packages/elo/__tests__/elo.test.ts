@@ -13,8 +13,7 @@ import {
   setStorageAdapter,
   getStorageAdapter,
   setConfig,
-  StorageAdapter,
-  ExperimentMetrics
+  StorageAdapter
 } from '../index';
 
 describe('Elo A/B Testing Module', () => {
@@ -125,7 +124,6 @@ describe('Elo A/B Testing Module', () => {
       }
       
       // Track some conversions
-      const variant = await getExperimentVariant('user_0', 'stats_exp');
       await trackConversion('user_0', 'stats_exp', { revenue: 29.99 });
       
       const results = await getExperimentResults('stats_exp');
