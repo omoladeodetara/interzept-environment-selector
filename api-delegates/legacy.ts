@@ -31,7 +31,7 @@ router.get('/pricing', async (req: Request, res: Response) => {
     }
     
     // Assign user to a variant
-    const variant = elo.assignVariant(userId, experimentId);
+    const variant = await elo.assignVariant(userId, experimentId);
     
     // Define pricing based on variant
     const pricing = variant === 'control' 
@@ -90,7 +90,7 @@ router.post('/convert', async (req: Request, res: Response) => {
     }
     
     // Get the user's variant
-    const variant = elo.getExperimentVariant(userId, experimentId);
+    const variant = await elo.getExperimentVariant(userId, experimentId);
     
     if (!variant) {
       return res.status(404).json({ 
@@ -102,7 +102,7 @@ router.post('/convert', async (req: Request, res: Response) => {
     const revenue = variant === 'control' ? 29.99 : 39.99;
     
     // Track conversion in A/B testing system
-    elo.trackConversion(userId, experimentId, { 
+    await elo.trackConversion(userId, experimentId, { 
       revenue,
       timestamp: new Date()
     });

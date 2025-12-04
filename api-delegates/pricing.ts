@@ -6,7 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import * as db from '@services/database';
-import * as jale from '@packages/jale';
+import * as jale from '../jale';
 import config from '@utils/config';
 
 const router = Router();

@@ -1,15 +1,16 @@
 {
-  "name": "last-price",
+  "name": "paid-ai-ab-testing-server",
   "version": "1.0.0",
-  "description": "Modular monolith for A/B testing pricing experiments with Paid.ai integration",
-  "main": "dist/server.js",
+  "description": "A/B testing server for pricing experiments with Paid.ai integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "nodemon --exec ts-node server.ts",
+    "dev": "ts-node server.ts",
     "test": "jest",
-    "lint": "eslint . --ext .ts",
-    "type-check": "tsc --noEmit"
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "paid.ai",
@@ -17,8 +18,7 @@
     "pricing",
     "monetization",
     "express",
-    "openapi",
-    "modular-monolith"
+    "openapi"
   ],
   "author": "",
   "license": "MIT",
@@ -29,29 +29,24 @@
     "express": "^4.18.2",
     "pg": "^8.11.3",
     "swagger-ui-express": "^5.0.0",
-    "uuid": "^9.0.1",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.10.5",
+    "@types/node": "^20.10.0",
     "@types/pg": "^8.10.9",
     "@types/swagger-ui-express": "^4.1.6",
-    "@types/uuid": "^9.0.8",
     "@types/yamljs": "^0.2.34",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "nodemon": "^3.0.1",
+    "rimraf": "^5.0.5",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=14.0.0"
   }
 }

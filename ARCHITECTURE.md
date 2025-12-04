@@ -79,20 +79,52 @@ The A/B testing engine that handles variant assignment and tracking.
 - `getExperimentResults(experimentId)` - Get aggregated results
 
 #### **Jale (Pricing Engine)**
-Location: `packages/jale/`
+Location: `jale/`
 
-The pricing optimization and recommendation engine.
+The advanced pricing optimization and recommendation engine.
+
+**Files:**
+- `index.ts` - Core pricing functions (elasticity, significance, optimal pricing)
+- `types.ts` - Shared type definitions
+- `recommendation-engine.ts` - AI-powered pricing recommendations
+- `experiment-manager.ts` - A/B experiment lifecycle management
+- `analytics.ts` - Dashboard data and experiment analytics
 
 **Responsibilities:**
-- Elasticity computation from experiment data
+- Price elasticity analysis with confidence intervals
+- Statistical significance testing
 - Revenue simulation for candidate prices
-- Price recommendations based on objectives
-- Confidence scoring
+- Advanced pricing recommendations with reasoning
+- Psychological pricing optimization
+- Business goal constraints (min/max price, margins)
+- Experiment lifecycle management
+- Analytics and dashboard data
 
-**Key Functions:**
-- `recommendPrice(options)` - Generate pricing recommendations
-- `estimateCvForPrice(observed, price)` - Estimate conversion rate
-- `simulateRevenueForCandidates(results, candidates)` - Simulate revenue
+**Key Functions (index.ts):**
+- `recommendPrice(options)` - Generate advanced pricing recommendations
+- `calculateElasticity(control, experiment)` - Calculate price elasticity
+- `analyzeElasticity(control, experiment)` - Full elasticity analysis
+- `calculateOptimalPrice(price, elasticity)` - Compute optimal price point
+- `applyPsychologicalPricing(price)` - Apply .99/.95 pricing
+- `calculateRevenueImpact(current, new, conversions, elasticity)` - Revenue impact
+- `calculateStatisticalSignificance(v1, v2)` - Statistical testing
+- `generateAdvancedRecommendation(variants, goals)` - Full recommendation
+
+**Key Functions (recommendation-engine.ts):**
+- `generateRecommendation(results, goals)` - Generate full recommendation with reasoning
+- `quickAnalysis(current, proposed, elasticity)` - Quick price change analysis
+
+**Key Functions (experiment-manager.ts):**
+- `createExperiment(tenantId, request)` - Create new experiment
+- `activateExperiment(id, tenantId)` - Start experiment
+- `assignVariant(experimentId, userId)` - Assign user to variant
+- `recordView/recordConversion()` - Track events
+- `getExperimentResults(id)` - Get aggregated results
+
+**Key Functions (analytics.ts):**
+- `getDashboardData(tenantId)` - Dashboard overview
+- `getExperimentAnalytics(id)` - Detailed experiment analytics
+- `compareExperiments(ids)` - Compare multiple experiments
 
 ### 2. Services (Infrastructure Layer)
 

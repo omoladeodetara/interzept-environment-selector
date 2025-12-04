@@ -3,23 +3,151 @@
  * 
  * Handles variant assignment logic, experiment tracking,
  * and analytics for A/B testing experiments.
+ * 
+ * Storage: By default uses in-memory storage. For production, inject a
+ * StorageAdapter implementation that persists to a database (PostgreSQL, Redis, etc.)
  */
 
 import crypto from 'crypto';
-import config from '@utils/config';
 
 // Hash range for variant assignment (0-99 = 100 buckets for percentage-based splits)
 const HASH_BUCKET_SIZE = 100;
 
+// ============================================================================
+// Configuration
+// ============================================================================
+
+export interface EloConfig {
+  nodeEnv: string;
+  experimentDefaults: {
+    controlWeight: number;
+    experimentWeight: number;
+  };
+}
+
+// Default configuration - can be overridden via setConfig()
+let config: EloConfig = {
+  nodeEnv: process.env.NODE_ENV || 'development',
+  experimentDefaults: {
+    controlWeight: 0.5,
+    experimentWeight: 0.5
+  }
+};
+
 /**
- * In-memory storage for experiment assignments
- * In production, replace this with a database (e.g., Redis, PostgreSQL, MongoDB)
+ * Set the configuration for the Elo module
+ * @param newConfig - Partial configuration to merge with defaults
  */
-const experimentAssignments = new Map<string, string>();
-const experimentResults = new Map<string, {
-  control: { views: number; conversions: number; revenue: number };
-  experiment: { views: number; conversions: number; revenue: number };
-}>();
+export function setConfig(newConfig: Partial<EloConfig>): void {
+  config = { ...config, ...newConfig };
+}
+
+/**
+ * Get the current configuration
+ */
+export function getConfig(): EloConfig {
+  return config;
+}
+
+// ============================================================================
+// Storage Abstraction Layer
+// ============================================================================
+
+export interface ExperimentMetrics {
+  views: number;
+  conversions: number;
+  revenue: number;
+}
+
+export interface StorageAdapter {
+  getAssignment(userId: string, experimentId: string): Promise<string | null>;
+  setAssignment(userId: string, experimentId: string, variant: string): Promise<void>;
+  getResults(experimentId: string): Promise<{ control: ExperimentMetrics; experiment: ExperimentMetrics } | null>;
+  initResults(experimentId: string): Promise<void>;
+  incrementViews(experimentId: string, variant: 'control' | 'experiment'): Promise<void>;
+  incrementConversions(experimentId: string, variant: 'control' | 'experiment', revenue?: number): Promise<void>;
+  getAllAssignments(): Promise<Array<{ userId: string; experimentId: string; variant: string }>>;
+  clear(): Promise<void>;
+}
+
+/**
+ * Default in-memory storage implementation
+ * For production, replace with a database-backed implementation
+ */
+class InMemoryStorageAdapter implements StorageAdapter {
+  private assignments = new Map<string, string>();
+  private results = new Map<string, { control: ExperimentMetrics; experiment: ExperimentMetrics }>();
+
+  async getAssignment(userId: string, experimentId: string): Promise<string | null> {
+    const key = `${userId}:${experimentId}`;
+    return this.assignments.get(key) || null;
+  }
+
+  async setAssignment(userId: string, experimentId: string, variant: string): Promise<void> {
+    const key = `${userId}:${experimentId}`;
+    this.assignments.set(key, variant);
+  }
+
+  async getResults(experimentId: string): Promise<{ control: ExperimentMetrics; experiment: ExperimentMetrics } | null> {
+    return this.results.get(experimentId) || null;
+  }
+
+  async initResults(experimentId: string): Promise<void> {
+    if (!this.results.has(experimentId)) {
+      this.results.set(experimentId, {
+        control: { views: 0, conversions: 0, revenue: 0 },
+        experiment: { views: 0, conversions: 0, revenue: 0 }
+      });
+    }
+  }
+
+  async incrementViews(experimentId: string, variant: 'control' | 'experiment'): Promise<void> {
+    const results = this.results.get(experimentId);
+    if (results) {
+      results[variant].views++;
+    }
+  }
+
+  async incrementConversions(experimentId: string, variant: 'control' | 'experiment', revenue: number = 0): Promise<void> {
+    const results = this.results.get(experimentId);
+    if (results) {
+      results[variant].conversions++;
+      results[variant].revenue += revenue;
+    }
+  }
+
+  async getAllAssignments(): Promise<Array<{ userId: string; experimentId: string; variant: string }>> {
+    const assignments: Array<{ userId: string; experimentId: string; variant: string }> = [];
+    this.assignments.forEach((variant, key) => {
+      const [userId, experimentId] = key.split(':');
+      assignments.push({ userId, experimentId, variant });
+    });
+    return assignments;
+  }
+
+  async clear(): Promise<void> {
+    this.assignments.clear();
+    this.results.clear();
+  }
+}
+
+// Default storage instance - can be replaced via setStorageAdapter()
+let storage: StorageAdapter = new InMemoryStorageAdapter();
+
+/**
+ * Set a custom storage adapter for production use
+ * @param adapter - A StorageAdapter implementation (e.g., PostgreSQL, Redis)
+ */
+export function setStorageAdapter(adapter: StorageAdapter): void {
+  storage = adapter;
+}
+
+/**
+ * Get the current storage adapter (useful for testing)
+ */
+export function getStorageAdapter(): StorageAdapter {
+  return storage;
+}
 
 /**
  * Assign a user to a variant for a specific experiment
@@ -30,11 +158,11 @@ const experimentResults = new Map<string, {
  * @param weights - Optional weights for variants (default: 50/50 split)
  * @returns The assigned variant ('control' or 'experiment')
  */
-export function assignVariant(
+export async function assignVariant(
   userId: string,
   experimentId: string,
   weights: { controlWeight: number; experimentWeight: number } | null = null
-): string {
+): Promise<string> {
   // Input validation
   if (!userId || typeof userId !== 'string') {
     throw new Error('Invalid userId: must be a non-empty string');
@@ -45,9 +173,9 @@ export function assignVariant(
   }
   
   // Check if user already has an assignment for this experiment
-  const assignmentKey = `${userId}:${experimentId}`;
-  if (experimentAssignments.has(assignmentKey)) {
-    return experimentAssignments.get(assignmentKey)!;
+  const existingAssignment = await storage.getAssignment(userId, experimentId);
+  if (existingAssignment) {
+    return existingAssignment;
   }
   
   // Use default weights if not provided
@@ -61,22 +189,16 @@ export function assignVariant(
   const variant = randomValue < assignmentWeights.controlWeight ? 'control' : 'experiment';
   
   // Store the assignment
-  experimentAssignments.set(assignmentKey, variant);
+  await storage.setAssignment(userId, experimentId, variant);
   
   // Initialize experiment results if not exists
-  if (!experimentResults.has(experimentId)) {
-    experimentResults.set(experimentId, {
-      control: { views: 0, conversions: 0, revenue: 0 },
-      experiment: { views: 0, conversions: 0, revenue: 0 }
-    });
-  }
+  await storage.initResults(experimentId);
   
   // Increment view count
-  const results = experimentResults.get(experimentId)!;
-  results[variant as 'control' | 'experiment'].views++;
+  await storage.incrementViews(experimentId, variant as 'control' | 'experiment');
   
   if (config.nodeEnv === 'development') {
-    console.log(`Assigned user ${userId} to variant "${variant}" for experiment ${experimentId}`);
+    console.log(`[Elo] Assigned user ${userId} to variant "${variant}" for experiment ${experimentId}`);
   }
   
   return variant;
@@ -105,9 +227,8 @@ function hashString(str: string): number {
  * @param experimentId - The experiment identifier
  * @returns The assigned variant or null if not assigned
  */
-export function getExperimentVariant(userId: string, experimentId: string): string | null {
-  const assignmentKey = `${userId}:${experimentId}`;
-  return experimentAssignments.get(assignmentKey) || null;
+export async function getExperimentVariant(userId: string, experimentId: string): Promise<string | null> {
+  return storage.getAssignment(userId, experimentId);
 }
 
 /**
@@ -118,11 +239,11 @@ export function getExperimentVariant(userId: string, experimentId: string): stri
  * @param conversionData - Additional conversion data
  * @returns Updated experiment results
  */
-export function trackConversion(
+export async function trackConversion(
   userId: string,
   experimentId: string,
-  conversionData: { revenue?: number; timestamp?: Date } = {}
-): any {
+  conversionData: { revenue?: number; timestamp?: Date; [key: string]: unknown } = {}
+): Promise<{ control: ExperimentMetrics; experiment: ExperimentMetrics } | null> {
   // Input validation
   if (!userId || typeof userId !== 'string') {
     throw new Error('Invalid userId: must be a non-empty string');
@@ -133,32 +254,28 @@ export function trackConversion(
   }
   
   // Get the user's variant
-  const variant = getExperimentVariant(userId, experimentId);
+  const variant = await getExperimentVariant(userId, experimentId);
   
   if (!variant) {
     throw new Error(`No variant assignment found for user ${userId} in experiment ${experimentId}`);
   }
   
   // Get experiment results
-  const results = experimentResults.get(experimentId);
+  const results = await storage.getResults(experimentId);
   
   if (!results) {
     throw new Error(`No results found for experiment ${experimentId}`);
   }
   
   // Update conversion metrics
-  results[variant as 'control' | 'experiment'].conversions++;
-  
-  if (conversionData.revenue) {
-    results[variant as 'control' | 'experiment'].revenue += conversionData.revenue;
-  }
+  await storage.incrementConversions(experimentId, variant as 'control' | 'experiment', conversionData.revenue);
   
   if (config.nodeEnv === 'development') {
-    console.log(`Tracked conversion for user ${userId} in variant "${variant}" for experiment ${experimentId}`);
-    console.log(`Revenue: ${conversionData.revenue || 0}`);
+    console.log(`[Elo] Tracked conversion for user ${userId} in variant "${variant}" for experiment ${experimentId}`);
+    console.log(`[Elo] Revenue: ${conversionData.revenue || 0}`);
   }
   
-  return results;
+  return storage.getResults(experimentId);
 }
 
 /**
@@ -167,8 +284,8 @@ export function trackConversion(
  * @param experimentId - The experiment identifier
  * @returns Experiment results with statistics
  */
-export function getExperimentResults(experimentId: string): any {
-  const results = experimentResults.get(experimentId);
+export async function getExperimentResults(experimentId: string): Promise<any> {
+  const results = await storage.getResults(experimentId);
   
   if (!results) {
     return {
@@ -227,11 +344,13 @@ export function getExperimentResults(experimentId: string): any {
  * 
  * @returns All experiment assignments
  */
-export function getAllAssignments(): Array<{ userId: string; experimentId: string; variant: string }> {
-  const assignments: Array<{ userId: string; experimentId: string; variant: string }> = [];
-  experimentAssignments.forEach((variant, key) => {
-    const [userId, experimentId] = key.split(':');
-    assignments.push({ userId, experimentId, variant });
-  });
-  return assignments;
+export async function getAllAssignments(): Promise<Array<{ userId: string; experimentId: string; variant: string }>> {
+  return storage.getAllAssignments();
+}
+
+/**
+ * Clear all assignments and results (useful for testing)
+ */
+export async function clearAll(): Promise<void> {
+  await storage.clear();
 }
