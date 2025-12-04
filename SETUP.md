@@ -8,6 +8,8 @@ This guide will walk you through setting up the complete multi-tenant pricing op
 - PostgreSQL 12+
 - Git
 
+> **Important**: This repository uses Git submodules. When cloning, use `git clone --recurse-submodules` or run `git submodule update --init` after cloning to initialize the `/shadcn-ui` submodule which contains reference UI components.
+
 ## Architecture Overview
 
 The system consists of:
