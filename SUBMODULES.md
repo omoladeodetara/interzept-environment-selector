@@ -28,7 +28,7 @@ Initialize and update submodules manually:
 
 ```bash
 cd last-price
-git submodule update --init --remote
+git submodule update --init
 ```
 
 ### Updating Submodules
@@ -81,7 +81,7 @@ last-price/
 ### Submodule directory is empty
 
 ```bash
-git submodule update --init --remote
+git submodule update --init
 ```
 
 ### Detached HEAD state in submodule
@@ -93,7 +93,7 @@ This is normal for submodules. They are pinned to specific commits rather than t
 ```bash
 # Accept incoming changes
 git checkout --theirs .gitmodules
-git submodule update --init --remote
+git submodule update --init
 
 # Or accept current changes
 git checkout --ours .gitmodules

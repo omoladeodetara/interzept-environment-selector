@@ -433,7 +433,7 @@ git clone --recurse-submodules https://github.com/omoladeodetara/last-price.git
 cd last-price
 
 # Or if you already cloned without submodules, initialize them:
-git submodule update --init --remote
+git submodule update --init
 
 # Install dependencies
 npm install
