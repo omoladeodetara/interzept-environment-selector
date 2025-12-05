@@ -1,8 +1,6 @@
 import { PaymentRequiredError } from './payment-handler';
 import { PaymentRequiredResponse } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
 interface ApiOptions extends RequestInit {
   onPaymentRequired?: (response: PaymentRequiredResponse) => void;
 }
