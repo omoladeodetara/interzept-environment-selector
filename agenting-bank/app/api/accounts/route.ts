@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Validate agentId format
     if (typeof agentId !== 'string' || agentId.length === 0 || agentId.length > 100 ||
-        !/^[a-zA-Z0-9_\-]+$/.test(agentId)) {
+        !/^[a-zA-Z0-9_-]+$/.test(agentId)) {
       return NextResponse.json(
         { error: 'Invalid agentId: must be a non-empty string (max 100 chars), containing only letters, numbers, underscores, or hyphens.' },
         { status: 400 }

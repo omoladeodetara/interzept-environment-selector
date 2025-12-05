@@ -11,10 +11,8 @@ interface ApiOptions extends RequestInit {
  * API Client with HTTP 402 handling
  */
 class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  private getBaseUrl(): string {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   }
 
   /**
@@ -26,7 +24,7 @@ class ApiClient {
   ): Promise<T> {
     const { onPaymentRequired, ...fetchOptions } = options;
 
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = `${this.getBaseUrl()}${endpoint}`;
     
     const response = await fetch(url, {
       ...fetchOptions,

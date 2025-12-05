@@ -58,7 +58,7 @@ export function createPaymentRequiredResponse(
     message,
     requiredAmount,
     currentBalance,
-    topUpUrl: `/billing/topup?account=${accountId}&amount=${Math.max(0, requiredAmount - currentBalance)}`,
+    topUpUrl: `/billing/topup?account=${encodeURIComponent(accountId)}&amount=${Math.max(0, requiredAmount - currentBalance)}`,
     accountId,
   };
 }
