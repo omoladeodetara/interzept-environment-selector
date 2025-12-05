@@ -20,7 +20,7 @@ export default function RootLayout({
             <div className="container mx-auto px-4">
               <nav className="flex items-center justify-between h-16">
                 <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
-                  <span className="text-2xl">🏦</span>
+                  <span className="text-2xl" aria-label="Bank logo" role="img">🏦</span>
                   Agenting Bank
                 </Link>
                 <div className="flex items-center gap-6">

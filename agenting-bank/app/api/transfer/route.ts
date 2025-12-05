@@ -10,8 +10,9 @@ import {
  * Transfer funds between accounts with HTTP 402 handling
  */
 export async function POST(request: NextRequest) {
+  let body: any = {};
   try {
-    const body = await request.json();
+    body = await request.json();
     const { fromAccountId, toAccountId, amount, description } = body;
 
     // Validate input
@@ -22,9 +23,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (amount <= 0) {
+    // Validate amount type and value
+    if (typeof amount !== 'number' || !isFinite(amount) || amount <= 0) {
       return NextResponse.json(
-        { error: 'Amount must be positive' },
+        { error: 'Amount must be a positive number' },
+        { status: 400 }
+      );
+    }
+
+    // Validate description if provided
+    if (description !== undefined && (typeof description !== 'string' || description.length > 500)) {
+      return NextResponse.json(
+        { error: 'Invalid description: must be a string with max 500 characters' },
         { status: 400 }
       );
     }
@@ -100,7 +110,15 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Transfer error:', error);
+    console.error('Transfer error:', {
+      error,
+      endpoint: '/api/transfer',
+      method: request.method,
+      fromAccountId: body.fromAccountId,
+      toAccountId: body.toAccountId,
+      amount: body.amount,
+      timestamp: new Date().toISOString(),
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

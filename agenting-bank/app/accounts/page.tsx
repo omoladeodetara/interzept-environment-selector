@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { sampleAccounts } from "@/lib/sample-data";
-import Link from "next/link";
 
 export default function AccountsPage() {
   const activeAccounts = sampleAccounts.filter((acc) => acc.status === 'active');

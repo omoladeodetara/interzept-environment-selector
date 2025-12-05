@@ -8,44 +8,44 @@ interface TransactionListProps {
   accountId?: string;
 }
 
+const getStatusColor = (status: Transaction['status']) => {
+  switch (status) {
+    case 'completed':
+      return 'default';
+    case 'pending':
+      return 'secondary';
+    case 'failed':
+      return 'destructive';
+    case 'payment_required':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+};
+
+const getTypeIcon = (type: Transaction['type']) => {
+  return type === 'credit' ? '↗️' : '↙️';
+};
+
+const getCategoryEmoji = (category: string) => {
+  switch (category) {
+    case 'api_usage':
+      return '🔌';
+    case 'deposit':
+      return '💰';
+    case 'data_transfer':
+      return '📦';
+    case 'monitoring':
+      return '👁️';
+    default:
+      return '💳';
+  }
+};
+
 export function TransactionList({ transactions, accountId }: TransactionListProps) {
   const filteredTransactions = accountId
     ? transactions.filter((t) => t.accountId === accountId)
     : transactions;
-
-  const getStatusColor = (status: Transaction['status']) => {
-    switch (status) {
-      case 'completed':
-        return 'default';
-      case 'pending':
-        return 'secondary';
-      case 'failed':
-        return 'destructive';
-      case 'payment_required':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
-
-  const getTypeIcon = (type: Transaction['type']) => {
-    return type === 'credit' ? '↗️' : '↙️';
-  };
-
-  const getCategoryEmoji = (category: string) => {
-    switch (category) {
-      case 'api_usage':
-        return '🔌';
-      case 'deposit':
-        return '💰';
-      case 'data_transfer':
-        return '📦';
-      case 'monitoring':
-        return '👁️';
-      default:
-        return '💳';
-    }
-  };
 
   if (filteredTransactions.length === 0) {
     return (

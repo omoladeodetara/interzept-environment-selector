@@ -8,34 +8,34 @@ interface AccountCardProps {
   account: AgentAccount;
 }
 
+const getStatusColor = (status: AgentAccount['status']) => {
+  switch (status) {
+    case 'active':
+      return 'default';
+    case 'payment_required':
+      return 'destructive';
+    case 'suspended':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+};
+
+const getAccountTypeIcon = (type: AgentAccount['accountType']) => {
+  switch (type) {
+    case 'standard':
+      return '🔵';
+    case 'premium':
+      return '⭐';
+    case 'enterprise':
+      return '💼';
+    default:
+      return '📊';
+  }
+};
+
 export function AccountCard({ account }: AccountCardProps) {
-  const getStatusColor = (status: AgentAccount['status']) => {
-    switch (status) {
-      case 'active':
-        return 'default';
-      case 'payment_required':
-        return 'destructive';
-      case 'suspended':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
-  const getAccountTypeIcon = (type: AgentAccount['accountType']) => {
-    switch (type) {
-      case 'standard':
-        return '🔵';
-      case 'premium':
-        return '⭐';
-      case 'enterprise':
-        return '💼';
-      default:
-        return '📊';
-    }
-  };
-
-  const usagePercentage = account.monthlyLimit
+  const usagePercentage = account.monthlyLimit && account.monthlyLimit > 0
     ? (account.usageThisMonth / account.monthlyLimit) * 100
     : 0;
 
