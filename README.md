@@ -56,7 +56,8 @@ last-price/
 
 **Demo Apps** - Example applications that demonstrate Last Price usage:
 - `demo-app/` - Pricing experiment showcase
-- Other demos (e.g., "coffee pouring simulator", etc.) can be added to show different use cases
+- `agenting-bank/` - AI agent banking platform with HTTP 402 payment authorization (inspired by Revolut, Coinbase, crypto platforms)
+- Other demos can be added to show different use cases
 - These are separate applications that integrate with Last Price via APIs
 
 **Your Applications** - Business owners, developers, and agent creators build their own apps:
@@ -464,9 +465,11 @@ The server will start at http://localhost:3000
 - **Optimization**: `POST /api/jale/optimize`
 - **Webhooks**: `POST /webhooks/paid`
 
-### Running the Demo App
+### Running the Demo Apps
 
-The demo app is an example application that demonstrates how to integrate Last Price into a real-world scenario. It showcases pricing experiment features and can serve as a reference implementation for building your own applications.
+#### Pricing Experiment Showcase (`demo-app/`)
+
+The demo app demonstrates how to integrate Last Price into a real-world scenario, showcasing pricing experiment features.
 
 ```bash
 cd demo-app
@@ -475,7 +478,25 @@ npm run dev
 # Open http://localhost:3002
 ```
 
-**Note:** This is one of several demo applications. Additional demos (such as a "coffee pouring simulator" or other domain-specific examples) can be created to demonstrate different use cases. Each demo is a separate application that uses the Last Price platform APIs.
+#### Agenting Bank (`agenting-bank/`)
+
+An AI agent banking platform demonstrating HTTP 402 (Payment Required) integration, inspired by Revolut, Coinbase, and modern crypto platforms. Features:
+
+- **HTTP 402 Payment Required**: Proper handling of payment authorization flows
+- **Agent Accounts**: Banking accounts for AI agents with usage tracking
+- **Real-time Transactions**: Track agent spending and API usage
+- **shadcn/ui Components**: Modern, accessible banking interface
+
+```bash
+cd agenting-bank
+npm install
+npm run dev
+# Open http://localhost:3003
+```
+
+**See also**: [agenting-bank/README.md](agenting-bank/README.md) for detailed documentation on HTTP 402 implementation and banking features.
+
+**Note:** These are examples of demo applications. Additional demos can be created to demonstrate different use cases. Each demo is a separate application that can integrate with the Last Price platform APIs.
 
 ## Conclusion: Traditional Wisdom Meets Modern Analytics
 
