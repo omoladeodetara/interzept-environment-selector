@@ -23,10 +23,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/node-fetch": "^2.6.13",
     "axios": "^1.6.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
     "pg": "^8.11.3",
     "swagger-ui-express": "^5.0.0",
     "uuid": "^9.0.1",
