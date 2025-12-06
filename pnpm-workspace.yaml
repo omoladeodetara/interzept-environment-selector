@@ -1,0 +1,7 @@
+packages:
+  - "oja"
+  - "ui"
+  - "demo-app"
+  - "agenting-bank"
+  - "jale"
+  - "packages/*"

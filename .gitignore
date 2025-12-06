@@ -57,3 +57,6 @@ next-env.d.ts
 
 # TypeScript build output
 dist/
+
+# Turborepo
+.turbo/
