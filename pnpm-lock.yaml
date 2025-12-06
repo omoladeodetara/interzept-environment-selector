@@ -29,9 +29,6 @@ importers:
       node-fetch:
         specifier: ^2.7.0
         version: 2.7.0
-      pg:
-        specifier: ^8.11.3
-        version: 8.16.3
       swagger-ui-express:
         specifier: ^5.0.0
         version: 5.0.1(express@4.22.1)
