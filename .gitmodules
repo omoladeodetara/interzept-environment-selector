@@ -1,6 +1,3 @@
 [submodule "shadcn-ui"]
 	path = shadcn-ui
 	url = https://github.com/omoladeodetara/ui.git
-[submodule "oja"]
-	path = oja
-	url = https://github.com/omoladeodetara/last-price-oja.git

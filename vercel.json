@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": {
-    "submodules": true
-  },
   "builds": [
     {
       "src": "api/index.ts",
@@ -23,5 +20,5 @@
       "dest": "/oja/$1"
     }
   ],
-  "installCommand": "git submodule update --init --recursive && npm install && cd oja && pnpm install"
+  "installCommand": "npm install && cd oja && pnpm install"
 }
