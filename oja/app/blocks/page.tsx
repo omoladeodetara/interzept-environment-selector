@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
+import { WorkspaceProvider } from "@/contexts/workspace-context"
 import { ArrowRight, Mic, Search, Table, CreditCard, Code, Settings2, MoreVertical, ArrowUpRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -86,6 +87,7 @@ export default function BlocksPage() {
   }
 
   return (
+    <WorkspaceProvider>
     <div className="flex h-screen bg-white">
       <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
@@ -250,5 +252,6 @@ export default function BlocksPage() {
         </div>
       </main>
     </div>
+    </WorkspaceProvider>
   )
 }

@@ -1,5 +1,10 @@
+import { DashboardLayout } from "@/components/dashboard-layout"
 import { BillingSettingsContent } from "@/components/billing-settings-content"
 
 export default function BillingSettingsPage() {
-  return <BillingSettingsContent />
+  return (
+    <DashboardLayout>
+      <BillingSettingsContent />
+    </DashboardLayout>
+  )
 }

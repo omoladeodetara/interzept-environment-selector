@@ -1,13 +1,10 @@
-import { Sidebar } from "@/components/sidebar"
+import { DashboardLayout } from "@/components/dashboard-layout"
 import { NewCreditBundleContent } from "@/components/new-credit-bundle-content"
 
 export default function NewCreditBundlePage() {
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 ml-[240px]">
-        <NewCreditBundleContent />
-      </main>
-    </div>
+    <DashboardLayout>
+      <NewCreditBundleContent />
+    </DashboardLayout>
   )
 }
