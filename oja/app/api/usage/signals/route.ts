@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as signalsService from '@services/signals';
+import * as db from '@services/database';
 
 /**
  * POST /api/usage/signals
@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
       agentId, 
       customerId, 
       eventType, 
-      eventData = {}, 
-      quantity = 1,
+      properties = {},
       metadata = {} 
     } = body;
 
@@ -34,22 +33,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'eventType is required' }, { status: 400 });
     }
 
-    // Record the usage signal
-    const signal = await signalsService.recordSignal({
+    // Record the usage signal in database
+    const query = `
+      INSERT INTO usage_signals (tenant_id, agent_id, customer_id, event_type, properties, metadata, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      RETURNING id, tenant_id, agent_id, customer_id, event_type, properties, metadata, created_at
+    `;
+
+    const result = await db.query(query, [
       tenantId,
-      agentId: agentId || null,
-      customerId: customerId || null,
+      agentId || null,
+      customerId || null,
       eventType,
-      eventData,
-      quantity,
-      metadata,
-      timestamp: new Date()
-    });
+      JSON.stringify(properties),
+      JSON.stringify(metadata)
+    ]);
 
     return NextResponse.json({
-      id: signal.id,
+      id: result.rows[0].id,
       message: 'Usage signal recorded successfully',
-      signal
+      signal: result.rows[0]
     }, { status: 201 });
   } catch (error) {
     console.error('Error recording usage signal:', error);
