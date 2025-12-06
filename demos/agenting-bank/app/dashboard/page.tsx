@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lastprice/ui";
 import { AccountCard } from "@/components/account-card";
 import { TransactionList } from "@/components/transaction-list";
 import { sampleAccounts, sampleTransactions, sampleDashboardStats } from "@/lib/sample-data";

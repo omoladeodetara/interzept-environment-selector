@@ -1,6 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "@lastprice/ui";
 import { TransactionList } from "@/components/transaction-list";
-import { Badge } from "@/components/ui/badge";
 import { sampleTransactions } from "@/lib/sample-data";
 import { formatCurrency } from "@/lib/utils";
 

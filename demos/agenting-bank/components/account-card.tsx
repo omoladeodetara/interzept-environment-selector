@@ -1,5 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "@lastprice/ui";
 import { AgentAccount } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";

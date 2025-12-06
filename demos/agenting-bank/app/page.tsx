@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from "@lastprice/ui";
 import { AccountCard } from "@/components/account-card";
 import { sampleAccounts, sampleDashboardStats } from "@/lib/sample-data";
 import { formatCurrency } from "@/lib/utils";
