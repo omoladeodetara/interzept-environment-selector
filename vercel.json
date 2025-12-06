@@ -1,12 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter oja build",
-  "outputDirectory": "oja/.next",
-  "installCommand": "pnpm install",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index.ts"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
