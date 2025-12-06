@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { Scale, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Input } from '@lastprice/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lastprice/ui'
 
 // Mock data - empty for now
 const disputes: {

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
+import { Button } from '@lastprice/ui'
+import { Switch } from '@lastprice/ui'
 import {
   ArrowRight,
   ArrowLeft,
@@ -20,12 +20,12 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from '@lastprice/ui'
+import { Calendar as CalendarComponent } from '@lastprice/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@lastprice/ui'
+import { RadioGroup, RadioGroupItem } from '@lastprice/ui'
+import { Label } from '@lastprice/ui'
 import Link from "next/link"
 import { format } from "date-fns"
 

@@ -4,14 +4,14 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ArrowRight, Plus, MoreVertical, Trash2, Sparkles, Info, Loader2, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from '@lastprice/ui'
+import { Switch } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@lastprice/ui'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@lastprice/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
+import { Label } from '@lastprice/ui'
+import { Textarea } from '@lastprice/ui'
 
 interface Signal {
   id: string

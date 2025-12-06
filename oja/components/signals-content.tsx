@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { BarChart3, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from '@lastprice/ui'
+import { Switch } from '@lastprice/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lastprice/ui'
 
 export function SignalsContent() {
   const [rawSignalsView, setRawSignalsView] = useState(false)

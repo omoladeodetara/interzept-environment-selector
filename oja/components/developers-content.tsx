@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ExternalLink, Copy, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 
 type Language = "python" | "nodejs" | "go" | "ruby" | "java"
 

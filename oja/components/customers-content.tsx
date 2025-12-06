@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from '@lastprice/ui'
+import { Checkbox } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Label } from '@lastprice/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
 import { Download, Plus, Search, X, MoreHorizontal } from "lucide-react"
 
 const exportColumns = [

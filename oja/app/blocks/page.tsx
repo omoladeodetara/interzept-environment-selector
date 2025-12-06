@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { WorkspaceProvider } from "@/contexts/workspace-context"
 import { ArrowRight, Mic, Search, Table, CreditCard, Code, Settings2, MoreVertical, ArrowUpRight } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
+import { Input } from '@lastprice/ui'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@lastprice/ui'
+import { Button } from '@lastprice/ui'
 
 const styleChips = [
   "Customer contacts table",

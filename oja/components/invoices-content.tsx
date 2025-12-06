@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 import { Download, Plus, X } from "lucide-react"
 import Link from "next/link"
 

@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from '@lastprice/ui'
+import { Card, CardContent } from '@lastprice/ui'
+import { Switch } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Checkbox } from '@lastprice/ui'
 import { X, Check, ChevronDown, MoreHorizontal } from "lucide-react"
 
 interface ValueReceiptConfig {

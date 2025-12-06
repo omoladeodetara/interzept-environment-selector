@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { Search, Pencil, Save } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
 import { useToast } from "@/hooks/use-toast"
 
 interface CompanyData {

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
+import { Switch } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Textarea } from '@lastprice/ui'
+import { Button } from '@lastprice/ui'
 import { Upload, AlertTriangle } from "lucide-react"
 import { TestModeBanner } from "@/components/test-mode-banner"
 import { useWorkspace } from "@/contexts/workspace-context"

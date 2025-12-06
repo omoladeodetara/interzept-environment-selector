@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowRight, Mic, Headphones, Sparkles, Plane, Pencil, Workflow, Check, Loader2, Trash2, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 import { cn } from "@/lib/utils"
 
 interface Signal {

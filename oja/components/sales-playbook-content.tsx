@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Textarea } from '@lastprice/ui'
 import { Pencil, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 

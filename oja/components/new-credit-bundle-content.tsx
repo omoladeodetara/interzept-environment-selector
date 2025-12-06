@@ -3,13 +3,13 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { DollarSign, ArrowLeft, Check, Info, Play, Pause } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Textarea } from '@lastprice/ui'
+import { Checkbox } from '@lastprice/ui'
 import { ChevronDown } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@lastprice/ui'
 import { useToast } from "@/hooks/use-toast"
 
 export function NewCreditBundleContent() {

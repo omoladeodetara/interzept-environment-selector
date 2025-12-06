@@ -19,14 +19,14 @@ import {
   Zap,
   X,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+} from '@lastprice/ui'
 
 const codeFiles = [
   {

@@ -6,8 +6,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Input } from '@lastprice/ui'
+import { Button } from '@lastprice/ui'
 
 export function ManualAgentSetupContent() {
   const router = useRouter()
