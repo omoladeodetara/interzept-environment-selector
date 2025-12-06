@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 
 export function CreditsContent() {
   const router = useRouter()

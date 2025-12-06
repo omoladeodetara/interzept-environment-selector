@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { ArrowUpRight, Bot, Menu } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from '@lastprice/ui'
 
 export function NewAgentContent() {
   return (

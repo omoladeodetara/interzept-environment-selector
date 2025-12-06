@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { FileText, ChevronRight, Plus, Pencil, Trash2, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 import { useToast } from "@/hooks/use-toast"
 
 interface InvoiceLine {

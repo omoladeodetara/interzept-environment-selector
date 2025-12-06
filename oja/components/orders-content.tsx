@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@lastprice/ui'
 import { Download, Plus } from "lucide-react"
 import Link from "next/link"
 

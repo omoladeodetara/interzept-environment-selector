@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from '@lastprice/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Textarea } from '@lastprice/ui'
 import { LayoutGrid, Plus, Trash2, Copy, Check } from "lucide-react"
 
 interface ApiKey {

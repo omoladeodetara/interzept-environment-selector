@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from '@lastprice/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Label } from '@lastprice/ui'
 import { useToast } from "@/hooks/use-toast"
 import { MoreVertical, Pencil, Plus, Send, Trash2, X } from "lucide-react"
 

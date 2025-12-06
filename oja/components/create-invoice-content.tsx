@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from '@lastprice/ui'
+import { Popover, PopoverContent, PopoverTrigger } from '@lastprice/ui'
 import { Check, ChevronRight, ChevronLeft, Calendar, Plus, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"

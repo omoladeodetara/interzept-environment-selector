@@ -26,7 +26,7 @@ import {
   LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from '@lastprice/ui'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,8 +34,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+} from '@lastprice/ui'
+import { Dialog, DialogContent } from '@lastprice/ui'
 import { useWorkspace } from "@/contexts/workspace-context"
 
 const teams = [{ id: "zyleme", name: "Zyleme", isActive: true }]

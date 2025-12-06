@@ -2,16 +2,16 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from '@lastprice/ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@lastprice/ui'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lastprice/ui'
 import { FileText, Pencil, Link2, Mail, XCircle, Send, Eye, Info, Copy } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Label } from '@lastprice/ui'
+import { Textarea } from '@lastprice/ui'
+import { Checkbox } from '@lastprice/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
 import { useToast } from "@/hooks/use-toast"
 
 const tabs = ["Invoice lines", "Payments", "Usages", "Credit notes"]

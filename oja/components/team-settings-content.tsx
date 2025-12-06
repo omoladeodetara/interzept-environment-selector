@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { LayoutGrid, ChevronRight, Mail, ArrowUpDown, AlertTriangle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from '@lastprice/ui'
+import { Avatar, AvatarFallback, AvatarImage } from '@lastprice/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Label } from '@lastprice/ui'
 import { TestModeBanner } from "@/components/test-mode-banner"
 import { useWorkspace } from "@/contexts/workspace-context"
 

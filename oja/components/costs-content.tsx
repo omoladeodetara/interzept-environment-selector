@@ -13,10 +13,10 @@ import {
   ChevronDown,
   Check,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
+import { Popover, PopoverContent, PopoverTrigger } from '@lastprice/ui'
 
 export function CostsContent() {
   const [timeRange, setTimeRange] = useState("last-month")

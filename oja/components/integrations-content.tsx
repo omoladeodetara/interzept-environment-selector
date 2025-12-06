@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
 import { ExternalLink, X, Link, AlertTriangle } from "lucide-react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from '@lastprice/ui'
 import { TestModeBanner } from "@/components/test-mode-banner"
 import { useWorkspace } from "@/contexts/workspace-context"
 

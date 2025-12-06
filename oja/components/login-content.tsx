@@ -5,8 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { Eye, EyeOff, LayoutGrid, DollarSign, Activity } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@lastprice/ui'
+import { Input } from '@lastprice/ui'
 
 export function LoginContent() {
   const [showPassword, setShowPassword] = useState(false)
