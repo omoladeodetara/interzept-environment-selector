@@ -10,14 +10,15 @@ import { Config } from '@models/types';
 
 dotenv.config();
 
-// Check if we're running in test environment
+// Check if we're running in test environment or build phase
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.BUILDING === 'true';
 
-// Validate required environment variables (skip in test environment)
+// Validate required environment variables (skip in test environment and build phase)
 const requiredEnvVars = ['PAID_API_KEY'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
-if (missingEnvVars.length > 0 && !isTestEnv) {
+if (missingEnvVars.length > 0 && !isTestEnv && !isBuildPhase) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
   console.error('Please create a .env file based on .env.example');
   process.exit(1);

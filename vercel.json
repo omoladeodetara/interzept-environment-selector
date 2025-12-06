@@ -1,3 +1,7 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter oja build",
+  "outputDirectory": "oja/.next",
+  "installCommand": "pnpm install",
+  "framework": "nextjs"
 }
