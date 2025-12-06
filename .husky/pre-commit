@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Auto-export Supabase DB data before each commit
+# Runs only if Supabase container is running
+
+CONTAINER_NAME="supabase_db_last-price"
+OUTPUT_FILE="supabase/seed_snapshot.sql"
+
+# Check if container is running
+if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+  echo "📦 Auto-exporting DB to $OUTPUT_FILE..."
+  docker exec -i "$CONTAINER_NAME" pg_dump -U postgres \
+    --data-only \
+    --schema=public \
+    --inserts \
+    --no-owner \
+    --no-privileges \
+    postgres > "$OUTPUT_FILE"
+  
+  # Stage the updated snapshot
+  git add "$OUTPUT_FILE"
+  echo "✅ DB snapshot updated and staged"
+else
+  echo "⏭️  Supabase not running, skipping DB export"
+fi
+
+exit 0

@@ -1,46 +1,102 @@
 "use client"
 
-import { useState } from "react"
-import { Scale, Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Scale, Search, Loader2 } from "lucide-react"
 import { Input } from '@lastprice/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lastprice/ui'
 
-// Mock data - empty for now
-const disputes: {
+// Dispute type matching DB schema
+interface Dispute {
   id: string
-  invoice: string
-  customer: string
-  reason: string
+  tenant_id: string
+  payment_id: string | null
+  customer_id: string | null
+  external_id: string | null
   status: string
-  amount: number
-  created: string
-}[] = []
+  amount: string
+  currency: string
+  reason: string | null
+  evidence: Record<string, unknown>
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
+  // Joined fields (optional)
+  customer_name?: string
+  invoice_number?: string
+}
+
+// Default tenant for demo (from seed)
+const DEMO_TENANT_ID = "bb62d990-23c8-486e-b7ac-736611c2427b"
 
 export function DisputesContent() {
+  const [disputes, setDisputes] = useState<Dispute[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [customerFilter, setCustomerFilter] = useState("all")
 
+  // Fetch disputes from API
+  useEffect(() => {
+    async function fetchDisputes() {
+      try {
+        setLoading(true)
+        const res = await fetch(`/api/disputes?tenantId=${DEMO_TENANT_ID}`)
+        if (!res.ok) {
+          throw new Error(`Failed to fetch disputes: ${res.status}`)
+        }
+        const json = await res.json()
+        setDisputes(json.data || [])
+      } catch (err) {
+        console.error(err)
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDisputes()
+  }, [])
+
   // Calculate stats
   const totalDisputes = disputes.length
-  const pendingResolution = disputes.filter((d) => d.status === "pending").length
-  const resolved = disputes.filter((d) => d.status === "resolved").length
-  const openDisputeAmount = disputes.filter((d) => d.status === "pending").reduce((sum, d) => sum + d.amount, 0)
+  const pendingResolution = disputes.filter((d) => d.status === "open" || d.status === "under_review").length
+  const resolved = disputes.filter((d) => d.status === "won" || d.status === "lost" || d.status === "closed").length
+  const openDisputeAmount = disputes
+    .filter((d) => d.status === "open" || d.status === "under_review")
+    .reduce((sum, d) => sum + parseFloat(d.amount || "0"), 0)
 
   // Filter disputes
   const filteredDisputes = disputes.filter((dispute) => {
     const matchesSearch =
       dispute.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dispute.invoice.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dispute.customer.toLowerCase().includes(searchQuery.toLowerCase())
+      (dispute.external_id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (dispute.reason || "").toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || dispute.status === statusFilter
-    const matchesCustomer = customerFilter === "all" || dispute.customer === customerFilter
+    const matchesCustomer = customerFilter === "all" || dispute.customer_id === customerFilter
     return matchesSearch && matchesStatus && matchesCustomer
   })
 
   // Get unique customers for filter
-  const customers = [...new Set(disputes.map((d) => d.customer))]
+  const customers = [...new Set(disputes.map((d) => d.customer_id).filter(Boolean))] as string[]
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="border border-destructive rounded-lg p-4 text-destructive">
+          Error loading disputes: {error}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -90,10 +146,11 @@ export function DisputesContent() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="under_review">Under Review</SelectItem>
             <SelectItem value="won">Won</SelectItem>
             <SelectItem value="lost">Lost</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
           </SelectContent>
         </Select>
         <Select value={customerFilter} onValueChange={setCustomerFilter}>
@@ -117,8 +174,8 @@ export function DisputesContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Dispute</TableHead>
-              <TableHead>Invoice</TableHead>
+              <TableHead>Dispute ID</TableHead>
+              <TableHead>External ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Reason</TableHead>
               <TableHead>Status</TableHead>
@@ -136,13 +193,22 @@ export function DisputesContent() {
             ) : (
               filteredDisputes.map((dispute) => (
                 <TableRow key={dispute.id}>
-                  <TableCell>{dispute.id}</TableCell>
-                  <TableCell>{dispute.invoice}</TableCell>
-                  <TableCell>{dispute.customer}</TableCell>
-                  <TableCell>{dispute.reason}</TableCell>
-                  <TableCell>{dispute.status}</TableCell>
-                  <TableCell>${dispute.amount.toFixed(2)}</TableCell>
-                  <TableCell>{dispute.created}</TableCell>
+                  <TableCell className="font-mono text-xs">{dispute.id.slice(0, 8)}...</TableCell>
+                  <TableCell>{dispute.external_id || "-"}</TableCell>
+                  <TableCell className="font-mono text-xs">{dispute.customer_id ? `${dispute.customer_id.slice(0, 8)}...` : "-"}</TableCell>
+                  <TableCell>{dispute.reason || "-"}</TableCell>
+                  <TableCell>
+                    <span className={`text-xs border rounded px-2 py-1 ${
+                      dispute.status === "open" ? "border-yellow-500 text-yellow-600" :
+                      dispute.status === "won" ? "border-green-500 text-green-600" :
+                      dispute.status === "lost" ? "border-red-500 text-red-600" :
+                      "border-border"
+                    }`}>
+                      {dispute.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>${parseFloat(dispute.amount).toFixed(2)} {dispute.currency}</TableCell>
+                  <TableCell>{new Date(dispute.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))
             )}
