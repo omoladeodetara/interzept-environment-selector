@@ -48,6 +48,16 @@ tags:
     description: Order management operations (Last Price)
   - name: Usage
     description: Agent signal tracking (Last Price)
+  - name: Invoices
+    description: Invoice management operations (Last Price)
+  - name: Payments
+    description: Payment tracking and management (Last Price)
+  - name: Disputes
+    description: Dispute and chargeback management (Last Price)
+  - name: Credits
+    description: Credit bundle and balance management (Last Price)
+  - name: Costs
+    description: Cost tracking and analytics (Last Price)
 
 paths:
   /health:
@@ -72,7 +82,7 @@ paths:
                     format: date-time
                     example: '2024-01-15T10:30:00.000Z'
 
-  /api/tenants:
+  /tenants:
     post:
       summary: Create a new tenant
       description: |
@@ -180,7 +190,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/tenants/{tenantId}:
+  /tenants/{tenantId}:
     get:
       summary: Get tenant details
       description: Retrieve information about a specific tenant
@@ -288,7 +298,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/tenants/{tenantId}/experiments:
+  /tenants/{tenantId}/experiments:
     post:
       summary: Create experiment for tenant
       description: Create a new A/B testing experiment for a specific tenant
@@ -380,7 +390,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/experiments/{experimentId}/pricing:
+  /experiments/{experimentId}/pricing:
     get:
       summary: Get pricing with variant assignment
       description: |
@@ -436,7 +446,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/experiments/{experimentId}/convert:
+  /experiments/{experimentId}/convert:
     post:
       summary: Record conversion for experiment
       description: |
@@ -499,7 +509,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/pricing:
+  /pricing:
     get:
       summary: Get pricing with variant assignment
       description: |
@@ -544,7 +554,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/convert:
+  /convert:
     post:
       summary: Track a conversion event
       description: |
@@ -597,7 +607,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/experiments/{experimentId}/definition:
+  /experiments/{experimentId}/definition:
     get:
       summary: Get experiment definition and variants
       description: |
@@ -641,7 +651,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/experiments/{experimentId}/results:
+  /experiments/{experimentId}/results:
     get:
       summary: Get experiment results
       description: |
@@ -677,7 +687,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/jale/optimize:
+  /jale/optimize:
     post:
       summary: Get pricing recommendation from jale optimization
       description: |
@@ -714,7 +724,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/jale/propose-variant:
+  /jale/propose-variant:
     post:
       summary: Propose a new variant for an experiment
       description: |
@@ -755,7 +765,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /webhooks/lastprice:
+  /webhooks/paid:
     post:
       summary: Last Price webhook endpoint
       description: |
@@ -798,7 +808,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/debug/assignments:
+  /debug/assignments:
     get:
       summary: Get all experiment assignments
       description: |
@@ -829,7 +839,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # ============ Last Price API Paths ============
-  /api/lastprice/customers:
+  /customers:
     get:
       tags:
         - Customers
@@ -878,7 +888,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/lastprice/customers/{customerId}:
+  /customers/{customerId}:
     get:
       tags:
         - Customers
@@ -962,7 +972,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/lastprice/customers/external/{externalId}:
+  /customers/external/{externalId}:
     get:
       tags:
         - Customers
@@ -1025,7 +1035,7 @@ paths:
         '204':
           description: Deleted
 
-  /api/lastprice/contacts:
+  /contacts:
     get:
       tags:
         - Contacts
@@ -1062,7 +1072,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LastPriceContact'
 
-  /api/lastprice/contacts/{contactId}:
+  /contacts/{contactId}:
     get:
       tags:
         - Contacts
@@ -1101,7 +1111,7 @@ paths:
         '204':
           description: Deleted
 
-  /api/lastprice/contacts/external/{externalId}:
+  /contacts/external/{externalId}:
     delete:
       tags:
         - Contacts
@@ -1118,7 +1128,7 @@ paths:
         '204':
           description: Deleted
 
-  /api/lastprice/agents:
+  /agents:
     get:
       tags:
         - Agents
@@ -1155,7 +1165,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LastPriceAgent'
 
-  /api/lastprice/agents/{agentId}:
+  /agents/{agentId}:
     get:
       tags:
         - Agents
@@ -1221,7 +1231,7 @@ paths:
         '204':
           description: Deleted
 
-  /api/lastprice/agents/external/{externalId}:
+  /agents/external/{externalId}:
     get:
       tags:
         - Agents
@@ -1284,7 +1294,7 @@ paths:
         '204':
           description: Deleted
 
-  /api/lastprice/orders:
+  /orders:
     get:
       tags:
         - Orders
@@ -1321,7 +1331,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LastPriceOrder'
 
-  /api/lastprice/orders/{orderId}:
+  /orders/{orderId}:
     get:
       tags:
         - Orders
@@ -1360,7 +1370,7 @@ paths:
         '204':
           description: Deleted
 
-  /api/lastprice/orders/{orderId}/lines:
+  /orders/{orderId}/lines:
     put:
       tags:
         - Orders
@@ -1395,7 +1405,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/LastPriceOrderLine'
 
-  /api/lastprice/orders/{orderId}/activate:
+  /orders/{orderId}/activate:
     post:
       tags:
         - Orders
@@ -1417,7 +1427,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LastPriceOrder'
 
-  /api/lastprice/usage/signals:
+  /usage/signals:
     post:
       tags:
         - Usage
@@ -1442,6 +1452,494 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /invoices:
+    get:
+      tags:
+        - Invoices
+      summary: List all invoices
+      description: Retrieves all invoices from Last Price
+      operationId: listLastPriceInvoices
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, paid, overdue, cancelled]
+        - name: customerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LastPriceInvoice'
+
+    post:
+      tags:
+        - Invoices
+      summary: Create an invoice
+      description: Creates a new invoice in Last Price
+      operationId: createLastPriceInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LastPriceInvoiceInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceInvoice'
+
+  /invoices/{invoiceId}:
+    get:
+      tags:
+        - Invoices
+      summary: Retrieve an invoice
+      description: Retrieves an invoice by ID from Last Price
+      operationId: getLastPriceInvoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceInvoice'
+
+    put:
+      tags:
+        - Invoices
+      summary: Update an invoice
+      description: Updates an invoice in Last Price
+      operationId: updateLastPriceInvoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LastPriceInvoiceInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceInvoice'
+
+    delete:
+      tags:
+        - Invoices
+      summary: Delete an invoice
+      description: Deletes an invoice from Last Price
+      operationId: deleteLastPriceInvoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+
+  /invoices/{invoiceId}/send:
+    post:
+      tags:
+        - Invoices
+      summary: Send an invoice
+      description: Sends an invoice to the customer
+      operationId: sendLastPriceInvoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Invoice sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceInvoice'
+
+  /payments:
+    get:
+      tags:
+        - Payments
+      summary: List all payments
+      description: Retrieves all payments from Last Price
+      operationId: listLastPricePayments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, failed, refunded]
+        - name: customerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LastPricePayment'
+
+  /payments/{paymentId}:
+    get:
+      tags:
+        - Payments
+      summary: Retrieve a payment
+      description: Retrieves a payment by ID from Last Price
+      operationId: getLastPricePayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPricePayment'
+
+  /payments/{paymentId}/refund:
+    post:
+      tags:
+        - Payments
+      summary: Refund a payment
+      description: Issues a refund for a payment
+      operationId: refundLastPricePayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  description: Amount to refund (omit for full refund)
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Refund processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPricePayment'
+
+  /disputes:
+    get:
+      tags:
+        - Disputes
+      summary: List all disputes
+      description: Retrieves all disputes from Last Price
+      operationId: listLastPriceDisputes
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, under_review, won, lost]
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LastPriceDispute'
+
+    post:
+      tags:
+        - Disputes
+      summary: Create a dispute
+      description: Creates a new dispute in Last Price
+      operationId: createLastPriceDispute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LastPriceDisputeInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceDispute'
+
+  /disputes/{disputeId}:
+    get:
+      tags:
+        - Disputes
+      summary: Retrieve a dispute
+      description: Retrieves a dispute by ID from Last Price
+      operationId: getLastPriceDispute
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceDispute'
+
+    put:
+      tags:
+        - Disputes
+      summary: Update a dispute
+      description: Updates a dispute in Last Price
+      operationId: updateLastPriceDispute
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LastPriceDisputeInput'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceDispute'
+
+  /credits:
+    get:
+      tags:
+        - Credits
+      summary: List all credit bundles
+      description: Retrieves all credit bundles from Last Price
+      operationId: listLastPriceCredits
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LastPriceCreditBundle'
+
+    post:
+      tags:
+        - Credits
+      summary: Create a credit bundle
+      description: Creates a new credit bundle in Last Price
+      operationId: createLastPriceCredit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LastPriceCreditBundleInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceCreditBundle'
+
+  /credits/{creditId}:
+    get:
+      tags:
+        - Credits
+      summary: Retrieve a credit bundle
+      description: Retrieves a credit bundle by ID from Last Price
+      operationId: getLastPriceCredit
+      parameters:
+        - name: creditId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceCreditBundle'
+
+    delete:
+      tags:
+        - Credits
+      summary: Delete a credit bundle
+      description: Deletes a credit bundle from Last Price
+      operationId: deleteLastPriceCredit
+      parameters:
+        - name: creditId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+
+  /credits/balance:
+    get:
+      tags:
+        - Credits
+      summary: Get customer credit balance
+      description: Retrieves the current credit balance for a customer
+      operationId: getLastPriceCreditBalance
+      parameters:
+        - name: customerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customerId:
+                    type: string
+                    format: uuid
+                  balance:
+                    type: number
+                  currency:
+                    type: string
+
+  /costs:
+    get:
+      tags:
+        - Costs
+      summary: List all costs
+      description: Retrieves cost tracking data from Last Price
+      operationId: listLastPriceCosts
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: agentId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LastPriceCost'
+
+  /costs/analytics:
+    get:
+      tags:
+        - Costs
+      summary: Get cost analytics
+      description: Retrieves aggregated cost analytics
+      operationId: getLastPriceCostAnalytics
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [agent, customer, day, week, month]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastPriceCostAnalytics'
 
 components:
   schemas:
@@ -2436,6 +2934,305 @@ components:
         data:
           type: object
           additionalProperties: true
+
+    # ============ Invoice Schemas ============
+    LastPriceInvoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        invoiceNumber:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue, cancelled]
+        issueDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        subtotal:
+          type: number
+        tax:
+          type: number
+        total:
+          type: number
+        currency:
+          type: string
+          example: USD
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/LastPriceInvoiceLineItem'
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LastPriceInvoiceInput:
+      type: object
+      required:
+        - customerId
+        - lineItems
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        issueDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/LastPriceInvoiceLineItem'
+        notes:
+          type: string
+        currency:
+          type: string
+          default: USD
+
+    LastPriceInvoiceLineItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        amount:
+          type: number
+
+    # ============ Payment Schemas ============
+    LastPricePayment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        invoiceId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+          example: USD
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        paymentMethod:
+          type: string
+        transactionId:
+          type: string
+        processedAt:
+          type: string
+          format: date-time
+        refundedAmount:
+          type: number
+        refundedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    # ============ Dispute Schemas ============
+    LastPriceDispute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        paymentId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [open, under_review, won, lost]
+        reason:
+          type: string
+        evidence:
+          type: string
+        customerMessage:
+          type: string
+        resolution:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+
+    LastPriceDisputeInput:
+      type: object
+      required:
+        - paymentId
+        - reason
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        evidence:
+          type: string
+        customerMessage:
+          type: string
+
+    # ============ Credit Schemas ============
+    LastPriceCreditBundle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        remainingBalance:
+          type: number
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, expired, exhausted]
+        createdAt:
+          type: string
+          format: date-time
+
+    LastPriceCreditBundleInput:
+      type: object
+      required:
+        - customerId
+        - amount
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          default: USD
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ============ Cost Schemas ============
+    LastPriceCost:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        agentId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        costType:
+          type: string
+          enum: [compute, storage, api_call, data_transfer, other]
+        amount:
+          type: number
+        currency:
+          type: string
+        units:
+          type: number
+        unitPrice:
+          type: number
+        metadata:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+
+    LastPriceCostAnalytics:
+      type: object
+      properties:
+        totalCost:
+          type: number
+        currency:
+          type: string
+        period:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              groupBy:
+                type: string
+              key:
+                type: string
+              cost:
+                type: number
+              percentage:
+                type: number
 
     Error:
       type: object

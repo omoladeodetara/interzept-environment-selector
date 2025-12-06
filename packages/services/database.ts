@@ -471,4 +471,7 @@ export async function close(): Promise<void> {
   await pool.end();
 }
 
+// Export query function for direct database access
+export const query = (text: string, params?: any[]) => pool.query(text, params);
+
 export { pool };
