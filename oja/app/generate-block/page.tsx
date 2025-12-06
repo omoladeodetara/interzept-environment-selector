@@ -525,7 +525,7 @@ function GenerateBlockContent() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Discount</span>
-                          <span className="font-medium text-emerald-600">{"$-" + annualDiscount.toLocaleString()}</span>
+                          <span className="font-medium text-emerald-600">{"-$" + annualDiscount.toLocaleString()}</span>
                         </div>
                       </>
                     )}
