@@ -1,0 +1,36 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "turbo run build --filter='./demos/*'",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "routes": [
+    {
+      "src": "/saas-pricing(.*)",
+      "dest": "/demos/saas-pricing$1"
+    },
+    {
+      "src": "/agenting-bank(.*)",
+      "dest": "/demos/agenting-bank$1"
+    },
+    {
+      "src": "/ai-api(.*)",
+      "dest": "/demos/ai-api-platform$1"
+    },
+    {
+      "src": "/ecommerce(.*)",
+      "dest": "/demos/ecommerce-store$1"
+    },
+    {
+      "src": "/marketplace(.*)",
+      "dest": "/demos/marketplace$1"
+    },
+    {
+      "src": "/digital-products(.*)",
+      "dest": "/demos/digital-products$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/demos/saas-pricing/$1"
+    }
+  ]
+}
