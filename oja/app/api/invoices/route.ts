@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { createInvoice, listInvoices } from '@services/database';
 
 /**
  * GET /api/invoices
@@ -24,22 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, customer_id, invoice_number, status, amount, currency, due_date, metadata, created_at, updated_at
-      FROM invoices
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-    `;
-
-    const result = await db.query(query, [tenantId, limit, offset]);
+    const invoices = await listInvoices(tenantId, { limit, offset });
 
     return NextResponse.json({
-      data: result.rows,
+      data: invoices,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: invoices.length
       }
     });
   } catch (error) {
@@ -58,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerId, invoiceNumber, amount, currency = 'USD', dueDate, status = 'draft', metadata = {} } = body;
+    const { customerId, invoiceNumber, amount, amountDue, currency = 'USD', dueDate, status = 'draft', metadata = {}, lineItems, externalId } = body;
 
     // TODO: Get tenantId from auth context
     const tenantId = body.tenantId;
@@ -71,28 +63,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
     }
 
-    if (!amount || typeof amount !== 'number') {
+    if (amount === undefined || typeof amount !== 'number') {
       return NextResponse.json({ error: 'amount is required and must be a number' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO invoices (tenant_id, customer_id, invoice_number, status, amount, currency, due_date, metadata, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-      RETURNING id, customer_id, invoice_number, status, amount, currency, due_date, metadata, created_at, updated_at
-    `;
-
-    const result = await db.query(query, [
+    const created = await createInvoice({
       tenantId,
       customerId,
-      invoiceNumber || null,
-      status,
+      invoiceNumber,
       amount,
+      amountDue: amountDue ?? amount,
       currency,
-      dueDate || null,
-      JSON.stringify(metadata)
-    ]);
+      externalId,
+      status,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      lineItems,
+      metadata,
+    });
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Error creating invoice:', error);
     return NextResponse.json(

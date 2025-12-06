@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { getCustomerByExternalId } from '@services/database';
 
 type RouteContext = {
   params: Promise<{ externalId: string }>;
@@ -27,19 +27,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, external_id, name, email, metadata, created_at, updated_at
-      FROM customers
-      WHERE tenant_id = $1 AND external_id = $2
-    `;
+    const customer = await getCustomerByExternalId(tenantId, externalId);
 
-    const result = await db.query(query, [tenantId, externalId]);
-
-    if (result.rows.length === 0) {
+    if (!customer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(customer);
   } catch (error) {
     console.error('Error getting customer by external ID:', error);
     return NextResponse.json(

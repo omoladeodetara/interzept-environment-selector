@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { getPayment, updatePayment } from '@services/database';
 
 type RouteContext = {
   params: Promise<{ paymentId: string }>;
@@ -22,48 +22,39 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const { amount, reason } = body;
 
     // Get the payment to check if it exists and can be refunded
-    const getQuery = `
-      SELECT id, amount as total_amount, currency, status
-      FROM payments
-      WHERE id = $1
-    `;
+    const payment = await getPayment(paymentId);
 
-    const getResult = await db.query(getQuery, [paymentId]);
-
-    if (getResult.rows.length === 0) {
+    if (!payment) {
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
     }
-
-    const payment = getResult.rows[0];
 
     if (payment.status === 'refunded') {
       return NextResponse.json({ error: 'Payment already refunded' }, { status: 400 });
     }
 
-    const refundAmount = amount || payment.total_amount;
+    const refundAmount = amount ?? (payment as any).amount;
 
-    if (refundAmount > payment.total_amount) {
+    if (refundAmount > (payment as any).amount) {
       return NextResponse.json({ error: 'Refund amount exceeds payment amount' }, { status: 400 });
     }
 
-    // Update payment status
-    const updateQuery = `
-      UPDATE payments
-      SET status = 'refunded', 
-          metadata = jsonb_set(
-            COALESCE(metadata, '{}'::jsonb),
-            '{refund}',
-            jsonb_build_object('amount', $2, 'reason', $3, 'refunded_at', NOW())
-          ),
-          updated_at = NOW()
-      WHERE id = $1
-      RETURNING id, invoice_id, customer_id, amount, currency, status, payment_method, metadata, created_at, updated_at
-    `;
+    const updatedMetadata = {
+      ...(payment as any).metadata,
+      refund: {
+        amount: refundAmount,
+        reason: reason || 'Refund requested',
+        refunded_at: new Date().toISOString(),
+      },
+    };
 
-    const result = await db.query(updateQuery, [paymentId, refundAmount, reason || 'Refund requested']);
+    const updated = await updatePayment(paymentId, {
+      status: 'refunded',
+      refunded_amount: refundAmount,
+      metadata: updatedMetadata,
+    });
 
     return NextResponse.json({
-      ...result.rows[0],
+      ...updated,
       message: 'Payment refunded successfully'
     });
   } catch (error) {

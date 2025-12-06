@@ -514,3 +514,681 @@ export async function close(): Promise<void> {
   // No-op for Supabase client
   return Promise.resolve();
 }
+
+// ============================================================================
+// AGENTS OPERATIONS
+// ============================================================================
+
+export async function createAgent(agent: {
+  tenantId: string;
+  name: string;
+  description?: string;
+  pricingModel?: string;
+  basePrice?: number;
+  currency?: string;
+  externalId?: string;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('agents')
+    .insert({
+      tenant_id: agent.tenantId,
+      name: agent.name,
+      description: agent.description,
+      pricing_model: agent.pricingModel,
+      base_price: agent.basePrice,
+      currency: agent.currency || 'USD',
+      external_id: agent.externalId,
+      metadata: agent.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getAgent(agentId: string) {
+  const { data, error } = await supabase
+    .from('agents')
+    .select('*')
+    .eq('id', agentId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function getAgentByExternalId(tenantId: string, externalId: string) {
+  const { data, error } = await supabase
+    .from('agents')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('external_id', externalId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function listAgents(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('agents')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateAgent(agentId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('agents')
+    .update(updates)
+    .eq('id', agentId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteAgent(agentId: string) {
+  const { error } = await supabase
+    .from('agents')
+    .delete()
+    .eq('id', agentId);
+  
+  if (error) throw error;
+  return true;
+}
+
+// ============================================================================
+// CUSTOMERS OPERATIONS
+// ============================================================================
+
+export async function createCustomer(customer: {
+  tenantId: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  externalId?: string;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('customers')
+    .insert({
+      tenant_id: customer.tenantId,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      external_id: customer.externalId,
+      metadata: customer.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getCustomer(customerId: string) {
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', customerId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function getCustomerByExternalId(tenantId: string, externalId: string) {
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('external_id', externalId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function listCustomers(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateCustomer(customerId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('customers')
+    .update(updates)
+    .eq('id', customerId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCustomer(customerId: string) {
+  const { error } = await supabase
+    .from('customers')
+    .delete()
+    .eq('id', customerId);
+  
+  if (error) throw error;
+  return true;
+}
+
+// ============================================================================
+// ORDERS OPERATIONS
+// ============================================================================
+
+export async function createOrder(order: {
+  tenantId: string;
+  customerId?: string;
+  agentId?: string;
+  amount: number;
+  currency?: string;
+  externalId?: string;
+  status?: string;
+  items?: any[];
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('orders')
+    .insert({
+      tenant_id: order.tenantId,
+      customer_id: order.customerId,
+      agent_id: order.agentId,
+      amount: order.amount,
+      currency: order.currency || 'USD',
+      external_id: order.externalId,
+      status: order.status || 'pending',
+      items: order.items || [],
+      metadata: order.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getOrder(orderId: string) {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', orderId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function listOrders(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateOrder(orderId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', orderId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+// ============================================================================
+// PAYMENTS OPERATIONS
+// ============================================================================
+
+export async function createPayment(payment: {
+  tenantId: string;
+  customerId?: string;
+  orderId?: string;
+  amount: number;
+  currency?: string;
+  externalId?: string;
+  status?: string;
+  paymentMethod?: string;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('payments')
+    .insert({
+      tenant_id: payment.tenantId,
+      customer_id: payment.customerId,
+      order_id: payment.orderId,
+      amount: payment.amount,
+      currency: payment.currency || 'USD',
+      external_id: payment.externalId,
+      status: payment.status || 'pending',
+      payment_method: payment.paymentMethod,
+      metadata: payment.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getPayment(paymentId: string) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('id', paymentId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function listPayments(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updatePayment(paymentId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('payments')
+    .update(updates)
+    .eq('id', paymentId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+// ============================================================================
+// INVOICES OPERATIONS
+// ============================================================================
+
+export async function createInvoice(invoice: {
+  tenantId: string;
+  customerId?: string;
+  invoiceNumber?: string;
+  amount: number;
+  amountDue: number;
+  currency?: string;
+  externalId?: string;
+  status?: string;
+  dueDate?: Date;
+  lineItems?: any[];
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .insert({
+      tenant_id: invoice.tenantId,
+      customer_id: invoice.customerId,
+      invoice_number: invoice.invoiceNumber,
+      amount: invoice.amount,
+      amount_due: invoice.amountDue,
+      currency: invoice.currency || 'USD',
+      external_id: invoice.externalId,
+      status: invoice.status || 'draft',
+      due_date: invoice.dueDate?.toISOString(),
+      line_items: invoice.lineItems || [],
+      metadata: invoice.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getInvoice(invoiceId: string) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('id', invoiceId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function listInvoices(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateInvoice(invoiceId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .update(updates)
+    .eq('id', invoiceId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteInvoice(invoiceId: string) {
+  const { error } = await supabase
+    .from('invoices')
+    .delete()
+    .eq('id', invoiceId);
+  
+  if (error) throw error;
+  return true;
+}
+
+// ============================================================================
+// DISPUTES OPERATIONS
+// ============================================================================
+
+export async function createDispute(dispute: {
+  tenantId: string;
+  paymentId?: string;
+  customerId?: string;
+  amount: number;
+  currency?: string;
+  externalId?: string;
+  status?: string;
+  reason?: string;
+  evidence?: Record<string, any>;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('disputes')
+    .insert({
+      tenant_id: dispute.tenantId,
+      payment_id: dispute.paymentId,
+      customer_id: dispute.customerId,
+      amount: dispute.amount,
+      currency: dispute.currency || 'USD',
+      external_id: dispute.externalId,
+      status: dispute.status || 'open',
+      reason: dispute.reason,
+      evidence: dispute.evidence || {},
+      metadata: dispute.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getDispute(disputeId: string) {
+  const { data, error } = await supabase
+    .from('disputes')
+    .select('*')
+    .eq('id', disputeId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function listDisputes(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('disputes')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function updateDispute(disputeId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('disputes')
+    .update(updates)
+    .eq('id', disputeId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+// ============================================================================
+// CREDITS OPERATIONS
+// ============================================================================
+
+export async function createCredit(credit: {
+  tenantId: string;
+  customerId: string;
+  amount: number;
+  remainingAmount?: number;
+  currency?: string;
+  externalId?: string;
+  status?: string;
+  expiresAt?: Date;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('credits')
+    .insert({
+      tenant_id: credit.tenantId,
+      customer_id: credit.customerId,
+      amount: credit.amount,
+      remaining_amount: credit.remainingAmount ?? credit.amount,
+      currency: credit.currency || 'USD',
+      external_id: credit.externalId,
+      status: credit.status || 'active',
+      expires_at: credit.expiresAt?.toISOString(),
+      metadata: credit.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getCredit(creditId: string) {
+  const { data, error } = await supabase
+    .from('credits')
+    .select('*')
+    .eq('id', creditId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function getCreditBalance(customerId: string) {
+  const { data, error } = await supabase
+    .from('credits')
+    .select('remaining_amount')
+    .eq('customer_id', customerId)
+    .eq('status', 'active')
+    .gt('remaining_amount', 0);
+  
+  if (error) throw error;
+  
+  const total = (data || []).reduce((sum, credit) => sum + parseFloat(credit.remaining_amount), 0);
+  return { balance: total };
+}
+
+export async function listCredits(tenantId: string, options: { limit?: number; offset?: number } = {}) {
+  const { limit = 20, offset = 0 } = options;
+  
+  const { data, error } = await supabase
+    .from('credits')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function deleteCredit(creditId: string) {
+  const { error } = await supabase
+    .from('credits')
+    .delete()
+    .eq('id', creditId);
+  
+  if (error) throw error;
+  return true;
+}
+
+// ============================================================================
+// COSTS OPERATIONS
+// ============================================================================
+
+export async function recordCost(cost: {
+  tenantId: string;
+  agentId?: string;
+  customerId?: string;
+  orderId?: string;
+  costType: string;
+  amount: number;
+  currency?: string;
+  quantity?: number;
+  unit?: string;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('costs')
+    .insert({
+      tenant_id: cost.tenantId,
+      agent_id: cost.agentId,
+      customer_id: cost.customerId,
+      order_id: cost.orderId,
+      cost_type: cost.costType,
+      amount: cost.amount,
+      currency: cost.currency || 'USD',
+      quantity: cost.quantity,
+      unit: cost.unit,
+      metadata: cost.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function getCosts(tenantId: string, options: {
+  startDate?: Date;
+  endDate?: Date;
+  agentId?: string;
+  customerId?: string;
+  costType?: string;
+  limit?: number;
+  offset?: number;
+} = {}) {
+  const { limit = 100, offset = 0, startDate, endDate, agentId, customerId, costType } = options;
+  
+  let query = supabase
+    .from('costs')
+    .select('*')
+    .eq('tenant_id', tenantId);
+  
+  if (startDate) {
+    query = query.gte('created_at', startDate.toISOString());
+  }
+  
+  if (endDate) {
+    query = query.lte('created_at', endDate.toISOString());
+  }
+  
+  if (agentId) {
+    query = query.eq('agent_id', agentId);
+  }
+  
+  if (customerId) {
+    query = query.eq('customer_id', customerId);
+  }
+  
+  if (costType) {
+    query = query.eq('cost_type', costType);
+  }
+  
+  query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+  
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  return data || [];
+}
+
+// ============================================================================
+// USAGE SIGNALS OPERATIONS
+// ============================================================================
+
+export async function recordUsageSignal(signal: {
+  tenantId: string;
+  agentId?: string;
+  customerId?: string;
+  eventType: string;
+  properties?: Record<string, any>;
+  metadata?: Record<string, any>;
+}) {
+  const { data, error } = await supabase
+    .from('usage_signals')
+    .insert({
+      tenant_id: signal.tenantId,
+      agent_id: signal.agentId,
+      customer_id: signal.customerId,
+      event_type: signal.eventType,
+      properties: signal.properties || {},
+      metadata: signal.metadata || {},
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { supabaseAdmin } from '@services/supabase';
 
 type RouteContext = {
   params: Promise<{ externalId: string }>;
@@ -26,19 +26,18 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, customer_id, external_id, email, phone, address, metadata, created_at, updated_at
-      FROM contacts
-      WHERE customer_id = $1 AND external_id = $2
-    `;
+    const { data, error } = await supabaseAdmin
+      .from('contacts')
+      .select('*')
+      .eq('customer_id', customerId)
+      .eq('external_id', externalId)
+      .single();
 
-    const result = await db.query(query, [customerId, externalId]);
-
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error getting contact by external ID:', error);
     return NextResponse.json(

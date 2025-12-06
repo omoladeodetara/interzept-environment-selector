@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { deleteCredit, getCredit } from '@services/database';
 
 type RouteContext = {
   params: Promise<{ creditId: string }>;
@@ -19,19 +19,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { creditId } = await context.params;
 
-    const query = `
-      SELECT id, customer_id, amount, balance, currency, expires_at, metadata, created_at, updated_at
-      FROM credit_bundles
-      WHERE id = $1
-    `;
+    const credit = await getCredit(creditId);
 
-    const result = await db.query(query, [creditId]);
-
-    if (result.rows.length === 0) {
+    if (!credit) {
       return NextResponse.json({ error: 'Credit bundle not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(credit);
   } catch (error) {
     console.error('Error getting credit bundle:', error);
     return NextResponse.json(
@@ -49,15 +43,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { creditId } = await context.params;
 
-    const query = `
-      DELETE FROM credit_bundles
-      WHERE id = $1
-      RETURNING id
-    `;
+    const deleted = await deleteCredit(creditId);
 
-    const result = await db.query(query, [creditId]);
-
-    if (result.rows.length === 0) {
+    if (!deleted) {
       return NextResponse.json({ error: 'Credit bundle not found' }, { status: 404 });
     }
 

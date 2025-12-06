@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { getOrder, updateOrder } from '@services/database';
 
 type RouteContext = {
   params: Promise<{ orderId: string }>;
@@ -29,21 +29,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'unitPrice is required and must be a number' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO order_lines (order_id, description, quantity, unit_price, metadata, created_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
-      RETURNING id, order_id, description, quantity, unit_price, metadata, created_at
-    `;
+    const order = await getOrder(orderId);
 
-    const result = await db.query(query, [
-      orderId,
-      description,
-      quantity,
-      unitPrice,
-      JSON.stringify(metadata)
-    ]);
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    const newLine = { description, quantity, unitPrice, metadata };
+    const currentItems = Array.isArray((order as any).items) ? (order as any).items : [];
+    const updatedItems = [...currentItems, newLine];
+
+    const updated = await updateOrder(orderId, { items: updatedItems });
+
+    return NextResponse.json(updated, { status: 201 });
   } catch (error) {
     console.error('Error adding order line:', error);
     return NextResponse.json(

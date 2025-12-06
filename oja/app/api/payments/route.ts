@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { listPayments } from '@services/database';
 
 /**
  * GET /api/payments
@@ -24,22 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, invoice_id, customer_id, amount, currency, status, payment_method, metadata, created_at, updated_at
-      FROM payments
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-    `;
-
-    const result = await db.query(query, [tenantId, limit, offset]);
+    const payments = await listPayments(tenantId, { limit, offset });
 
     return NextResponse.json({
-      data: result.rows,
+      data: payments,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: payments.length
       }
     });
   } catch (error) {

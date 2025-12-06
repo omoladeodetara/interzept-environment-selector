@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { getCosts, recordCost } from '@services/database';
 
 /**
  * GET /api/costs
@@ -26,36 +26,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    let query = `
-      SELECT id, agent_id, customer_id, cost_type, amount, currency, metadata, created_at
-      FROM costs
-      WHERE tenant_id = $1
-    `;
-
-    const params: any[] = [tenantId];
-    let paramIndex = 2;
-
-    if (startDate) {
-      query += ` AND created_at >= $${paramIndex++}`;
-      params.push(startDate);
-    }
-
-    if (endDate) {
-      query += ` AND created_at <= $${paramIndex++}`;
-      params.push(endDate);
-    }
-
-    query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
-    params.push(limit, offset);
-
-    const result = await db.query(query, params);
+    const costs = await getCosts(tenantId, {
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      limit,
+      offset,
+    });
 
     return NextResponse.json({
-      data: result.rows,
+      data: costs,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: costs.length
       }
     });
   } catch (error) {
@@ -74,7 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { agentId, customerId, costType, amount, currency = 'USD', metadata = {} } = body;
+    const { agentId, customerId, orderId, costType, amount, currency = 'USD', quantity, unit, metadata = {} } = body;
 
     // TODO: Get tenantId from auth context
     const tenantId = body.tenantId;
@@ -87,23 +70,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'amount is required and must be a number' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO costs (tenant_id, agent_id, customer_id, cost_type, amount, currency, metadata, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      RETURNING id, agent_id, customer_id, cost_type, amount, currency, metadata, created_at
-    `;
-
-    const result = await db.query(query, [
+    const recorded = await recordCost({
       tenantId,
-      agentId || null,
-      customerId || null,
-      costType || 'usage',
+      agentId,
+      customerId,
+      orderId,
+      costType: costType || 'usage',
       amount,
       currency,
-      JSON.stringify(metadata)
-    ]);
+      quantity,
+      unit,
+      metadata,
+    });
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(recorded, { status: 201 });
   } catch (error) {
     console.error('Error recording cost:', error);
     return NextResponse.json(

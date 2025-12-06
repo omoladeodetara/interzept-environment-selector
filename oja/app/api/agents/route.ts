@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { createAgent, listAgents } from '@services/database';
 
 /**
  * GET /api/agents
@@ -24,22 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, external_id, name, description, pricing_model, metadata, created_at, updated_at
-      FROM agents
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-    `;
-
-    const result = await db.query(query, [tenantId, limit, offset]);
+    const agents = await listAgents(tenantId, { limit, offset });
 
     return NextResponse.json({
-      data: result.rows,
+      data: agents,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: agents.length
       }
     });
   } catch (error) {
@@ -58,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { externalId, name, description, pricingModel, metadata = {} } = body;
+    const { externalId, name, description, pricingModel, basePrice, currency, metadata = {} } = body;
 
     // TODO: Get tenantId from auth context
     const tenantId = body.tenantId;
@@ -71,22 +63,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO agents (tenant_id, external_id, name, description, pricing_model, metadata, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-      RETURNING id, external_id, name, description, pricing_model, metadata, created_at, updated_at
-    `;
-
-    const result = await db.query(query, [
+    const created = await createAgent({
       tenantId,
-      externalId || null,
+      externalId,
       name,
-      description || null,
-      pricingModel || null,
-      JSON.stringify(metadata)
-    ]);
+      description,
+      pricingModel,
+      basePrice,
+      currency,
+      metadata
+    });
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Error creating agent:', error);
     return NextResponse.json(

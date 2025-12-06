@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { getCosts } from '@services/database';
 
 /**
  * GET /api/costs/analytics
@@ -25,83 +25,73 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    let groupByClause = '';
-    let selectClause = '';
+    const costs = await getCosts(tenantId, {
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      limit: 5000,
+      offset: 0,
+    });
 
-    switch (groupBy) {
-      case 'agent':
-        selectClause = 'agent_id as group_key';
-        groupByClause = 'agent_id';
-        break;
-      case 'customer':
-        selectClause = 'customer_id as group_key';
-        groupByClause = 'customer_id';
-        break;
-      case 'type':
-        selectClause = 'cost_type as group_key';
-        groupByClause = 'cost_type';
-        break;
-      case 'week':
-        selectClause = "DATE_TRUNC('week', created_at) as group_key";
-        groupByClause = "DATE_TRUNC('week', created_at)";
-        break;
-      case 'month':
-        selectClause = "DATE_TRUNC('month', created_at) as group_key";
-        groupByClause = "DATE_TRUNC('month', created_at)";
-        break;
-      default: // day
-        selectClause = "DATE_TRUNC('day', created_at) as group_key";
-        groupByClause = "DATE_TRUNC('day', created_at)";
+    const groupKeyFn = (cost: any) => {
+      const created = new Date(cost.created_at);
+      switch (groupBy) {
+        case 'agent':
+          return cost.agent_id || 'unassigned';
+        case 'customer':
+          return cost.customer_id || 'unassigned';
+        case 'type':
+          return cost.cost_type || 'unknown';
+        case 'week':
+          return created.toISOString().substring(0, 10); // simple date bucket
+        case 'month':
+          return created.toISOString().substring(0, 7);
+        default:
+          return created.toISOString().substring(0, 10);
+      }
+    };
+
+    const analyticsMap = new Map<string, { count: number; total: number; min: number; max: number; currency: string }>();
+
+    for (const cost of costs) {
+      const key = groupKeyFn(cost);
+      const amount = parseFloat((cost as any).amount);
+      const entry = analyticsMap.get(key) || { count: 0, total: 0, min: amount, max: amount, currency: (cost as any).currency };
+      entry.count += 1;
+      entry.total += amount;
+      entry.min = Math.min(entry.min, amount);
+      entry.max = Math.max(entry.max, amount);
+      analyticsMap.set(key, entry);
     }
 
-    let query = `
-      SELECT 
-        ${selectClause},
-        COUNT(*) as count,
-        SUM(amount) as total_amount,
-        AVG(amount) as avg_amount,
-        MIN(amount) as min_amount,
-        MAX(amount) as max_amount,
-        currency
-      FROM costs
-      WHERE tenant_id = $1
-    `;
+    const analytics = Array.from(analyticsMap.entries()).map(([group_key, entry]) => ({
+      group_key,
+      count: entry.count,
+      total_amount: entry.total,
+      avg_amount: entry.total / entry.count,
+      min_amount: entry.min,
+      max_amount: entry.max,
+      currency: entry.currency,
+    }));
 
-    const params: any[] = [tenantId];
-    let paramIndex = 2;
-
-    if (startDate) {
-      query += ` AND created_at >= $${paramIndex++}`;
-      params.push(startDate);
+    const totalsMap = new Map<string, { total_count: number; total_amount: number }>();
+    for (const cost of costs) {
+      const currency = (cost as any).currency;
+      const amount = parseFloat((cost as any).amount);
+      const entry = totalsMap.get(currency) || { total_count: 0, total_amount: 0 };
+      entry.total_count += 1;
+      entry.total_amount += amount;
+      totalsMap.set(currency, entry);
     }
 
-    if (endDate) {
-      query += ` AND created_at <= $${paramIndex++}`;
-      params.push(endDate);
-    }
-
-    query += ` GROUP BY ${groupByClause}, currency ORDER BY group_key DESC`;
-
-    const result = await db.query(query, params);
-
-    // Calculate overall totals
-    const totalQuery = `
-      SELECT 
-        COUNT(*) as total_count,
-        SUM(amount) as total_amount,
-        currency
-      FROM costs
-      WHERE tenant_id = $1
-      ${startDate ? `AND created_at >= $${params.length > 1 ? 2 : params.length + 1}` : ''}
-      ${endDate ? `AND created_at <= $${params.length > 2 ? 3 : params.length + 1}` : ''}
-      GROUP BY currency
-    `;
-
-    const totalResult = await db.query(totalQuery, params);
+    const totals = Array.from(totalsMap.entries()).map(([currency, entry]) => ({
+      currency,
+      total_count: entry.total_count,
+      total_amount: entry.total_amount,
+    }));
 
     return NextResponse.json({
-      analytics: result.rows,
-      totals: totalResult.rows,
+      analytics,
+      totals,
       groupBy
     });
   } catch (error) {

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { createOrder, listOrders } from '@services/database';
 
 /**
  * GET /api/orders
@@ -24,22 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, customer_id, agent_id, status, total_amount, currency, metadata, created_at, updated_at
-      FROM orders
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-    `;
-
-    const result = await db.query(query, [tenantId, limit, offset]);
+    const orders = await listOrders(tenantId, { limit, offset });
 
     return NextResponse.json({
-      data: result.rows,
+      data: orders,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: orders.length
       }
     });
   } catch (error) {
@@ -58,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerId, agentId, status = 'draft', totalAmount = 0, currency = 'USD', metadata = {} } = body;
+    const { customerId, agentId, status = 'pending', amount, totalAmount, currency = 'USD', items, metadata = {}, externalId } = body;
 
     // TODO: Get tenantId from auth context
     const tenantId = body.tenantId;
@@ -67,27 +59,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    if (!customerId) {
-      return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
+    const numericAmount = amount ?? totalAmount;
+
+    if (numericAmount === undefined || typeof numericAmount !== 'number') {
+      return NextResponse.json({ error: 'amount is required and must be a number' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO orders (tenant_id, customer_id, agent_id, status, total_amount, currency, metadata, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-      RETURNING id, customer_id, agent_id, status, total_amount, currency, metadata, created_at, updated_at
-    `;
-
-    const result = await db.query(query, [
+    const created = await createOrder({
       tenantId,
       customerId,
-      agentId || null,
-      status,
-      totalAmount,
+      agentId,
+      amount: numericAmount,
       currency,
-      JSON.stringify(metadata)
-    ]);
+      status,
+      items,
+      externalId,
+      metadata,
+    });
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Error creating order:', error);
     return NextResponse.json(

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { createCredit, listCredits } from '@services/database';
 
 /**
  * GET /api/credits
@@ -24,22 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, customer_id, amount, balance, currency, expires_at, metadata, created_at, updated_at
-      FROM credit_bundles
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-    `;
-
-    const result = await db.query(query, [tenantId, limit, offset]);
+    const credits = await listCredits(tenantId, { limit, offset });
 
     return NextResponse.json({
-      data: result.rows,
+      data: credits,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: credits.length
       }
     });
   } catch (error) {
@@ -58,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerId, amount, currency = 'USD', expiresAt, metadata = {} } = body;
+    const { customerId, amount, currency = 'USD', expiresAt, metadata = {}, externalId, remainingAmount } = body;
 
     // TODO: Get tenantId from auth context
     const tenantId = body.tenantId;
@@ -75,22 +67,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'amount is required and must be a positive number' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO credit_bundles (tenant_id, customer_id, amount, balance, currency, expires_at, metadata, created_at, updated_at)
-      VALUES ($1, $2, $3, $3, $4, $5, $6, NOW(), NOW())
-      RETURNING id, customer_id, amount, balance, currency, expires_at, metadata, created_at, updated_at
-    `;
-
-    const result = await db.query(query, [
+    const created = await createCredit({
       tenantId,
       customerId,
       amount,
+      remainingAmount,
       currency,
-      expiresAt || null,
-      JSON.stringify(metadata)
-    ]);
+      externalId,
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      metadata,
+    });
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Error creating credit bundle:', error);
     return NextResponse.json(

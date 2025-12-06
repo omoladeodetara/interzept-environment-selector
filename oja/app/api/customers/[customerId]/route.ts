@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { deleteCustomer, getCustomer, updateCustomer } from '@services/database';
 
 type RouteContext = {
   params: Promise<{ customerId: string }>;
@@ -19,19 +19,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { customerId } = await context.params;
 
-    const query = `
-      SELECT id, external_id, name, email, metadata, created_at, updated_at
-      FROM customers
-      WHERE id = $1
-    `;
+    const customer = await getCustomer(customerId);
 
-    const result = await db.query(query, [customerId]);
-
-    if (result.rows.length === 0) {
+    if (!customer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(customer);
   } catch (error) {
     console.error('Error getting customer:', error);
     return NextResponse.json(
@@ -51,49 +45,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const body = await request.json();
     const { name, email, metadata } = body;
 
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (name !== undefined) {
-      updates.push(`name = $${paramIndex++}`);
-      values.push(name);
+    if (email !== undefined && email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
-    if (email !== undefined) {
-      if (email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-        return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
-      }
-      updates.push(`email = $${paramIndex++}`);
-      values.push(email);
-    }
-
-    if (metadata !== undefined) {
-      updates.push(`metadata = $${paramIndex++}`);
-      values.push(JSON.stringify(metadata));
-    }
-
-    if (updates.length === 0) {
+    if (name === undefined && email === undefined && metadata === undefined) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
-    updates.push(`updated_at = NOW()`);
-    values.push(customerId);
+    const updated = await updateCustomer(customerId, {
+      name,
+      email,
+      metadata,
+    });
 
-    const query = `
-      UPDATE customers
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING id, external_id, name, email, metadata, created_at, updated_at
-    `;
-
-    const result = await db.query(query, values);
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(updated);
   } catch (error) {
     console.error('Error updating customer:', error);
     return NextResponse.json(
@@ -111,15 +77,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { customerId } = await context.params;
 
-    const query = `
-      DELETE FROM customers
-      WHERE id = $1
-      RETURNING id
-    `;
+    const deleted = await deleteCustomer(customerId);
 
-    const result = await db.query(query, [customerId]);
-
-    if (result.rows.length === 0) {
+    if (!deleted) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 

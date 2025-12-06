@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { getOrder, updateOrder } from '@services/database';
 
 type RouteContext = {
   params: Promise<{ orderId: string }>;
@@ -19,20 +19,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { orderId } = await context.params;
 
-    const query = `
-      UPDATE orders
-      SET status = 'active', updated_at = NOW()
-      WHERE id = $1 AND status = 'draft'
-      RETURNING id, customer_id, agent_id, status, total_amount, currency, metadata, created_at, updated_at
-    `;
+    const order = await getOrder(orderId);
 
-    const result = await db.query(query, [orderId]);
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Order not found or already activated' }, { status: 404 });
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    const updated = await updateOrder(orderId, { status: 'processing' });
+
+    return NextResponse.json(updated);
   } catch (error) {
     console.error('Error activating order:', error);
     return NextResponse.json(

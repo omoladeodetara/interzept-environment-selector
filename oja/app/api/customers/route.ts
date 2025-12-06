@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { createCustomer, listCustomers } from '@services/database';
 
 /**
  * GET /api/customers
@@ -24,22 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const query = `
-      SELECT id, external_id, name, email, metadata, created_at, updated_at
-      FROM customers
-      WHERE tenant_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-    `;
-
-    const result = await db.query(query, [tenantId, limit, offset]);
+    const customers = await listCustomers(tenantId, { limit, offset });
 
     return NextResponse.json({
-      data: result.rows,
+      data: customers,
       pagination: {
         limit,
         offset,
-        total: result.rows.length
+        total: customers.length
       }
     });
   } catch (error) {
@@ -58,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { externalId, name, email, metadata = {} } = body;
+    const { externalId, name, email, phone, metadata = {} } = body;
 
     // TODO: Get tenantId from auth context
     const tenantId = body.tenantId;
@@ -75,21 +67,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO customers (tenant_id, external_id, name, email, metadata, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      RETURNING id, external_id, name, email, metadata, created_at, updated_at
-    `;
-
-    const result = await db.query(query, [
+    const created = await createCustomer({
       tenantId,
-      externalId || null,
+      externalId,
       name,
-      email || null,
-      JSON.stringify(metadata)
-    ]);
+      email,
+      phone,
+      metadata,
+    });
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Error creating customer:', error);
     return NextResponse.json(

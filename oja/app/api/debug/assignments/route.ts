@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { supabaseAdmin } from '@services/supabase';
 
 /**
  * GET /api/debug/assignments
@@ -22,51 +22,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'experimentId is required' }, { status: 400 });
     }
 
-    let query = `
-      SELECT 
-        a.id,
-        a.experiment_id,
-        a.user_id,
-        a.variant_index,
-        a.assigned_at,
-        e.name as experiment_name,
-        e.variants
-      FROM experiment_assignments a
-      JOIN experiments e ON a.experiment_id = e.id
-      WHERE a.experiment_id = $1
-    `;
+    const assignmentsQuery = supabaseAdmin
+      .from('experiment_assignments')
+      .select('id, experiment_id, user_id, variant_index, assigned_at, experiments(name, variants)')
+      .eq('experiment_id', experimentId)
+      .order('assigned_at', { ascending: false })
+      .limit(limit);
 
-    const params: any[] = [experimentId];
+    const filteredQuery = userId ? assignmentsQuery.eq('user_id', userId) : assignmentsQuery;
+    const { data: assignments, error } = await filteredQuery;
+    if (error) throw error;
 
-    if (userId) {
-      query += ` AND a.user_id = $2`;
-      params.push(userId);
-    }
+    const { data: statsSource, error: statsError } = await supabaseAdmin
+      .from('experiment_assignments')
+      .select('variant_index')
+      .eq('experiment_id', experimentId)
+      .limit(10000);
 
-    query += ` ORDER BY a.assigned_at DESC LIMIT $${params.length + 1}`;
-    params.push(limit);
-
-    const result = await db.query(query, params);
-
-    // Get assignment statistics
-    const statsQuery = `
-      SELECT 
-        variant_index,
-        COUNT(*) as count,
-        COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
-      FROM experiment_assignments
-      WHERE experiment_id = $1
-      GROUP BY variant_index
-      ORDER BY variant_index
-    `;
-
-    const statsResult = await db.query(statsQuery, [experimentId]);
+    if (statsError) throw statsError;
 
     return NextResponse.json({
-      assignments: result.rows,
-      statistics: statsResult.rows,
+      assignments,
+      statistics: (() => {
+        const counts = new Map<number, number>();
+        for (const row of statsSource || []) {
+          const key = Number((row as any).variant_index);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        }
+        const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0) || 1;
+        return Array.from(counts.entries())
+          .sort((a, b) => a[0] - b[0])
+          .map(([variant_index, count]) => ({
+            variant_index,
+            count,
+            percentage: (count * 100) / total,
+          }));
+      })(),
       experimentId,
-      total: result.rows.length
+      total: assignments?.length || 0
     });
   } catch (error) {
     console.error('Error getting debug assignments:', error);

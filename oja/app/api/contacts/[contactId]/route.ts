@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { supabaseAdmin } from '@services/supabase';
 
 type RouteContext = {
   params: Promise<{ contactId: string }>;
@@ -19,15 +19,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { contactId } = await context.params;
 
-    const query = `
-      DELETE FROM contacts
-      WHERE id = $1
-      RETURNING id
-    `;
+    const { error, data } = await supabaseAdmin
+      .from('contacts')
+      .delete()
+      .eq('id', contactId)
+      .select('id')
+      .single();
 
-    const result = await db.query(query, [contactId]);
-
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
     }
 

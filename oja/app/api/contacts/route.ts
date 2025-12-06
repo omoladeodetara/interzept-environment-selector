@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as db from '@services/database';
+import { supabaseAdmin } from '@services/supabase';
 
 /**
  * POST /api/contacts
@@ -24,22 +24,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
     }
 
-    const query = `
-      INSERT INTO contacts (customer_id, external_id, email, phone, address, metadata, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-      RETURNING id, customer_id, external_id, email, phone, address, metadata, created_at, updated_at
-    `;
+    const { data, error } = await supabaseAdmin
+      .from('contacts')
+      .insert({
+        customer_id: customerId,
+        external_id: externalId || null,
+        email,
+        phone: phone || null,
+        address: address || null,
+        metadata: metadata || {},
+      })
+      .select()
+      .single();
 
-    const result = await db.query(query, [
-      customerId,
-      externalId || null,
-      email,
-      phone || null,
-      address ? JSON.stringify(address) : null,
-      JSON.stringify(metadata)
-    ]);
+    if (error) throw error;
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error('Error creating contact:', error);
     return NextResponse.json(
