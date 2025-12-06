@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Last Price
   description: |
-    Server for conducting A/B testing experiments on pricing strategies using Paid.ai integration.
+    Server for conducting A/B testing experiments on pricing strategies using Last Price integration.
     
     This server provides endpoints for:
     - Assigning users to experiment variants
@@ -37,17 +37,17 @@ tags:
     description: Paid.ai webhook integration
   - name: Debug
     description: Debugging and development endpoints
-  # Paid.ai API tags
+  # Last Price API tags
   - name: Customers
-    description: Customer management operations (Paid.ai)
+    description: Customer management operations (Last Price)
   - name: Contacts
-    description: Contact management operations (Paid.ai)
+    description: Contact management operations (Last Price)
   - name: Agents
-    description: AI Agent management operations (Paid.ai)
+    description: AI Agent management operations (Last Price)
   - name: Orders
-    description: Order management operations (Paid.ai)
+    description: Order management operations (Last Price)
   - name: Usage
-    description: Agent signal tracking (Paid.ai)
+    description: Agent signal tracking (Last Price)
 
 paths:
   /health:
@@ -441,7 +441,7 @@ paths:
       summary: Record conversion for experiment
       description: |
         Records a conversion event for a user in an experiment. Uses tenant context
-        to determine the correct Paid.ai API key for signal emission.
+        to determine the correct Last Price API key for signal emission.
       tags:
         - Experiments
       parameters:
@@ -505,7 +505,7 @@ paths:
       description: |
         Assigns a user to an A/B test variant (control or experiment) and returns the corresponding pricing.
         The assignment is deterministic based on userId and experimentId, ensuring consistency across sessions.
-        Also emits a signal to Paid.ai tracking the pricing view event.
+        Also emits a signal to Last Price tracking the pricing view event.
       tags:
         - Experiments
       parameters:
@@ -550,7 +550,7 @@ paths:
       description: |
         Records a conversion (subscription/purchase) for a user in an experiment.
         The user must have been previously assigned to a variant via the /api/pricing endpoint.
-        Emits a conversion signal to Paid.ai for tracking.
+        Emits a conversion signal to Last Price for tracking.
       tags:
         - Experiments
       requestBody:
@@ -755,11 +755,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /webhooks/paid:
+  /webhooks/lastprice:
     post:
-      summary: Paid.ai webhook endpoint
+      summary: Last Price webhook endpoint
       description: |
-        Receives webhook events from Paid.ai about subscriptions, payments, and other billing events.
+        Receives webhook events from Last Price about subscriptions, payments, and other billing events.
         Links these events to A/B test experiments for conversion tracking.
         
         **Security**: In production, webhook signatures should be verified using the WEBHOOK_SECRET.
@@ -828,14 +828,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  # ============ Paid.ai API Paths ============
-  /api/paid/customers:
+  # ============ Last Price API Paths ============
+  /api/lastprice/customers:
     get:
       tags:
         - Customers
       summary: List all customers
-      description: Retrieves all customers from Paid.ai
-      operationId: listPaidCustomers
+      description: Retrieves all customers from Last Price
+      operationId: listLastPriceCustomers
       responses:
         '200':
           description: Retrieved
@@ -844,7 +844,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaidCustomer'
+                  $ref: '#/components/schemas/LastPriceCustomer'
         '401':
           description: Unauthorized
           content:
@@ -856,21 +856,21 @@ paths:
       tags:
         - Customers
       summary: Create a customer
-      description: Creates a new customer in Paid.ai
-      operationId: createPaidCustomer
+      description: Creates a new customer in Last Price
+      operationId: createLastPriceCustomer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidCustomerInput'
+              $ref: '#/components/schemas/LastPriceCustomerInput'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidCustomer'
+                $ref: '#/components/schemas/LastPriceCustomer'
         '400':
           description: Bad Request
           content:
@@ -878,13 +878,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/paid/customers/{customerId}:
+  /api/lastprice/customers/{customerId}:
     get:
       tags:
         - Customers
       summary: Retrieve a customer
-      description: Retrieves a customer by ID from Paid.ai
-      operationId: getPaidCustomer
+      description: Retrieves a customer by ID from Last Price
+      operationId: getLastPriceCustomer
       parameters:
         - name: customerId
           in: path
@@ -898,7 +898,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidCustomer'
+                $ref: '#/components/schemas/LastPriceCustomer'
         '404':
           description: Not Found
           content:
@@ -910,8 +910,8 @@ paths:
       tags:
         - Customers
       summary: Update a customer
-      description: Updates a customer in Paid.ai
-      operationId: updatePaidCustomer
+      description: Updates a customer in Last Price
+      operationId: updateLastPriceCustomer
       parameters:
         - name: customerId
           in: path
@@ -924,14 +924,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidCustomerInput'
+              $ref: '#/components/schemas/LastPriceCustomerInput'
       responses:
         '200':
           description: Updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidCustomer'
+                $ref: '#/components/schemas/LastPriceCustomer'
         '404':
           description: Not Found
           content:
@@ -943,8 +943,8 @@ paths:
       tags:
         - Customers
       summary: Delete a customer
-      description: Deletes a customer from Paid.ai
-      operationId: deletePaidCustomer
+      description: Deletes a customer from Last Price
+      operationId: deleteLastPriceCustomer
       parameters:
         - name: customerId
           in: path
@@ -962,13 +962,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/paid/customers/external/{externalId}:
+  /api/lastprice/customers/external/{externalId}:
     get:
       tags:
         - Customers
       summary: Retrieve customer by external ID
-      description: Retrieves a customer by external ID from Paid.ai
-      operationId: getPaidCustomerByExternalId
+      description: Retrieves a customer by external ID from Last Price
+      operationId: getLastPriceCustomerByExternalId
       parameters:
         - name: externalId
           in: path
@@ -981,14 +981,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidCustomer'
+                $ref: '#/components/schemas/LastPriceCustomer'
 
     put:
       tags:
         - Customers
       summary: Update customer by external ID
-      description: Updates a customer by external ID in Paid.ai
-      operationId: updatePaidCustomerByExternalId
+      description: Updates a customer by external ID in Last Price
+      operationId: updateLastPriceCustomerByExternalId
       parameters:
         - name: externalId
           in: path
@@ -1000,21 +1000,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidCustomerInput'
+              $ref: '#/components/schemas/LastPriceCustomerInput'
       responses:
         '200':
           description: Updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidCustomer'
+                $ref: '#/components/schemas/LastPriceCustomer'
 
     delete:
       tags:
         - Customers
       summary: Delete customer by external ID
-      description: Deletes a customer by external ID from Paid.ai
-      operationId: deletePaidCustomerByExternalId
+      description: Deletes a customer by external ID from Last Price
+      operationId: deleteLastPriceCustomerByExternalId
       parameters:
         - name: externalId
           in: path
@@ -1025,13 +1025,13 @@ paths:
         '204':
           description: Deleted
 
-  /api/paid/contacts:
+  /api/lastprice/contacts:
     get:
       tags:
         - Contacts
       summary: List all contacts
-      description: Retrieves all contacts from Paid.ai
-      operationId: listPaidContacts
+      description: Retrieves all contacts from Last Price
+      operationId: listLastPriceContacts
       responses:
         '200':
           description: Retrieved
@@ -1040,35 +1040,35 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaidContact'
+                  $ref: '#/components/schemas/LastPriceContact'
 
     post:
       tags:
         - Contacts
       summary: Create a contact
-      description: Creates a new contact in Paid.ai
-      operationId: createPaidContact
+      description: Creates a new contact in Last Price
+      operationId: createLastPriceContact
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidContactInput'
+              $ref: '#/components/schemas/LastPriceContactInput'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidContact'
+                $ref: '#/components/schemas/LastPriceContact'
 
-  /api/paid/contacts/{contactId}:
+  /api/lastprice/contacts/{contactId}:
     get:
       tags:
         - Contacts
       summary: Retrieve a contact
-      description: Retrieves a contact by ID from Paid.ai
-      operationId: getPaidContact
+      description: Retrieves a contact by ID from Last Price
+      operationId: getLastPriceContact
       parameters:
         - name: contactId
           in: path
@@ -1082,14 +1082,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidContact'
+                $ref: '#/components/schemas/LastPriceContact'
 
     delete:
       tags:
         - Contacts
       summary: Delete a contact
-      description: Deletes a contact from Paid.ai
-      operationId: deletePaidContact
+      description: Deletes a contact from Last Price
+      operationId: deleteLastPriceContact
       parameters:
         - name: contactId
           in: path
@@ -1101,13 +1101,13 @@ paths:
         '204':
           description: Deleted
 
-  /api/paid/contacts/external/{externalId}:
+  /api/lastprice/contacts/external/{externalId}:
     delete:
       tags:
         - Contacts
       summary: Delete contact by external ID
-      description: Deletes a contact by external ID from Paid.ai
-      operationId: deletePaidContactByExternalId
+      description: Deletes a contact by external ID from Last Price
+      operationId: deleteLastPriceContactByExternalId
       parameters:
         - name: externalId
           in: path
@@ -1118,13 +1118,13 @@ paths:
         '204':
           description: Deleted
 
-  /api/paid/agents:
+  /api/lastprice/agents:
     get:
       tags:
         - Agents
       summary: List all agents
-      description: Retrieves all agents from Paid.ai
-      operationId: listPaidAgents
+      description: Retrieves all agents from Last Price
+      operationId: listLastPriceAgents
       responses:
         '200':
           description: Retrieved
@@ -1133,35 +1133,35 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaidAgent'
+                  $ref: '#/components/schemas/LastPriceAgent'
 
     post:
       tags:
         - Agents
       summary: Create an agent
-      description: Creates a new agent in Paid.ai
-      operationId: createPaidAgent
+      description: Creates a new agent in Last Price
+      operationId: createLastPriceAgent
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidAgentInput'
+              $ref: '#/components/schemas/LastPriceAgentInput'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidAgent'
+                $ref: '#/components/schemas/LastPriceAgent'
 
-  /api/paid/agents/{agentId}:
+  /api/lastprice/agents/{agentId}:
     get:
       tags:
         - Agents
       summary: Retrieve an agent
-      description: Retrieves an agent by ID from Paid.ai
-      operationId: getPaidAgent
+      description: Retrieves an agent by ID from Last Price
+      operationId: getLastPriceAgent
       parameters:
         - name: agentId
           in: path
@@ -1175,14 +1175,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidAgent'
+                $ref: '#/components/schemas/LastPriceAgent'
 
     put:
       tags:
         - Agents
       summary: Update an agent
-      description: Updates an agent in Paid.ai
-      operationId: updatePaidAgent
+      description: Updates an agent in Last Price
+      operationId: updateLastPriceAgent
       parameters:
         - name: agentId
           in: path
@@ -1195,21 +1195,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidAgentInput'
+              $ref: '#/components/schemas/LastPriceAgentInput'
       responses:
         '200':
           description: Updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidAgent'
+                $ref: '#/components/schemas/LastPriceAgent'
 
     delete:
       tags:
         - Agents
       summary: Delete an agent
-      description: Deletes an agent from Paid.ai
-      operationId: deletePaidAgent
+      description: Deletes an agent from Last Price
+      operationId: deleteLastPriceAgent
       parameters:
         - name: agentId
           in: path
@@ -1221,13 +1221,13 @@ paths:
         '204':
           description: Deleted
 
-  /api/paid/agents/external/{externalId}:
+  /api/lastprice/agents/external/{externalId}:
     get:
       tags:
         - Agents
       summary: Retrieve agent by external ID
-      description: Retrieves an agent by external ID from Paid.ai
-      operationId: getPaidAgentByExternalId
+      description: Retrieves an agent by external ID from Last Price
+      operationId: getLastPriceAgentByExternalId
       parameters:
         - name: externalId
           in: path
@@ -1240,14 +1240,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidAgent'
+                $ref: '#/components/schemas/LastPriceAgent'
 
     put:
       tags:
         - Agents
       summary: Update agent by external ID
-      description: Updates an agent by external ID in Paid.ai
-      operationId: updatePaidAgentByExternalId
+      description: Updates an agent by external ID in Last Price
+      operationId: updateLastPriceAgentByExternalId
       parameters:
         - name: externalId
           in: path
@@ -1259,21 +1259,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidAgentInput'
+              $ref: '#/components/schemas/LastPriceAgentInput'
       responses:
         '200':
           description: Updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidAgent'
+                $ref: '#/components/schemas/LastPriceAgent'
 
     delete:
       tags:
         - Agents
       summary: Delete agent by external ID
-      description: Deletes an agent by external ID from Paid.ai
-      operationId: deletePaidAgentByExternalId
+      description: Deletes an agent by external ID from Last Price
+      operationId: deleteLastPriceAgentByExternalId
       parameters:
         - name: externalId
           in: path
@@ -1284,13 +1284,13 @@ paths:
         '204':
           description: Deleted
 
-  /api/paid/orders:
+  /api/lastprice/orders:
     get:
       tags:
         - Orders
       summary: List all orders
-      description: Retrieves all orders from Paid.ai
-      operationId: listPaidOrders
+      description: Retrieves all orders from Last Price
+      operationId: listLastPriceOrders
       responses:
         '200':
           description: Retrieved
@@ -1299,35 +1299,35 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaidOrder'
+                  $ref: '#/components/schemas/LastPriceOrder'
 
     post:
       tags:
         - Orders
       summary: Create an order
-      description: Creates a new order in Paid.ai
-      operationId: createPaidOrder
+      description: Creates a new order in Last Price
+      operationId: createLastPriceOrder
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaidOrderInput'
+              $ref: '#/components/schemas/LastPriceOrderInput'
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidOrder'
+                $ref: '#/components/schemas/LastPriceOrder'
 
-  /api/paid/orders/{orderId}:
+  /api/lastprice/orders/{orderId}:
     get:
       tags:
         - Orders
       summary: Retrieve an order
-      description: Retrieves an order by ID from Paid.ai
-      operationId: getPaidOrder
+      description: Retrieves an order by ID from Last Price
+      operationId: getLastPriceOrder
       parameters:
         - name: orderId
           in: path
@@ -1341,14 +1341,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidOrder'
+                $ref: '#/components/schemas/LastPriceOrder'
 
     delete:
       tags:
         - Orders
       summary: Delete an order
-      description: Deletes an order from Paid.ai
-      operationId: deletePaidOrder
+      description: Deletes an order from Last Price
+      operationId: deleteLastPriceOrder
       parameters:
         - name: orderId
           in: path
@@ -1360,13 +1360,13 @@ paths:
         '204':
           description: Deleted
 
-  /api/paid/orders/{orderId}/lines:
+  /api/lastprice/orders/{orderId}/lines:
     put:
       tags:
         - Orders
       summary: Update order lines
-      description: Updates order lines in Paid.ai
-      operationId: updatePaidOrderLines
+      description: Updates order lines in Last Price
+      operationId: updateLastPriceOrderLines
       parameters:
         - name: orderId
           in: path
@@ -1384,7 +1384,7 @@ paths:
                 lines:
                   type: array
                   items:
-                    $ref: '#/components/schemas/PaidOrderLineInput'
+                    $ref: '#/components/schemas/LastPriceOrderLineInput'
       responses:
         '200':
           description: Updated
@@ -1393,15 +1393,15 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaidOrderLine'
+                  $ref: '#/components/schemas/LastPriceOrderLine'
 
-  /api/paid/orders/{orderId}/activate:
+  /api/lastprice/orders/{orderId}/activate:
     post:
       tags:
         - Orders
       summary: Activate an order
-      description: Activates an order in Paid.ai
-      operationId: activatePaidOrder
+      description: Activates an order in Last Price
+      operationId: activateLastPriceOrder
       parameters:
         - name: orderId
           in: path
@@ -1415,15 +1415,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaidOrder'
+                $ref: '#/components/schemas/LastPriceOrder'
 
-  /api/paid/usage/signals:
+  /api/lastprice/usage/signals:
     post:
       tags:
         - Usage
       summary: Record agent signal
-      description: Records a usage signal to Paid.ai
-      operationId: recordPaidSignal
+      description: Records a usage signal to Last Price
+      operationId: recordLastPriceSignal
       requestBody:
         required: true
         content:
@@ -1432,7 +1432,7 @@ paths:
               type: object
               properties:
                 signal:
-                  $ref: '#/components/schemas/PaidAgentSignal'
+                  $ref: '#/components/schemas/LastPriceAgentSignal'
       responses:
         '201':
           description: Signal recorded
@@ -1476,9 +1476,9 @@ components:
           enum: [managed, byok]
           description: Integration mode (managed uses platform key, byok uses tenant's key)
           example: "byok"
-        paidApiKey:
+        lastPriceApiKey:
           type: string
-          description: Masked Paid.ai API key (only shown for BYOK mode)
+          description: Masked Last Price API key (only shown for BYOK mode)
           example: "sk_test_...abc123"
         plan:
           type: string
@@ -1525,9 +1525,9 @@ components:
           enum: [managed, byok]
           description: Integration mode
           example: "managed"
-        paidApiKey:
+        lastPriceApiKey:
           type: string
-          description: Paid.ai API key (required for BYOK mode)
+          description: Last Price API key (required for BYOK mode)
           example: "sk_live_abc123..."
         plan:
           type: string
@@ -1552,9 +1552,9 @@ components:
           type: string
           enum: [managed, byok]
           description: Integration mode
-        paidApiKey:
+        lastPriceApiKey:
           type: string
-          description: Paid.ai API key (for updating BYOK mode key)
+          description: Last Price API key (for updating BYOK mode key)
         plan:
           type: string
           enum: [free, starter, pro, enterprise]
@@ -2050,8 +2050,8 @@ components:
                 type: object
 
 
-    # ============ Paid.ai API Schemas ============
-    PaidAddress:
+    # ============ Last Price API Schemas ============
+    LastPriceAddress:
       type: object
       properties:
         line1:
@@ -2073,7 +2073,7 @@ components:
           type: string
           example: "USA"
 
-    PaidCustomer:
+    LastPriceCustomer:
       type: object
       properties:
         id:
@@ -2111,9 +2111,9 @@ components:
           type: string
           example: "active"
         billingAddress:
-          $ref: '#/components/schemas/PaidAddress'
+          $ref: '#/components/schemas/LastPriceAddress'
 
-    PaidCustomerInput:
+    LastPriceCustomerInput:
       type: object
       required:
         - name
@@ -2137,9 +2137,9 @@ components:
         externalId:
           type: string
         billingAddress:
-          $ref: '#/components/schemas/PaidAddress'
+          $ref: '#/components/schemas/LastPriceAddress'
 
-    PaidContact:
+    LastPriceContact:
       type: object
       properties:
         id:
@@ -2179,7 +2179,7 @@ components:
           type: string
           readOnly: true
 
-    PaidContactInput:
+    LastPriceContactInput:
       type: object
       required:
         - firstName
@@ -2214,7 +2214,7 @@ components:
         externalId:
           type: string
 
-    PaidPriceTier:
+    LastPricePriceTier:
       type: object
       properties:
         minQuantity:
@@ -2224,7 +2224,7 @@ components:
         unitPrice:
           type: number
 
-    PaidPricePoint:
+    LastPricePricePoint:
       type: object
       properties:
         unitPrice:
@@ -2236,9 +2236,9 @@ components:
         tiers:
           type: array
           items:
-            $ref: '#/components/schemas/PaidPriceTier'
+            $ref: '#/components/schemas/LastPricePriceTier'
 
-    PaidPricing:
+    LastPricePricing:
       type: object
       properties:
         eventName:
@@ -2257,9 +2257,9 @@ components:
         pricePoints:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/PaidPricePoint'
+            $ref: '#/components/schemas/LastPricePricePoint'
 
-    PaidAgentAttribute:
+    LastPriceAgentAttribute:
       type: object
       properties:
         name:
@@ -2267,9 +2267,9 @@ components:
         active:
           type: boolean
         pricing:
-          $ref: '#/components/schemas/PaidPricing'
+          $ref: '#/components/schemas/LastPricePricing'
 
-    PaidAgent:
+    LastPriceAgent:
       type: object
       properties:
         id:
@@ -2291,9 +2291,9 @@ components:
         agentAttributes:
           type: array
           items:
-            $ref: '#/components/schemas/PaidAgentAttribute'
+            $ref: '#/components/schemas/LastPriceAgentAttribute'
 
-    PaidAgentInput:
+    LastPriceAgentInput:
       type: object
       required:
         - name
@@ -2311,9 +2311,9 @@ components:
         agentAttributes:
           type: array
           items:
-            $ref: '#/components/schemas/PaidAgentAttribute'
+            $ref: '#/components/schemas/LastPriceAgentAttribute'
 
-    PaidOrderLine:
+    LastPriceOrderLine:
       type: object
       properties:
         id:
@@ -2346,7 +2346,7 @@ components:
         totalBilledAmount:
           type: number
 
-    PaidOrder:
+    LastPriceOrder:
       type: object
       properties:
         id:
@@ -2385,9 +2385,9 @@ components:
         orderLines:
           type: array
           items:
-            $ref: '#/components/schemas/PaidOrderLine'
+            $ref: '#/components/schemas/LastPriceOrderLine'
 
-    PaidOrderInput:
+    LastPriceOrderInput:
       type: object
       required:
         - accountId
@@ -2407,7 +2407,7 @@ components:
           type: string
           format: date
 
-    PaidOrderLineInput:
+    LastPriceOrderLineInput:
       type: object
       properties:
         agentExternalId:
@@ -2420,7 +2420,7 @@ components:
         description:
           type: string
 
-    PaidAgentSignal:
+    LastPriceAgentSignal:
       type: object
       required:
         - agentId
@@ -2452,7 +2452,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Bearer token for Paid.ai API authentication
+      description: Bearer token for Last Price API authentication
     webhookSignature:
       type: apiKey
       in: header
