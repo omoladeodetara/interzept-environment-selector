@@ -27,8 +27,15 @@ last-price/
 ├── models/               # TypeScript type definitions
 ├── utils/                # Shared utilities
 ├── migrations/           # Database schema
-├── ui/                   # Component library (for Oja and other UIs)
-└── demo-app/             # Example demo app (one of many possible demos)
+├── oja/                  # Admin dashboard UI
+├── ui/                   # Shared component library
+└── demos/                # Customer integration examples
+    ├── saas-pricing/     # SaaS subscription pricing demo
+    ├── agenting-bank/    # AI agent banking demo (HTTP 402)
+    ├── ai-api-platform/  # API usage pricing demo
+    ├── ecommerce-store/  # E-commerce product pricing demo
+    ├── marketplace/      # Marketplace commission demo
+    └── digital-products/ # Course/content pricing demo
 ```
 
 **Key Benefits:**
@@ -54,11 +61,16 @@ last-price/
 - Settings for configuring integrations
 - Built using the UI component library
 
-**Demo Apps** - Example applications that demonstrate Last Price usage:
-- `demo-app/` - Pricing experiment showcase
-- `agenting-bank/` - AI agent banking platform with HTTP 402 payment authorization (inspired by Revolut, Coinbase, crypto platforms)
-- Other demos can be added to show different use cases
+**Demo Apps** - Example applications that demonstrate Last Price usage ([`/demos`](demos/)):
+- `demos/saas-pricing/` - SaaS subscription tier pricing (CloudNote)
+- `demos/agenting-bank/` - AI agent banking with HTTP 402 (AgentBank)
+- `demos/ai-api-platform/` - API usage-based pricing (CloudAI)
+- `demos/ecommerce-store/` - E-commerce product pricing (ModernGoods)
+- `demos/marketplace/` - Marketplace commission rates (SkillHub)
+- `demos/digital-products/` - Course/content pricing (LearnFast)
 - These are separate applications that integrate with Last Price via APIs
+
+**[📚 View Demo Apps Documentation →](demos/README.md)**
 
 **Your Applications** - Business owners, developers, and agent creators build their own apps:
 - Custom software that uses Last Price for pricing experiments

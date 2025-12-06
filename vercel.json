@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter oja build",
+  "buildCommand": "cd oja && pnpm build",
   "outputDirectory": "oja/.next",
   "installCommand": "pnpm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_LASTPRICE_API_URL": "https://api.lastprice.io"
+  }
 }
