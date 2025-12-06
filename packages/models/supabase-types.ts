@@ -34,6 +34,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          base_price: number | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          pricing_model: string | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          pricing_model?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          pricing_model?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignments: {
         Row: {
           created_at: string | null
@@ -121,6 +174,263 @@ export type Database = {
           },
         ]
       }
+      costs: {
+        Row: {
+          agent_id: string | null
+          amount: number
+          cost_type: string
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          quantity: number | null
+          tenant_id: string
+          unit: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          amount: number
+          cost_type: string
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          quantity?: number | null
+          tenant_id: string
+          unit?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          amount?: number
+          cost_type?: string
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          quantity?: number | null
+          tenant_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "costs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credits: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          expires_at: string | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          remaining_amount: number
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          expires_at?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          remaining_amount: number
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          expires_at?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          remaining_amount?: number
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          name: string | null
+          phone: string | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          phone?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          phone?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disputes: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          evidence: Json | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          payment_id: string | null
+          reason: string | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          evidence?: Json | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          reason?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          evidence?: Json | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          reason?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experiments: {
         Row: {
           created_at: string | null
@@ -170,6 +480,215 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "experiments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          amount_due: number
+          amount_paid: number | null
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          due_date: string | null
+          external_id: string | null
+          id: string
+          invoice_number: string | null
+          line_items: Json | null
+          metadata: Json | null
+          paid_at: string | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          id?: string
+          invoice_number?: string | null
+          line_items?: Json | null
+          metadata?: Json | null
+          paid_at?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          id?: string
+          invoice_number?: string | null
+          line_items?: Json | null
+          metadata?: Json | null
+          paid_at?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          agent_id: string | null
+          amount: number
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          external_id: string | null
+          id: string
+          items: Json | null
+          metadata: Json | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          external_id?: string | null
+          id?: string
+          items?: Json | null
+          metadata?: Json | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          external_id?: string | null
+          id?: string
+          items?: Json | null
+          metadata?: Json | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          payment_method: string | null
+          refunded_amount: number | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          payment_method?: string | null
+          refunded_amount?: number | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          payment_method?: string | null
+          refunded_amount?: number | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -305,6 +824,61 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "usage_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_signals: {
+        Row: {
+          agent_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          properties: Json | null
+          tenant_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          properties?: Json | null
+          tenant_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          properties?: Json | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_signals_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_signals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_signals_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
