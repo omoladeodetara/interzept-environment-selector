@@ -25,6 +25,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.86.2",
     "@types/node-fetch": "^2.6.13",
     "axios": "^1.6.2",
     "cors": "^2.8.5",

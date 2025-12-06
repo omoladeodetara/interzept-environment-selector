@@ -29,9 +29,9 @@
     "types": ["node", "jest"],
     "paths": {
       "@packages/*": ["packages/*"],
-      "@services/*": ["services/*"],
+      "@services/*": ["packages/services/*", "services/*"],
       "@api-delegates/*": ["api-delegates/*"],
-      "@models/*": ["models/*"],
+      "@models/*": ["packages/models/*", "models/*"],
       "@utils/*": ["utils/*"]
     }
   },

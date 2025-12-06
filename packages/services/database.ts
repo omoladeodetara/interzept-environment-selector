@@ -1,11 +1,11 @@
 /**
  * Database service for Last Price multi-tenant system
  * 
- * This module provides database access using PostgreSQL with the pg library.
+ * This module provides database access using Supabase.
  * It handles tenant management, experiments, assignments, views, conversions, and usage tracking.
  */
 
-import { Pool } from 'pg';
+import { supabaseAdmin as supabase } from './supabase';
 import {
   Tenant,
   Experiment,
@@ -16,45 +16,6 @@ import {
   Variant,
   ExperimentResults
 } from '@models/types';
-
-// Database configuration from environment variables
-const config = {
-  connectionString: process.env.DATABASE_URL,
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  database: process.env.DB_NAME || 'lastprice',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  max: parseInt(process.env.DB_POOL_MAX || '20', 10),
-  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000', 10),
-};
-
-// Create connection pool with consistent configuration
-const poolConfig = config.connectionString
-  ? {
-      connectionString: config.connectionString,
-      max: config.max,
-      idleTimeoutMillis: config.idleTimeoutMillis,
-      connectionTimeoutMillis: config.connectionTimeoutMillis,
-    }
-  : {
-      host: config.host,
-      port: config.port,
-      database: config.database,
-      user: config.user,
-      password: config.password,
-      max: config.max,
-      idleTimeoutMillis: config.idleTimeoutMillis,
-      connectionTimeoutMillis: config.connectionTimeoutMillis,
-    };
-
-const pool = new Pool(poolConfig);
-
-// Handle pool errors
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle database client', err);
-});
 
 // ============================================================================
 // TENANT OPERATIONS
@@ -70,35 +31,49 @@ export async function createTenant(tenant: {
 }): Promise<Tenant> {
   const { name, email, mode, paidApiKey = null, plan = 'free', metadata = {} } = tenant;
   
-  const query = `
-    INSERT INTO tenants (name, email, mode, paid_api_key, plan, metadata)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-  `;
-  
-  const values = [name, email, mode, paidApiKey, plan, metadata];
-  
-  try {
-    const result = await pool.query(query, values);
-    return result.rows[0];
-  } catch (error: any) {
+  const { data, error } = await supabase
+    .from('tenants')
+    .insert({
+      name,
+      email,
+      mode,
+      paid_api_key: paidApiKey,
+      plan,
+      metadata,
+    })
+    .select()
+    .single();
+
+  if (error) {
     if (error.code === '23505') { // Unique violation
       throw new Error('Tenant with this email already exists');
     }
     throw error;
   }
+  
+  return data as Tenant;
 }
 
 export async function getTenant(tenantId: string): Promise<Tenant | null> {
-  const query = 'SELECT * FROM tenants WHERE id = $1';
-  const result = await pool.query(query, [tenantId]);
-  return result.rows[0] || null;
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('id', tenantId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Tenant | null;
 }
 
 export async function getTenantByEmail(email: string): Promise<Tenant | null> {
-  const query = 'SELECT * FROM tenants WHERE email = $1';
-  const result = await pool.query(query, [email]);
-  return result.rows[0] || null;
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('email', email)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Tenant | null;
 }
 
 export async function listTenants(options: {
@@ -109,37 +84,26 @@ export async function listTenants(options: {
 } = {}): Promise<{ tenants: Tenant[]; pagination: { total: number; limit: number; offset: number } }> {
   const { mode, plan, limit = 20, offset = 0 } = options;
   
-  let whereClause = 'WHERE 1=1';
-  const whereValues: any[] = [];
-  let paramCount = 0;
+  let query = supabase.from('tenants').select('*', { count: 'exact' });
   
   if (mode) {
-    whereValues.push(mode);
-    whereClause += ` AND mode = $${++paramCount}`;
+    query = query.eq('mode', mode);
   }
   
   if (plan) {
-    whereValues.push(plan);
-    whereClause += ` AND plan = $${++paramCount}`;
+    query = query.eq('plan', plan);
   }
   
-  // Main query
-  let query = `SELECT * FROM tenants ${whereClause} ORDER BY created_at DESC`;
-  query += ` LIMIT $${++paramCount} OFFSET $${++paramCount}`;
-  const queryValues = [...whereValues, limit, offset];
+  query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
   
-  // Count query with same filters
-  const countQuery = `SELECT COUNT(*) FROM tenants ${whereClause}`;
+  const { data, error, count } = await query;
   
-  const [tenantsResult, countResult] = await Promise.all([
-    pool.query(query, queryValues),
-    pool.query(countQuery, whereValues)
-  ]);
+  if (error) throw error;
   
   return {
-    tenants: tenantsResult.rows,
+    tenants: (data as Tenant[]) || [],
     pagination: {
-      total: parseInt(countResult.rows[0].count),
+      total: count || 0,
       limit,
       offset
     }
@@ -148,37 +112,37 @@ export async function listTenants(options: {
 
 export async function updateTenant(tenantId: string, updates: Partial<Tenant>): Promise<Tenant | null> {
   const allowedFields = ['name', 'mode', 'paid_api_key', 'plan', 'metadata', 'webhook_secret'];
-  const setClause: string[] = [];
-  const values: any[] = [];
-  let paramCount = 0;
+  const updateData: any = {};
   
   for (const [key, value] of Object.entries(updates)) {
     if (allowedFields.includes(key)) {
-      setClause.push(`${key} = $${++paramCount}`);
-      values.push(value);
+      updateData[key] = value;
     }
   }
   
-  if (setClause.length === 0) {
+  if (Object.keys(updateData).length === 0) {
     throw new Error('No valid fields to update');
   }
   
-  values.push(tenantId);
-  const query = `
-    UPDATE tenants
-    SET ${setClause.join(', ')}, updated_at = now()
-    WHERE id = $${++paramCount}
-    RETURNING *
-  `;
+  const { data, error } = await supabase
+    .from('tenants')
+    .update(updateData)
+    .eq('id', tenantId)
+    .select()
+    .single();
   
-  const result = await pool.query(query, values);
-  return result.rows[0] || null;
+  if (error) throw error;
+  return data as Tenant | null;
 }
 
 export async function deleteTenant(tenantId: string): Promise<boolean> {
-  const query = 'DELETE FROM tenants WHERE id = $1';
-  const result = await pool.query(query, [tenantId]);
-  return (result.rowCount ?? 0) > 0;
+  const { error } = await supabase
+    .from('tenants')
+    .delete()
+    .eq('id', tenantId);
+  
+  if (error) throw error;
+  return true;
 }
 
 // ============================================================================
@@ -195,87 +159,105 @@ export async function createExperiment(experiment: {
 }): Promise<Experiment> {
   const { tenantId, key, name, description = null, variants, targetSampleSize = null } = experiment;
   
-  const query = `
-    INSERT INTO experiments (tenant_id, key, name, description, variants, target_sample_size)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-  `;
+  const { data, error } = await supabase
+    .from('experiments')
+    .insert({
+      tenant_id: tenantId,
+      key,
+      name,
+      description,
+      variants,
+      target_sample_size: targetSampleSize,
+    })
+    .select()
+    .single();
   
-  const values = [tenantId, key, name, description, JSON.stringify(variants), targetSampleSize];
-  
-  try {
-    const result = await pool.query(query, values);
-    return result.rows[0];
-  } catch (error: any) {
-    if (error.code === '23505') { // Unique violation
+  if (error) {
+    if (error.code === '23505') {
       throw new Error('Experiment with this key already exists for this tenant');
     }
     throw error;
   }
+  
+  return data as Experiment;
 }
 
 export async function getExperiment(experimentId: string): Promise<Experiment | null> {
-  const query = 'SELECT * FROM experiments WHERE id = $1';
-  const result = await pool.query(query, [experimentId]);
-  return result.rows[0] || null;
+  const { data, error } = await supabase
+    .from('experiments')
+    .select('*')
+    .eq('id', experimentId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Experiment | null;
 }
 
 export async function getExperimentByKey(tenantId: string, experimentKey: string): Promise<Experiment | null> {
-  const query = 'SELECT * FROM experiments WHERE tenant_id = $1 AND key = $2';
-  const result = await pool.query(query, [tenantId, experimentKey]);
-  return result.rows[0] || null;
+  const { data, error } = await supabase
+    .from('experiments')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('key', experimentKey)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Experiment | null;
 }
 
 export async function listExperiments(tenantId: string, options: { status?: string } = {}): Promise<Experiment[]> {
   const { status } = options;
   
-  let query = 'SELECT * FROM experiments WHERE tenant_id = $1';
-  const values: any[] = [tenantId];
+  let query = supabase
+    .from('experiments')
+    .select('*')
+    .eq('tenant_id', tenantId);
   
   if (status) {
-    values.push(status);
-    query += ` AND status = $2`;
+    query = query.eq('status', status);
   }
   
-  query += ' ORDER BY created_at DESC';
+  query = query.order('created_at', { ascending: false });
   
-  const result = await pool.query(query, values);
-  return result.rows;
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  return (data as Experiment[]) || [];
 }
 
 export async function updateExperiment(experimentId: string, updates: Partial<Experiment>): Promise<Experiment | null> {
   const allowedFields = ['name', 'description', 'status', 'variants', 'start_date', 'end_date', 'target_sample_size', 'metadata'];
-  const setClause: string[] = [];
-  const values: any[] = [];
-  let paramCount = 0;
+  const updateData: any = {};
   
   for (const [key, value] of Object.entries(updates)) {
     if (allowedFields.includes(key)) {
-      setClause.push(`${key} = $${++paramCount}`);
-      values.push(key === 'variants' && typeof value === 'object' ? JSON.stringify(value) : value);
+      updateData[key] = value;
     }
   }
   
-  if (setClause.length === 0) {
+  if (Object.keys(updateData).length === 0) {
     throw new Error('No valid fields to update');
   }
   
-  values.push(experimentId);
-  const query = `
-    UPDATE experiments
-    SET ${setClause.join(', ')}, updated_at = now()
-    WHERE id = $${++paramCount}
-    RETURNING *
-  `;
+  const { data, error } = await supabase
+    .from('experiments')
+    .update(updateData)
+    .eq('id', experimentId)
+    .select()
+    .single();
   
-  const result = await pool.query(query, values);
-  return result.rows[0] || null;
+  if (error) throw error;
+  return data as Experiment | null;
 }
 
 export async function deleteExperiment(experimentId: string): Promise<boolean> {
-  const query = 'DELETE FROM experiments WHERE id = $1';
-  const result = await pool.query(query, [experimentId]);
-  return (result.rowCount ?? 0) > 0;
+  const { error } = await supabase
+    .from('experiments')
+    .delete()
+    .eq('id', experimentId);
+  
+  if (error) throw error;
+  return true;
 }
 
 // ============================================================================
@@ -283,21 +265,32 @@ export async function deleteExperiment(experimentId: string): Promise<boolean> {
 // ============================================================================
 
 export async function createAssignment(experimentId: string, userId: string, variant: string): Promise<Assignment> {
-  const query = `
-    INSERT INTO assignments (experiment_id, user_id, variant)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (experiment_id, user_id) DO UPDATE SET variant = EXCLUDED.variant
-    RETURNING *
-  `;
+  const { data, error } = await supabase
+    .from('assignments')
+    .upsert({
+      experiment_id: experimentId,
+      user_id: userId,
+      variant,
+    }, {
+      onConflict: 'experiment_id,user_id'
+    })
+    .select()
+    .single();
   
-  const result = await pool.query(query, [experimentId, userId, variant]);
-  return result.rows[0];
+  if (error) throw error;
+  return data as Assignment;
 }
 
 export async function getAssignment(experimentId: string, userId: string): Promise<Assignment | null> {
-  const query = 'SELECT * FROM assignments WHERE experiment_id = $1 AND user_id = $2';
-  const result = await pool.query(query, [experimentId, userId]);
-  return result.rows[0] || null;
+  const { data, error } = await supabase
+    .from('assignments')
+    .select('*')
+    .eq('experiment_id', experimentId)
+    .eq('user_id', userId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Assignment | null;
 }
 
 // ============================================================================
@@ -310,14 +303,19 @@ export async function recordView(
   variant: string,
   metadata: Record<string, any> = {}
 ): Promise<View> {
-  const query = `
-    INSERT INTO views (experiment_id, user_id, variant, metadata)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
-  `;
+  const { data, error } = await supabase
+    .from('views')
+    .insert({
+      experiment_id: experimentId,
+      user_id: userId,
+      variant,
+      metadata,
+    })
+    .select()
+    .single();
   
-  const result = await pool.query(query, [experimentId, userId, variant, metadata]);
-  return result.rows[0];
+  if (error) throw error;
+  return data as View;
 }
 
 // ============================================================================
@@ -332,14 +330,21 @@ export async function recordConversion(
   metadata: Record<string, any> = {},
   paidOrderId: string | null = null
 ): Promise<Conversion> {
-  const query = `
-    INSERT INTO conversions (experiment_id, user_id, variant, revenue, metadata, paid_order_id)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-  `;
+  const { data, error } = await supabase
+    .from('conversions')
+    .insert({
+      experiment_id: experimentId,
+      user_id: userId,
+      variant,
+      revenue,
+      metadata,
+      paid_order_id: paidOrderId,
+    })
+    .select()
+    .single();
   
-  const result = await pool.query(query, [experimentId, userId, variant, revenue, metadata, paidOrderId]);
-  return result.rows[0];
+  if (error) throw error;
+  return data as Conversion;
 }
 
 // ============================================================================
@@ -347,53 +352,74 @@ export async function recordConversion(
 // ============================================================================
 
 export async function getExperimentResults(experimentId: string): Promise<ExperimentResults> {
-  const query = `
-    SELECT
-      v.variant,
-      COUNT(DISTINCT v.user_id) AS views,
-      COUNT(DISTINCT c.user_id) AS conversions,
-      COALESCE(SUM(c.revenue), 0) AS revenue,
-      CASE
-        WHEN COUNT(DISTINCT v.user_id) > 0
-        THEN CAST(COUNT(DISTINCT c.user_id) AS DECIMAL) / COUNT(DISTINCT v.user_id)
-        ELSE 0
-      END AS conversion_rate,
-      CASE
-        WHEN COUNT(DISTINCT c.user_id) > 0
-        THEN COALESCE(SUM(c.revenue), 0) / COUNT(DISTINCT c.user_id)
-        ELSE 0
-      END AS arpu
-    FROM
-      (SELECT DISTINCT experiment_id, user_id, variant FROM views WHERE experiment_id = $1) v
-    LEFT JOIN
-      conversions c ON v.experiment_id = c.experiment_id AND v.user_id = c.user_id
-    GROUP BY v.variant
-  `;
+  // This function uses complex SQL aggregation
+  // For now, we'll use Supabase's raw SQL via RPC or reconstruct using multiple queries
   
-  const result = await pool.query(query, [experimentId]);
+  // Get all views for this experiment
+  const { data: views, error: viewsError } = await supabase
+    .from('views')
+    .select('variant, user_id')
+    .eq('experiment_id', experimentId);
   
-  // Transform results into control/experiment structure
+  if (viewsError) throw viewsError;
+  
+  // Get all conversions for this experiment
+  const { data: conversions, error: conversionsError } = await supabase
+    .from('conversions')
+    .select('variant, user_id, revenue')
+    .eq('experiment_id', experimentId);
+  
+  if (conversionsError) throw conversionsError;
+  
+  // Calculate metrics per variant
+  const variantMetrics: Record<string, any> = {};
+  
+  // Group views by variant
+  const viewsByVariant: Record<string, Set<string>> = {};
+  views?.forEach((view: any) => {
+    if (!viewsByVariant[view.variant]) {
+      viewsByVariant[view.variant] = new Set();
+    }
+    viewsByVariant[view.variant].add(view.user_id);
+  });
+  
+  // Group conversions by variant
+  const conversionsByVariant: Record<string, { users: Set<string>; totalRevenue: number }> = {};
+  conversions?.forEach((conv: any) => {
+    if (!conversionsByVariant[conv.variant]) {
+      conversionsByVariant[conv.variant] = { users: new Set(), totalRevenue: 0 };
+    }
+    conversionsByVariant[conv.variant].users.add(conv.user_id);
+    conversionsByVariant[conv.variant].totalRevenue += parseFloat(conv.revenue);
+  });
+  
+  // Calculate metrics for each variant
   const results: ExperimentResults = {
     experimentId,
     control: null,
     experiment: null
   };
   
-  for (const row of result.rows) {
+  Object.keys(viewsByVariant).forEach(variant => {
+    const viewCount = viewsByVariant[variant].size;
+    const conversionData = conversionsByVariant[variant] || { users: new Set(), totalRevenue: 0 };
+    const conversionCount = conversionData.users.size;
+    const revenue = conversionData.totalRevenue;
+    
     const metrics = {
-      views: parseInt(row.views),
-      conversions: parseInt(row.conversions),
-      revenue: parseFloat(row.revenue).toFixed(2),
-      conversionRate: (parseFloat(row.conversion_rate) * 100).toFixed(2) + '%',
-      arpu: parseFloat(row.arpu).toFixed(2)
+      views: viewCount,
+      conversions: conversionCount,
+      revenue: revenue.toFixed(2),
+      conversionRate: viewCount > 0 ? ((conversionCount / viewCount) * 100).toFixed(2) + '%' : '0.00%',
+      arpu: conversionCount > 0 ? (revenue / conversionCount).toFixed(2) : '0.00'
     };
     
-    if (row.variant === 'control') {
+    if (variant === 'control') {
       results.control = metrics;
     } else {
-      results[row.variant] = metrics;
+      results[variant] = metrics;
     }
-  }
+  });
   
   return results;
 }
@@ -410,16 +436,32 @@ export async function recordUsage(
 ): Promise<Usage> {
   const periodDate = period.toISOString().split('T')[0]; // YYYY-MM-DD
   
-  const query = `
-    INSERT INTO usage (tenant_id, metric, value, period)
-    VALUES ($1, $2, $3, $4)
-    ON CONFLICT (tenant_id, metric, period)
-    DO UPDATE SET value = usage.value + EXCLUDED.value
-    RETURNING *
-  `;
+  // First, try to get existing usage
+  const { data: existing } = await supabase
+    .from('usage')
+    .select('value')
+    .eq('tenant_id', tenantId)
+    .eq('metric', metric)
+    .eq('period', periodDate)
+    .single();
   
-  const result = await pool.query(query, [tenantId, metric, value, periodDate]);
-  return result.rows[0];
+  const newValue = existing ? existing.value + value : value;
+  
+  const { data, error } = await supabase
+    .from('usage')
+    .upsert({
+      tenant_id: tenantId,
+      metric,
+      value: newValue,
+      period: periodDate,
+    }, {
+      onConflict: 'tenant_id,metric,period'
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data as Usage;
 }
 
 export async function getUsage(
@@ -428,29 +470,29 @@ export async function getUsage(
 ): Promise<Usage[]> {
   const { startDate, endDate, metric } = options;
   
-  let query = 'SELECT * FROM usage WHERE tenant_id = $1';
-  const values: any[] = [tenantId];
-  let paramCount = 1;
+  let query = supabase
+    .from('usage')
+    .select('*')
+    .eq('tenant_id', tenantId);
   
   if (startDate) {
-    values.push(startDate.toISOString().split('T')[0]);
-    query += ` AND period >= $${++paramCount}`;
+    query = query.gte('period', startDate.toISOString().split('T')[0]);
   }
   
   if (endDate) {
-    values.push(endDate.toISOString().split('T')[0]);
-    query += ` AND period <= $${++paramCount}`;
+    query = query.lte('period', endDate.toISOString().split('T')[0]);
   }
   
   if (metric) {
-    values.push(metric);
-    query += ` AND metric = $${++paramCount}`;
+    query = query.eq('metric', metric);
   }
   
-  query += ' ORDER BY period DESC, metric';
+  query = query.order('period', { ascending: false }).order('metric');
   
-  const result = await pool.query(query, values);
-  return result.rows;
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  return (data as Usage[]) || [];
 }
 
 // ============================================================================
@@ -459,19 +501,16 @@ export async function getUsage(
 
 export async function testConnection(): Promise<boolean> {
   try {
-    await pool.query('SELECT NOW()');
-    return true;
+    const { error } = await supabase.from('tenants').select('id').limit(1);
+    return !error;
   } catch (error) {
     console.error('Database connection test failed:', error);
     return false;
   }
 }
 
+// Note: Supabase doesn't require explicit connection closing
 export async function close(): Promise<void> {
-  await pool.end();
+  // No-op for Supabase client
+  return Promise.resolve();
 }
-
-// Export query function for direct database access
-export const query = (text: string, params?: any[]) => pool.query(text, params);
-
-export { pool };
