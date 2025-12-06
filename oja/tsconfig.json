@@ -24,10 +24,11 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@services/*": ["../services/*"],
       "@packages/*": ["../packages/*"],
-      "@utils/*": ["../utils/*"],
-      "@models/*": ["../models/*"]
+      "@services/*": ["../packages/services/*"],
+      "@utils/*": ["../packages/utils/*"],
+      "@models/*": ["../packages/models/*"],
+      "@jale/*": ["../packages/jale/*"]
     }
   },
   "include": [
