@@ -1,6 +1,7 @@
 {
   "name": "last-price",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.24.0",
   "description": "Modular monolith for A/B testing pricing experiments with Paid.ai integration",
   "main": "dist/server.js",
   "scripts": {
