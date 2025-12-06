@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import * as jale from '../../../../../jale';
+import * as jale from '@packages/jale';
 import config from '@utils/config';
 
 /**
