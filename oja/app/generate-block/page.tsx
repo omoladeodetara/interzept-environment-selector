@@ -1,4 +1,7 @@
 "use client"
+import { useState, useEffect, Suspense } from "react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   ArrowRight,
   ChevronDown,
@@ -28,35 +31,39 @@ import {
 const codeFiles = [
   {
     name: "App.tsx",
-    content: `import './screenshotBridge.ts';
-import React, { useState } from 'react';
-import './styles.css';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './components/ui/card';
-import { Button } from './components/ui/button';
-import { Badge } from './components/ui/badge';
-import { Check, Info, TrendingUp, Zap } from 'lucide-react';
-
-// HARDCODED pricing data based on the SQL query results
-const PRICING_DATA = {
-  signals: [
-    {
-      id: 'chat_prompt',
-      name: 'Chat Prompt Usage',
-      unitPrice: 100, // $1.00 per unit (100 cents)
-      includedQuantity: 0,
-      minQuantity: 0,
-      description: 'Each AI chat prompt processed by your agent'
-    }
-  ],
-  basePrice: 0 // No base subscription, pure usage-based
-};
-
-// Purchase handler (will be injected by install-block tool)
-const handleBuyPlan = (planId: string, name: string, price: number) => {
-  /* PRICING_PURCHASE_PLACEHOLDER */
-  console.log('Plan selected:', { planId, name, price });
-  alert('Stripe payment will be enabled after installation. Run: npx @paid-ai/install-block');
-};
+    content: [
+      "import './screenshotBridge.ts';",
+      "import React, { useState } from 'react';",
+      "import './styles.css';",
+      "import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './components/ui/card';",
+      "import { Button } from './components/ui/button';",
+      "import { Badge } from './components/ui/badge';",
+      "import { Check, Info, TrendingUp, Zap } from 'lucide-react';",
+      "",
+      "// HARDCODED pricing data based on the SQL query results",
+      "const PRICING_DATA = {",
+      "  signals: [",
+      "    {",
+      "      id: 'chat_prompt',",
+      "      name: 'Chat Prompt Usage',",
+      "      unitPrice: 100, // $1.00 per unit (100 cents)",
+      "      includedQuantity: 0,",
+      "      minQuantity: 0,",
+      "      description: 'Each AI chat prompt processed by your agent'",
+      "    }",
+      "  ],",
+      "  basePrice: 0 // No base subscription, pure usage-based",
+      "};",
+      "",
+      "// Purchase handler (will be injected by install-block tool)",
+      "const handleBuyPlan = (planId: string, name: string, price: number) => {",
+      "  /* PRICING_PURCHASE_PLACEHOLDER */",
+      "  console.log('Plan selected:', { planId, name, price });",
+      "  alert('Stripe payment will be enabled after installation. Run: npx @paid-ai/install-block');",
+      "};",
+    ].join("\n"),
+  },
+]
 
 function highlightCode(code: string) {
   const lines = code.split("\n")
@@ -88,7 +95,7 @@ function highlightCode(code: string) {
   })
 }
 
-export default function GenerateBlockPage() {
+function GenerateBlockContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const prompt = searchParams.get("prompt") || ""
@@ -215,12 +222,12 @@ export default function GenerateBlockPage() {
                 className="w-full flex items-center justify-between p-3 text-sm hover:bg-white/5"
               >
                 <div className="flex items-center gap-2">
-                  <ArrowRight className={\`h-4 w-4 transition-transform ${dataQueryExpanded ? "rotate-90" : ""}`} />
-                  <span>Data query</span>\
+                  <ArrowRight className={"h-4 w-4 transition-transform " + (dataQueryExpanded ? "rotate-90" : "")} />
+                  <span>Data query</span>
                 </div>
                 <div className="h-4 w-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
               </button>
-\
+
               {dataQueryExpanded && (
                 <div className="px-4 pb-3 space-y-1">
                   {thinkingSteps.map((step, i) => (
@@ -228,18 +235,16 @@ export default function GenerateBlockPage() {
                       <span className="text-white/50">{step.text}:</span> {step.dots}
                     </div>
                   ))}
-                </div>\
-)}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-{
-  /* Bottom Input */
-}
-;<div className="p-4 border-t border-white/10">
-  <div className="relative">
-    <textarea
+        {/* Bottom Input */}
+        <div className="p-4 border-t border-white/10">
+          <div className="relative">
+            <textarea
       value={followUpText}
       onChange={(e) => setFollowUpText(e.target.value)}
       placeholder="Describe your block or ask for changes..."
@@ -252,7 +257,7 @@ export default function GenerateBlockPage() {
       <Button
         variant="ghost"
         size="icon"
-        className={`h-8 w-8 ${followUpText ? "text-white hover:bg-white/10" : "text-white/20"}`}
+        className={"h-8 w-8 " + (followUpText ? "text-white hover:bg-white/10" : "text-white/20")}
         disabled={!followUpText}
       >
         <ArrowRight className="h-4 w-4" />
@@ -260,12 +265,10 @@ export default function GenerateBlockPage() {
     </div>
   </div>
 </div>
-</div>
+      </div>
 
-{
-  /* Right Side - Light (with Code View) */
-}
-;<div className="flex-1 flex flex-col bg-background overflow-hidden">
+      {/* Right Side - Light (with Code View) */}
+      <div className="flex-1 flex flex-col bg-background overflow-hidden">
   {isGenerating ? (
     <div className="flex-1 flex flex-col items-center justify-center">
       <div className="text-center space-y-2">
@@ -359,11 +362,11 @@ export default function GenerateBlockPage() {
                 <button
                   key={file.name}
                   onClick={() => setActiveFile(file.name)}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm border-r border-white/10 whitespace-nowrap ${
+                  className={"flex items-center gap-2 px-4 py-2 text-sm border-r border-white/10 whitespace-nowrap " + (
                     activeFile === file.name
                       ? "bg-[#2d2d2d] text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
-                  }`}
+                  )}
                 >
                   {file.name}
                   {activeFile === file.name && <X className="h-3 w-3 text-white/40 hover:text-white" />}
@@ -388,7 +391,7 @@ export default function GenerateBlockPage() {
         )}
 
         {/* Preview Panel */}
-        <div className={`${showCode ? "w-1/2" : "flex-1"} overflow-auto p-8`}>
+        <div className={(showCode ? "w-1/2" : "flex-1") + " overflow-auto p-8"}>
           <div className="max-w-4xl mx-auto space-y-8">
             {/* Header */}
             <div className="text-center space-y-2">
@@ -401,17 +404,17 @@ export default function GenerateBlockPage() {
               <div className="inline-flex items-center bg-muted rounded-lg p-1">
                 <button
                   onClick={() => setBillingPeriod("monthly")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={"px-4 py-2 text-sm font-medium rounded-md transition-colors " + (
                     billingPeriod === "monthly" ? "bg-background shadow-sm" : "text-muted-foreground"
-                  }`}
+                  )}
                 >
                   Monthly
                 </button>
                 <button
                   onClick={() => setBillingPeriod("annual")}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={"px-4 py-2 text-sm font-medium rounded-md transition-colors " + (
                     billingPeriod === "annual" ? "bg-background shadow-sm" : "text-muted-foreground"
-                  }`}
+                  )}
                 >
                   Annual
                 </button>
@@ -422,7 +425,7 @@ export default function GenerateBlockPage() {
             </div>
 
             {/* Main Content */}
-            <div className={`grid ${showCode ? "grid-cols-1" : "grid-cols-3"} gap-6`}>
+            <div className={"grid " + (showCode ? "grid-cols-1" : "grid-cols-3") + " gap-6"}>
               {/* Usage Configuration */}
               <div className={showCode ? "" : "col-span-2"}>
                 <div className="border rounded-lg p-6 space-y-4">
@@ -467,9 +470,9 @@ export default function GenerateBlockPage() {
                         <button
                           key={value}
                           onClick={() => setUsageValue(value)}
-                          className={`px-3 py-1 text-sm rounded-md border transition-colors ${
+                          className={"px-3 py-1 text-sm rounded-md border transition-colors " + (
                             usageValue === value ? "bg-foreground text-background border-foreground" : "hover:bg-muted"
-                          }`}
+                          )}
                         >
                           {value.toLocaleString()}
                         </button>
@@ -491,7 +494,7 @@ export default function GenerateBlockPage() {
 
                   <div>
                     <div className="text-4xl font-bold">
-                      ${billingPeriod === "annual" ? annualTotal.toLocaleString() : monthlyBaseCost.toLocaleString()}
+                      {"$" + (billingPeriod === "annual" ? annualTotal.toLocaleString() : monthlyBaseCost.toLocaleString())}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {billingPeriod === "annual" ? "per year" : "per month"}
@@ -505,24 +508,24 @@ export default function GenerateBlockPage() {
                         <div className="text-sm font-medium text-emerald-700">Annual Savings</div>
                         <div className="text-xs text-emerald-600">Equivalent to 2 months free!</div>
                       </div>
-                      <div className="text-lg font-bold text-emerald-700">${annualDiscount.toLocaleString()}</div>
+                      <div className="text-lg font-bold text-emerald-700">{"$" + annualDiscount.toLocaleString()}</div>
                     </div>
                   )}
 
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Monthly Cost</span>
-                      <span className="font-medium">${monthlyBaseCost.toLocaleString()}</span>
+                      <span className="font-medium">{"$" + monthlyBaseCost.toLocaleString()}</span>
                     </div>
                     {billingPeriod === "annual" && (
                       <>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Annual Cost (12 months)</span>
-                          <span className="font-medium">${annualCost.toLocaleString()}</span>
+                          <span className="font-medium">{"$" + annualCost.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Discount</span>
-                          <span className="font-medium text-emerald-600">-${annualDiscount.toLocaleString()}</span>
+                          <span className="font-medium text-emerald-600">{"$-" + annualDiscount.toLocaleString()}</span>
                         </div>
                       </>
                     )}
@@ -551,18 +554,18 @@ export default function GenerateBlockPage() {
                       {usageValue.toLocaleString()} billable units · $1/unit
                     </div>
                   </div>
-                  <div className="font-semibold">${usageValue.toLocaleString()}</div>
+                  <div className="font-semibold">{"$" + usageValue.toLocaleString()}</div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
                   <div className="font-semibold">Monthly Total</div>
-                  <div className="text-xl font-bold">${monthlyBaseCost.toLocaleString()}</div>
+                  <div className="text-xl font-bold">{"$" + monthlyBaseCost.toLocaleString()}</div>
                 </div>
 
                 {billingPeriod === "annual" && (
                   <div className="flex items-center justify-between pt-2">
                     <div className="font-semibold">Annual Total</div>
-                    <div className="text-xl font-bold">${annualTotal.toLocaleString()}</div>
+                    <div className="text-xl font-bold">{"$" + annualTotal.toLocaleString()}</div>
                   </div>
                 )}
               </div>
@@ -574,5 +577,13 @@ export default function GenerateBlockPage() {
   )}
 </div>
 </div>
+  )
+}
+
+export default function GenerateBlockPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <GenerateBlockContent />
+    </Suspense>
   )
 }
