@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Badge } from "@lastprice/ui";
 import { sampleExperiments } from "@/lib/sample-data";
 import { apiClient, Experiment } from "@/lib/api-client";
 
@@ -127,7 +125,7 @@ export default function ExperimentsPage() {
                 <div>
                   <h4 className="text-sm font-medium mb-2">Variants</h4>
                   <div className="flex flex-wrap gap-2">
-                    {experiment.variants.map((variant) => (
+                    {experiment.variants.map((variant: { id: string; name: string; price: number; weight: number }) => (
                       <div
                         key={variant.id}
                         className="text-sm bg-muted px-3 py-1 rounded-full"

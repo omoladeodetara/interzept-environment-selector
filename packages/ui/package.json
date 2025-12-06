@@ -1,7 +1,16 @@
 {
-  "name": "ui",
+  "name": "@lastprice/ui",
   "version": "0.1.0",
   "private": true,
+  "main": "./src/components/index.ts",
+  "types": "./src/components/index.ts",
+  "exports": {
+    ".": "./src/components/index.ts",
+    "./ui/*": "./src/components/ui/*.tsx",
+    "./pricing-card": "./src/components/pricing-card.tsx",
+    "./analytics-dashboard": "./src/components/analytics-dashboard.tsx",
+    "./lib/utils": "./src/lib/utils.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

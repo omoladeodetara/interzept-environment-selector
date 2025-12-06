@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@lastprice/ui": "workspace:*",
     "@ai-sdk/openai": "2.0.77",
     "@hookform/resolvers": "^3.10.0",
     "@paid-ai/paid-node": "0.4.1",

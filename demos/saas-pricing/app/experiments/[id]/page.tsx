@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Badge } from "@lastprice/ui";
 import { sampleExperiments, sampleExperimentResults } from "@/lib/sample-data";
 
 interface PageProps {
@@ -125,8 +123,8 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
                 <div>
                   <div className="text-sm text-muted-foreground">Statistical Significance</div>
                   <div className="text-2xl font-bold">
-                    {results.summary.statisticalSignificance 
-                      ? `${(results.summary.statisticalSignificance * 100).toFixed(0)}%`
+                    {results.statisticalSignificance 
+                      ? `${(results.statisticalSignificance * 100).toFixed(0)}%`
                       : "N/A"}
                   </div>
                 </div>

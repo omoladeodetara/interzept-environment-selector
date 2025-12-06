@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lastprice/ui";
+import { Button } from "@lastprice/ui";
+import { Badge } from "@lastprice/ui";
 import { sampleDashboard, sampleExperiments } from "@/lib/sample-data";
 
 export default function Home() {
