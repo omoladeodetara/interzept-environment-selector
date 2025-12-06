@@ -1,24 +1,40 @@
 #!/usr/bin/env bash
 # Auto-export Supabase DB data before each commit
 # Runs only if Supabase container is running
+# Creates timestamped snapshots + updates latest
 
 CONTAINER_NAME="supabase_db_last-price"
-OUTPUT_FILE="supabase/seed_snapshot.sql"
+SNAPSHOTS_DIR="supabase/snapshots"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+LATEST_FILE="supabase/seed_snapshot.sql"
+TIMESTAMPED_FILE="$SNAPSHOTS_DIR/snapshot_$TIMESTAMP.sql"
 
 # Check if container is running
 if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-  echo "📦 Auto-exporting DB to $OUTPUT_FILE..."
+  echo "📦 Auto-exporting DB..."
+  
+  # Create snapshots directory if needed
+  mkdir -p "$SNAPSHOTS_DIR"
+  
+  # Export to timestamped file
   docker exec -i "$CONTAINER_NAME" pg_dump -U postgres \
     --data-only \
     --schema=public \
     --inserts \
     --no-owner \
     --no-privileges \
-    postgres > "$OUTPUT_FILE"
+    postgres > "$TIMESTAMPED_FILE"
   
-  # Stage the updated snapshot
-  git add "$OUTPUT_FILE"
-  echo "✅ DB snapshot updated and staged"
+  # Copy to latest
+  cp "$TIMESTAMPED_FILE" "$LATEST_FILE"
+  
+  # Keep only last 10 snapshots (cleanup old ones)
+  ls -t "$SNAPSHOTS_DIR"/snapshot_*.sql 2>/dev/null | tail -n +11 | xargs -r rm --
+  
+  # Stage files
+  git add "$LATEST_FILE" "$SNAPSHOTS_DIR"
+  echo "✅ DB snapshot: $TIMESTAMPED_FILE"
+  echo "✅ Latest updated: $LATEST_FILE"
 else
   echo "⏭️  Supabase not running, skipping DB export"
 fi
