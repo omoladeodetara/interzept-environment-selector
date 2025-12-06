@@ -361,6 +361,50 @@ export type Database = {
           },
         ]
       }
+        contacts: {
+          Row: {
+            address: Json | null
+            created_at: string | null
+            customer_id: string
+            email: string | null
+            external_id: string | null
+            id: string
+            metadata: Json | null
+            phone: string | null
+            updated_at: string | null
+          }
+          Insert: {
+            address?: Json | null
+            created_at?: string | null
+            customer_id: string
+            email?: string | null
+            external_id?: string | null
+            id?: string
+            metadata?: Json | null
+            phone?: string | null
+            updated_at?: string | null
+          }
+          Update: {
+            address?: Json | null
+            created_at?: string | null
+            customer_id?: string
+            email?: string | null
+            external_id?: string | null
+            id?: string
+            metadata?: Json | null
+            phone?: string | null
+            updated_at?: string | null
+          }
+          Relationships: [
+            {
+              foreignKeyName: "contacts_customer_id_fkey"
+              columns: ["customer_id"]
+              isOneToOne: false
+              referencedRelation: "customers"
+              referencedColumns: ["id"]
+            },
+          ]
+        }
       disputes: {
         Row: {
           amount: number
