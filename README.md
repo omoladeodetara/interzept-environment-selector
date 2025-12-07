@@ -1,6 +1,6 @@
 # interzept-environment-selector
 
-Multi-environment data source selector with feature flags and production safety. Perfect for testing and debugging across multiple environments simultaneously.
+Multi-environment data source selector with feature flags and production safety.  Perfect for testing and debugging across multiple environments simultaneously.
 
 ![Data Source Toggle Demo](https://via.placeholder.com/800x400?text=Data+Source+Toggle)
 
