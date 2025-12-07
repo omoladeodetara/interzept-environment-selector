@@ -1,86 +1,64 @@
 "use client"
 
+import { useState } from "react"
 import { useDataSource, DataSourceMode } from "@/lib/data-source"
 import { Database, TestTube2, Globe, Server, Building2, ChevronDown, Check } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@lastprice/ui'
+import { cn } from "@/lib/utils"
 
-const MODE_CONFIGS: Record<DataSourceMode, { icon: any; label: string; color?: string }> = {
-  mock: { icon: TestTube2, label: 'Mock', color: 'text-purple-400' },
-  local: { icon: Database, label: 'Local', color: 'text-blue-400' },
-  dev: { icon: Server, label: 'Dev', color: 'text-green-400' },
-  uat: { icon: Building2, label: 'UAT', color: 'text-amber-400' },
-  production: { icon: Globe, label: 'Prod', color: 'text-red-400' },
+const MODE_CONFIGS: Record<DataSourceMode, { icon: any; label: string; description: string; color?: string }> = {
+  mock: { icon: TestTube2, label: 'Mock', description: 'Static test data', color: 'text-purple-400' },
+  local: { icon: Database, label: 'Local', description: 'Local Supabase', color: 'text-blue-400' },
+  dev: { icon: Server, label: 'Dev', description: 'Preview environment', color: 'text-green-400' },
+  uat: { icon: Building2, label: 'UAT', description: 'Main branch', color: 'text-amber-400' },
+  production: { icon: Globe, label: 'Production', description: 'Release branch', color: 'text-red-400' },
 }
 
 export function DataSourceToggle() {
   const { selectedSources, toggleSource } = useDataSource()
+  const [isExpanded, setIsExpanded] = useState(false)
 
   return (
-    <div className="px-3 pb-4">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 px-3 py-2 w-full hover:bg-[#2a2a2a] transition-colors rounded-lg border border-[#2a2a2a]">
-            <div className="flex items-center gap-2 flex-1">
-              {selectedSources.length === 1 ? (
-                <>
-                  {(() => {
-                    const Icon = MODE_CONFIGS[selectedSources[0]].icon
-                    return <Icon className="h-4 w-4 flex-shrink-0" />
-                  })()}
-                  <span className="text-sm whitespace-nowrap">{MODE_CONFIGS[selectedSources[0]].label}</span>
-                </>
-              ) : (
-                <>
-                  <Database className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm whitespace-nowrap">{selectedSources.length} sources</span>
-                </>
-              )}
-            </div>
-            <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
-            Data Sources
-          </DropdownMenuLabel>
+    <div className="mb-6">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="mb-2 flex w-full items-center justify-between whitespace-nowrap px-2 text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:text-gray-400"
+      >
+        <span>Data Sources</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")} />
+      </button>
+      
+      {isExpanded && (
+        <ul className="space-y-1">
           {Object.entries(MODE_CONFIGS).map(([key, config]) => {
             const Icon = config.icon
             const isSelected = selectedSources.includes(key as DataSourceMode)
             
             return (
-              <DropdownMenuItem
-                key={key}
-                onClick={() => toggleSource(key as DataSourceMode)}
-                className="flex items-center justify-between cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Icon className={`h-4 w-4 ${isSelected ? '' : config.color}`} />
-                  <span>{config.label}</span>
-                </div>
-                {isSelected && <Check className="h-4 w-4" />}
-              </DropdownMenuItem>
+              <li key={key}>
+                <button
+                  onClick={() => toggleSource(key as DataSourceMode)}
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm text-gray-300 transition-colors hover:bg-[#2a2a2a] hover:text-white"
+                >
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", isSelected && config.color)} />
+                  <div className="flex-1 text-left">
+                    <div className="whitespace-nowrap">{config.label}</div>
+                    <div className="text-xs text-gray-500">{config.description}</div>
+                  </div>
+                  {isSelected && <Check className="h-4 w-4 flex-shrink-0" />}
+                </button>
+              </li>
             )
           })}
-          
-          {selectedSources.length > 1 && (
-            <>
-              <DropdownMenuSeparator />
-              <div className="px-2 py-1.5">
-                <span className="text-xs text-muted-foreground">
-                  {selectedSources.length} sources selected - data will be merged
-                </span>
-              </div>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </ul>
+      )}
+      
+      {selectedSources.length > 1 && (
+        <div className="mt-2 px-2">
+          <span className="text-xs text-gray-500">
+            {selectedSources.length} selected
+          </span>
+        </div>
+      )}
     </div>
   )
 }

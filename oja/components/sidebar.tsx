@@ -290,12 +290,10 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               ))}
             </ul>
           </div>
-        </nav>
 
-        {/* Data Source Toggle */}
-        <div className="px-3 pb-4">
+          {/* Data Source Toggle */}
           <DataSourceToggle />
-        </div>
+        </nav>
 
         {/* User Profile */}
         <div className="border-t border-[#2a2a2a] p-3">
