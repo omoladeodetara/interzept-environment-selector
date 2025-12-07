@@ -1,0 +1,56 @@
+{
+  "name": "@lastprice/data-source-toggle",
+  "version": "1.0.0",
+  "description": "Multi-environment data source selector with feature flags and production safety",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./context": {
+      "require": "./dist/context.js",
+      "import": "./dist/context.mjs",
+      "types": "./dist/context.d.ts"
+    },
+    "./toggle": {
+      "require": "./dist/toggle.js",
+      "import": "./dist/toggle.mjs",
+      "types": "./dist/toggle.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "react",
+    "multi-environment",
+    "data-source",
+    "feature-flag",
+    "development-tools"
+  ],
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "lucide-react": "^0.263.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omoladeodetara/last-price",
+    "directory": "packages/data-source-toggle"
+  },
+  "license": "MIT"
+}
