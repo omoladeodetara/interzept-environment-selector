@@ -1,0 +1,75 @@
+{
+  "name": "interzept-environment-selector",
+  "version": "1.1.0",
+  "description": "Multi-environment data source selector with feature flags and production safety",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./context": {
+      "types": "./dist/context.d.ts",
+      "import": "./dist/context.mjs",
+      "require": "./dist/context.js"
+    },
+    "./toggle": {
+      "types": "./dist/toggle.d.ts",
+      "import": "./dist/toggle.mjs",
+      "require": "./dist/toggle.js"
+    },
+    "./unstyled": {
+      "types": "./dist/toggle-unstyled.d.ts",
+      "import": "./dist/toggle-unstyled.mjs",
+      "require": "./dist/toggle-unstyled.js"
+    },
+    "./styles.css": "./dist/toggle.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "multi-environment",
+    "data-source",
+    "feature-flag",
+    "development-tools",
+    "nextjs",
+    "environment-toggle"
+  ],
+  "peerDependencies": {
+    "lucide-react": ">=0.263.0",
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.2.0 || ^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omoladeodetara/interzept-environment-selector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/omoladeodetara/interzept-environment-selector/issues"
+  },
+  "homepage": "https://github.com/omoladeodetara/interzept-environment-selector#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
