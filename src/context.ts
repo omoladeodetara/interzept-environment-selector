@@ -24,11 +24,13 @@ interface DataSourceContextType {
 const DataSourceContext = createContext<DataSourceContextType | undefined>(undefined)
 
 // Environment-specific API URLs
+// API base URLs must be configured via environment variables.
+// Replace 'https://your-api-domain.com' with your actual API endpoints.
 const API_URLS: Record<Exclude<DataSourceMode, 'mock'>, string> = {
   local: process.env.NEXT_PUBLIC_LOCAL_API_URL || 'http://127.0.0.1:55321',
-  dev: process.env.NEXT_PUBLIC_DEV_API_URL || 'https://dev-api.lastprice.ai',
-  uat: process.env.NEXT_PUBLIC_UAT_API_URL || 'https://uat-api.lastprice.ai',
-  production: process.env.NEXT_PUBLIC_PROD_API_URL || 'https://api.lastprice.ai',
+  dev: process.env.NEXT_PUBLIC_DEV_API_URL || 'https://your-api-domain.com',
+  uat: process.env.NEXT_PUBLIC_UAT_API_URL || 'https://your-api-domain.com',
+  production: process.env.NEXT_PUBLIC_PROD_API_URL || 'https://your-api-domain.com',
 }
 
 // Storage key for persistence
