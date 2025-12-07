@@ -2,6 +2,23 @@
 
 Multi-environment data source selector with feature flags and production safety.  Perfect for testing and debugging across multiple environments simultaneously.
 
+---
+
+## Environment Selector vs Data Source Selector
+
+**Environment Selector**: Lets you choose which app environment to use (e.g., development, staging, production). Useful for testing how your app behaves in different deployment contexts.
+
+**Data Source Selector**: Lets you choose where your app gets its data (e.g., mock data, local database, remote API). Useful for switching between test data and real data sources.
+
+**This package combines both!**
+- Select environments (dev, UAT, prod) and data sources (mock, local, API) in one UI.
+- Multi-select and merge data from several sources/environments for advanced testing and debugging.
+
+This flexibility makes it a powerful tool for development, QA, and debugging.
+
+---
+
+![Data Source Toggle Demo](https://via.placeholder.com/800x400?text=Data+Source+Toggle)
 
 ## Features
 
@@ -42,6 +59,27 @@ export default function RootLayout({ children }) {
   )
 }
 ```
+
+  ## Using Wrappers for Customization
+
+  You can create thin wrapper files in your app or in this package to customize, feature-flag, or style the exports from `interzept-environment-selector`. Wrappers help keep your import paths stable and allow you to add app-specific logic.
+
+  **Example: Custom Wrapper for DataSourceToggle**
+
+  ```tsx
+  // src/data-source-toggle-wrapper.tsx
+  // Add feature flags, custom props, or styling here if needed
+  export { DataSourceToggle } from 'interzept-environment-selector'
+  ```
+
+  **Why use wrappers?**
+  - Add feature flags or environment checks
+  - Apply custom styling or theming
+  - Set default props or behaviors
+  - Add logging, analytics, or permission checks
+  - Keep your app's import paths stable
+
+  Other developers can import from your wrapper instead of the package directly if they need custom logic. For most use cases, importing directly from the package is fine.
 
 ### 2. Add the toggle to your sidebar
 
@@ -345,8 +383,8 @@ MIT
 Built with ❤️ for developers who need to test across multiple environments simultaneously.
 
 **Check out other Interzept projects:**
-- [Interzept Browser Extension](https://github.com/omoladeodetara/interzept-browser-extension) - Browser extension for enhanced development workflows
+- [Interzept Browser Extension](https://github.com/interzept/interzept-browser-extension) - Browser extension for enhanced development workflows
 
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/omoladeodetara/interzept-environment-selector/issues)
+**Need help?** Open an issue on [GitHub](https://github.com/interzept/interzept-environment-selector/issues)
