@@ -17,6 +17,8 @@ interface DataSourceContextType {
   useMockData: () => boolean
   getApiBaseUrls: () => string[]
   primarySource: DataSourceMode
+  isProductionReadOnly: boolean
+  canShowToggle: boolean
 }
 
 const DataSourceContext = createContext<DataSourceContextType | undefined>(undefined)
@@ -76,6 +78,19 @@ export function DataSourceProvider({ children }: { children: ReactNode }) {
       .map((mode) => API_URLS[mode as Exclude<DataSourceMode, 'mock'>])
   }
 
+  const isProductionReadOnly = process.env.NEXT_PUBLIC_PRODUCTION_READ_ONLY === 'true'
+  
+  // Hide toggle ONLY in production deployment
+  // Show by default in development and preview environments
+  const isProductionDeployment = 
+    process.env.NODE_ENV === 'production' && 
+    process.env.NEXT_PUBLIC_VERCEL_ENV === 'production'
+  
+  // Show toggle by default unless explicitly disabled OR in production deployment
+  const canShowToggle = 
+    process.env.NEXT_PUBLIC_ENABLE_DATA_SOURCE_TOGGLE !== 'false' && 
+    !isProductionDeployment
+
   const contextValue: DataSourceContextType = {
     selectedSources,
     toggleSource,
@@ -83,6 +98,8 @@ export function DataSourceProvider({ children }: { children: ReactNode }) {
     useMockData: () => selectedSources.includes('mock'),
     getApiBaseUrls,
     primarySource: selectedSources[0] || 'local',
+    isProductionReadOnly,
+    canShowToggle,
   }
 
   return createElement(DataSourceContext.Provider, { value: contextValue }, children)
