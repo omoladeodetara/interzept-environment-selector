@@ -28,7 +28,12 @@ export function DataSourceToggle() {
         onClick={() => setIsExpanded(!isExpanded)}
         className="mb-2 flex w-full items-center justify-between whitespace-nowrap px-2 text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:text-gray-400"
       >
-        <span>Data Sources</span>
+        <div className="flex items-center gap-2">
+          <span>Data Sources</span>
+          <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-400">
+            Internal
+          </span>
+        </div>
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")} />
       </button>
       
