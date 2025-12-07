@@ -5,6 +5,7 @@ import { Scale, Search, Loader2 } from "lucide-react"
 import { Input } from '@lastprice/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lastprice/ui'
+import { useMockData, useDataSource } from '@/lib/data-source'
 
 // Dispute type matching DB schema
 interface Dispute {
@@ -26,23 +27,67 @@ interface Dispute {
   invoice_number?: string
 }
 
+// Mock data for development without database
+const MOCK_DISPUTES: Dispute[] = [
+  {
+    id: 'mock-dispute-1',
+    tenant_id: 'mock-tenant',
+    payment_id: 'mock-payment-1',
+    customer_id: 'mock-customer-1',
+    external_id: 'disp_mock_001',
+    status: 'open',
+    amount: '150.00',
+    currency: 'USD',
+    reason: 'product_not_received',
+    evidence: { summary: 'Customer claims product was never delivered' },
+    metadata: { priority: 'high' },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-dispute-2',
+    tenant_id: 'mock-tenant',
+    payment_id: 'mock-payment-2',
+    customer_id: 'mock-customer-2',
+    external_id: 'disp_mock_002',
+    status: 'won',
+    amount: '75.00',
+    currency: 'USD',
+    reason: 'fraud',
+    evidence: { summary: 'Verified transaction was legitimate' },
+    metadata: { priority: 'medium' },
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 3600000).toISOString(),
+  }
+]
+
 // Default tenant for demo (from seed)
 const DEMO_TENANT_ID = "bb62d990-23c8-486e-b7ac-736611c2427b"
 
 export function DisputesContent() {
-  const [disputes, setDisputes] = useState<Dispute[]>([])
-  const [loading, setLoading] = useState(true)
+  const isMockMode = useMockData()
+  const { getApiBaseUrl } = useDataSource()
+  const [disputes, setDisputes] = useState<Dispute[]>(isMockMode ? MOCK_DISPUTES : [])
+  const [loading, setLoading] = useState(!isMockMode)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [customerFilter, setCustomerFilter] = useState("all")
 
-  // Fetch disputes from API
+  // Fetch disputes from API (only if not in mock mode)
   useEffect(() => {
+    if (isMockMode) {
+      setDisputes(MOCK_DISPUTES)
+      setLoading(false)
+      return
+    }
+
     async function fetchDisputes() {
       try {
         setLoading(true)
-        const res = await fetch(`/api/disputes?tenantId=${DEMO_TENANT_ID}`)
+        const baseUrl = getApiBaseUrl()
+        const url = baseUrl ? `${baseUrl}/api/disputes?tenantId=${DEMO_TENANT_ID}` : `/api/disputes?tenantId=${DEMO_TENANT_ID}`
+        const res = await fetch(url)
         if (!res.ok) {
           throw new Error(`Failed to fetch disputes: ${res.status}`)
         }
@@ -56,7 +101,7 @@ export function DisputesContent() {
       }
     }
     fetchDisputes()
-  }, [])
+  }, [isMockMode, getApiBaseUrl])
 
   // Calculate stats
   const totalDisputes = disputes.length

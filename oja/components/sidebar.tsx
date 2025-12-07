@@ -37,6 +37,7 @@ import {
 } from '@lastprice/ui'
 import { Dialog, DialogContent } from '@lastprice/ui'
 import { useWorkspace } from "@/contexts/workspace-context"
+import { DataSourceToggle } from "@/components/data-source-toggle"
 
 const teams = [{ id: "zyleme", name: "Zyleme", isActive: true }]
 
@@ -291,7 +292,13 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
           </div>
         </nav>
 
-        <div className="border-t border-[#2a2a2a] px-3 py-3">
+        {/* Data Source Toggle */}
+        <div className="px-3 pb-4">
+          <DataSourceToggle />
+        </div>
+
+        {/* User Profile */}
+        <div className="border-t border-[#2a2a2a] p-3"
           <Link
             href="/documentation"
             className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-gray-300 transition-colors hover:bg-[#2a2a2a] hover:text-white"

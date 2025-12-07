@@ -5,6 +5,13 @@
   "description": "A/B testing pricing experiments with Paid.ai integration",
   "scripts": {
     "dev": "pnpm --filter oja dev",
+    "dev:local": "SUPABASE_URL=http://127.0.0.1:55321 SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH pnpm --filter oja dev",
+    "db:start": "pnpm dlx supabase start",
+    "db:stop": "pnpm dlx supabase stop",
+    "db:seed": "psql postgresql://postgres:postgres@localhost:55322/postgres -f supabase/seed_snapshot.sql",
+    "db:export": "./scripts/export-db.sh",
+    "db:studio": "echo 'Open http://127.0.0.1:55323'",
+    "start:all": "pnpm db:start && pnpm db:seed && pnpm dev:local",
     "build": "pnpm --filter oja build",
     "start": "pnpm --filter oja start",
     "test": "jest",
