@@ -18,8 +18,6 @@ This flexibility makes it a powerful tool for development, QA, and debugging.
 
 ---
 
-![Data Source Toggle Demo](https://via.placeholder.com/800x400?text=Data+Source+Toggle)
-
 ## Features
 
 ✨ **Multi-Select** - Select and merge data from multiple environments simultaneously  
