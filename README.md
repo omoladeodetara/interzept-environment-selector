@@ -1,4 +1,4 @@
-# @lastprice/data-source-toggle
+# interzept-environment-selector
 
 Multi-environment data source selector with feature flags and production safety. Perfect for testing and debugging across multiple environments simultaneously.
 
@@ -16,11 +16,11 @@ Multi-environment data source selector with feature flags and production safety.
 ## Installation
 
 ```bash
-npm install @lastprice/data-source-toggle
+npm install interzept-environment-selector
 # or
-pnpm add @lastprice/data-source-toggle
+pnpm add interzept-environment-selector
 # or
-yarn add @lastprice/data-source-toggle
+yarn add interzept-environment-selector
 ```
 
 ## Quick Start
@@ -29,7 +29,7 @@ yarn add @lastprice/data-source-toggle
 
 ```tsx
 // app/layout.tsx
-import { DataSourceProvider } from '@lastprice/data-source-toggle'
+import { DataSourceProvider } from 'interzept-environment-selector'
 
 export default function RootLayout({ children }) {
   return (
@@ -46,26 +46,55 @@ export default function RootLayout({ children }) {
 
 ### 2. Add the toggle to your sidebar
 
+Choose the version that fits your project:
+
+**Option A: With Tailwind CSS**
 ```tsx
 // components/sidebar.tsx
-import { DataSourceToggle } from '@lastprice/data-source-toggle'
+import { DataSourceToggle } from 'interzept-environment-selector'
 
 export function Sidebar() {
   return (
     <nav>
-      {/* Your navigation items */}
-      
       <DataSourceToggle />
     </nav>
   )
 }
 ```
 
+Then configure Tailwind to scan the package:
+```js
+// tailwind.config.js
+module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx}',
+    './node_modules/interzept-environment-selector/dist/**/*.{js,mjs}'
+  ],
+}
+```
+
+**Option B: Without Tailwind (Plain CSS)**
+```tsx
+// components/sidebar.tsx
+import { DataSourceToggleUnstyled } from 'interzept-environment-selector/unstyled'
+import 'interzept-environment-selector/styles.css'
+
+export function Sidebar() {
+  return (
+    <nav>
+      <DataSourceToggleUnstyled />
+    </nav>
+  )
+}
+```
+
+No configuration needed! Works in any React project.
+
 ### 3. Use in your components
 
 ```tsx
 // components/my-component.tsx
-import { useDataSource, useMockData } from '@lastprice/data-source-toggle'
+import { useDataSource, useMockData } from 'interzept-environment-selector'
 
 export function MyComponent() {
   const isMockMode = useMockData()
@@ -173,35 +202,65 @@ Check if any real API source is selected.
 const hasApiData = useApiData()
 ```
 
-### `DataSourceToggle`
+### `DataSourceToggle` / `DataSourceToggleUnstyled`
 
-UI component for source selection.
+UI component for source selection. Choose based on your styling preference:
 
 ```tsx
+// Tailwind version (requires Tailwind CSS setup)
+import { DataSourceToggle } from 'interzept-environment-selector'
 <DataSourceToggle />
+
+// Plain CSS version (works everywhere)
+import { DataSourceToggleUnstyled } from 'interzept-environment-selector/unstyled'
+import 'interzept-environment-selector/styles.css'
+<DataSourceToggleUnstyled />
 ```
 
-## Styling
+## Styling & Customization
 
-The component uses Tailwind CSS classes. Make sure you have:
+### Tailwind Version
 
-1. Tailwind CSS configured
-2. `lucide-react` installed for icons
-3. A utility function `cn()` for className merging (optional)
+Uses Tailwind utility classes. Requires:
+1. Tailwind CSS configured in your project
+2. Package path added to Tailwind content config
+3. `lucide-react` installed
 
-If you need to customize styling, create a wrapper:
+### Plain CSS Version
 
-```tsx
-import { DataSourceToggle } from '@lastprice/data-source-toggle'
+Uses standalone CSS with class prefix `dst-*`. To customize:
 
-export function CustomDataSourceToggle() {
-  return (
-    <div className="your-custom-wrapper">
-      <DataSourceToggle />
-    </div>
-  )
+```css
+/* Override in your own CSS file */
+.dst-container {
+  margin-bottom: 2rem !important;
+}
+
+.dst-header {
+  color: #your-color !important;
+}
+
+.dst-item-button:hover {
+  background-color: #your-hover-color !important;
 }
 ```
+
+**Available CSS Classes:**
+- `.dst-container` - Main wrapper
+- `.dst-header` - Collapsible header button
+- `.dst-badge` - "Internal" badge
+- `.dst-item-button` - Each data source button
+- `.dst-icon-purple`, `.dst-icon-blue`, `.dst-icon-green`, `.dst-icon-amber`, `.dst-icon-red` - Icon colors
+- `.dst-footer` - Footer with selection count
+
+### Comparison
+
+| Feature | Tailwind (`DataSourceToggle`) | Plain CSS (`DataSourceToggleUnstyled`) |
+|---------|-------------------------------|----------------------------------------|
+| Setup | Requires Tailwind config | Import CSS once |
+| Customization | Tailwind classes or wrapper | CSS overrides with `!important` |
+| Bundle Size | Smaller (utility classes) | Includes compiled CSS (~3KB) |
+| Best For | Tailwind projects | Any React project |
 
 ## Production Deployment
 
@@ -269,23 +328,26 @@ return (
 Full TypeScript support included:
 
 ```typescript
-import type { DataSourceMode } from '@lastprice/data-source-toggle'
+import type { DataSourceMode } from 'interzept-environment-selector'
 
 type DataSourceMode = 'mock' | 'local' | 'dev' | 'uat' | 'production'
 ```
 
 ## Contributing
 
-Contributions welcome! This package is part of the [Last Price](https://github.com/omoladeodetara/last-price) monorepo.
+Contributions welcome!
 
 ## License
 
-MIT © Last Price
+MIT
 
 ## Credits
 
 Built with ❤️ for developers who need to test across multiple environments simultaneously.
 
+**Check out other Interzept projects:**
+- [Interzept Browser Extension](https://github.com/omoladeodetara/interzept-browser-extension) - Browser extension for enhanced development workflows
+
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/omoladeodetara/last-price/issues)
+**Need help?** Open an issue on [GitHub](https://github.com/omoladeodetara/interzept-environment-selector/issues)

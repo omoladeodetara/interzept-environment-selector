@@ -1,11 +1,13 @@
 {
-  "name": "@lastprice/data-source-toggle",
+  "name": "interzept-environment-selector",
   "version": "1.1.0",
   "description": "Multi-environment data source selector with feature flags and production safety",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -21,7 +23,13 @@
       "types": "./dist/toggle.d.ts",
       "import": "./dist/toggle.mjs",
       "require": "./dist/toggle.js"
-    }
+    },
+    "./unstyled": {
+      "types": "./dist/toggle-unstyled.d.ts",
+      "import": "./dist/toggle-unstyled.mjs",
+      "require": "./dist/toggle-unstyled.js"
+    },
+    "./styles.css": "./dist/toggle.css"
   },
   "files": [
     "dist",
@@ -54,13 +62,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/omoladeodetara/last-price",
-    "directory": "packages/data-source-toggle"
+    "url": "https://github.com/omoladeodetara/interzept-environment-selector.git"
   },
   "bugs": {
-    "url": "https://github.com/omoladeodetara/last-price/issues"
+    "url": "https://github.com/omoladeodetara/interzept-environment-selector/issues"
   },
-  "homepage": "https://github.com/omoladeodetara/last-price/tree/main/packages/data-source-toggle#readme",
+  "homepage": "https://github.com/omoladeodetara/interzept-environment-selector#readme",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
