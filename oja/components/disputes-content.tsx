@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Scale, Search, Loader2 } from "lucide-react"
 import { Input } from '@lastprice/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@lastprice/ui'
-import { useMockData, useDataSource } from '@/lib/data-source'
+import { useFetchData } from '@/hooks/useFetchData'
+import { MOCK_DISPUTES } from '@/lib/mock-data'
 
 // Dispute type matching DB schema
 interface Dispute {
@@ -27,108 +28,33 @@ interface Dispute {
   invoice_number?: string
 }
 
-// Mock data for development without database
-const MOCK_DISPUTES: Dispute[] = [
-  {
-    id: 'mock-dispute-1',
-    tenant_id: 'mock-tenant',
-    payment_id: 'mock-payment-1',
-    customer_id: 'mock-customer-1',
-    external_id: 'disp_mock_001',
-    status: 'open',
-    amount: '150.00',
-    currency: 'USD',
-    reason: 'product_not_received',
-    evidence: { summary: 'Customer claims product was never delivered' },
-    metadata: { priority: 'high' },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'mock-dispute-2',
-    tenant_id: 'mock-tenant',
-    payment_id: 'mock-payment-2',
-    customer_id: 'mock-customer-2',
-    external_id: 'disp_mock_002',
-    status: 'won',
-    amount: '75.00',
-    currency: 'USD',
-    reason: 'fraud',
-    evidence: { summary: 'Verified transaction was legitimate' },
-    metadata: { priority: 'medium' },
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 3600000).toISOString(),
-  }
-]
-
 // Default tenant for demo (from seed)
 const DEMO_TENANT_ID = "bb62d990-23c8-486e-b7ac-736611c2427b"
 
 export function DisputesContent() {
-  const isMockMode = useMockData()
-  const { getApiBaseUrls } = useDataSource()
-  const [disputes, setDisputes] = useState<Dispute[]>(isMockMode ? MOCK_DISPUTES : [])
-  const [loading, setLoading] = useState(!isMockMode)
-  const [error, setError] = useState<string | null>(null)
+  // Fetch disputes using the centralized hook
+  const { data: disputes, loading, error } = useFetchData<Dispute[]>(
+    '/api/disputes',
+    MOCK_DISPUTES as unknown as Dispute[],
+    { params: { tenantId: DEMO_TENANT_ID } }
+  )
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [customerFilter, setCustomerFilter] = useState("all")
 
-  // Fetch disputes from API (only if not in mock mode)
-  useEffect(() => {
-    if (isMockMode) {
-      setDisputes(MOCK_DISPUTES)
-      setLoading(false)
-      return
-    }
-
-    async function fetchDisputes() {
-      try {
-        setLoading(true)
-        const baseUrls = getApiBaseUrls()
-        
-        // Fetch from all selected data sources in parallel
-        const results = await Promise.allSettled(
-          baseUrls.map(async (baseUrl) => {
-            const url = baseUrl ? `${baseUrl}/api/disputes?tenantId=${DEMO_TENANT_ID}` : `/api/disputes?tenantId=${DEMO_TENANT_ID}`
-            const res = await fetch(url)
-            if (!res.ok) {
-              throw new Error(`Failed to fetch from ${baseUrl}: ${res.status}`)
-            }
-            const json = await res.json()
-            return json.data || []
-          })
-        )
-        
-        // Merge all successful results without deduplication
-        const allDisputes: Dispute[] = []
-        results.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            allDisputes.push(...result.value)
-          }
-        })
-        
-        setDisputes(allDisputes)
-      } catch (err) {
-        console.error(err)
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchDisputes()
-  }, [isMockMode, getApiBaseUrls])
+  const disputesList = disputes || []
 
   // Calculate stats
-  const totalDisputes = disputes.length
-  const pendingResolution = disputes.filter((d) => d.status === "open" || d.status === "under_review").length
-  const resolved = disputes.filter((d) => d.status === "won" || d.status === "lost" || d.status === "closed").length
-  const openDisputeAmount = disputes
+  const totalDisputes = disputesList.length
+  const pendingResolution = disputesList.filter((d) => d.status === "open" || d.status === "under_review").length
+  const resolved = disputesList.filter((d) => d.status === "won" || d.status === "lost" || d.status === "closed").length
+  const openDisputeAmount = disputesList
     .filter((d) => d.status === "open" || d.status === "under_review")
     .reduce((sum, d) => sum + parseFloat(d.amount || "0"), 0)
 
   // Filter disputes
-  const filteredDisputes = disputes.filter((dispute) => {
+  const filteredDisputes = disputesList.filter((dispute) => {
     const matchesSearch =
       dispute.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (dispute.external_id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -139,7 +65,7 @@ export function DisputesContent() {
   })
 
   // Get unique customers for filter
-  const customers = [...new Set(disputes.map((d) => d.customer_id).filter(Boolean))] as string[]
+  const customers = [...new Set(disputesList.map((d) => d.customer_id).filter(Boolean))] as string[]
 
   if (loading) {
     return (

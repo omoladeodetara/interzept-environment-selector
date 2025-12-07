@@ -8,7 +8,9 @@ import { Input } from '@lastprice/ui'
 import { Label } from '@lastprice/ui'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
-import { Download, Plus, Search, X, MoreHorizontal } from "lucide-react"
+import { Download, Plus, Search, X, MoreHorizontal, Loader2 } from "lucide-react"
+import { useFetchData } from '@/hooks/useFetchData'
+import { MOCK_CUSTOMERS } from '@/lib/mock-data'
 
 const exportColumns = [
   { id: "id", label: "ID", defaultChecked: true },
@@ -30,16 +32,12 @@ export function CustomersContent() {
     exportColumns.filter((c) => c.defaultChecked).map((c) => c.id),
   )
 
-  const [customers] = useState([
-    {
-      id: "onboarding-test-customer",
-      name: "Onboarding Test Customer",
-      status: "Active",
-      website: "https://paid.ai",
-      phone: "+1-555-0123",
-      customerId: "onboarding-test-customer",
-    },
-  ])
+  // Fetch customers from selected data source(s)
+  const { data: customers, loading, error } = useFetchData(
+    '/api/customers',
+    MOCK_CUSTOMERS,
+    { params: { tenantId: 'default' } }
+  )
 
   const [newCustomer, setNewCustomer] = useState({
     name: "",
@@ -66,11 +64,31 @@ export function CustomersContent() {
 
   const isAllSelected = selectedColumns.length === exportColumns.length
 
-  const filteredCustomers = customers.filter((customer) => {
+  const filteredCustomers = (customers || []).filter((customer) => {
     const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || customer.status.toLowerCase() === statusFilter.toLowerCase()
     return matchesSearch && matchesStatus
   })
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-red-500 py-8">
+          Error loading customers: {error}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">

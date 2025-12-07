@@ -9,7 +9,9 @@ import { Label } from '@lastprice/ui'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lastprice/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@lastprice/ui'
 import { useToast } from "@/hooks/use-toast"
-import { Download, Plus, X } from "lucide-react"
+import { Download, Plus, X, Loader2 } from "lucide-react"
+import { useFetchData } from '@/hooks/useFetchData'
+import { MOCK_PAYMENTS } from '@/lib/mock-data'
 
 const exportColumns = [
   { id: "id", label: "ID", defaultChecked: true },
@@ -36,16 +38,12 @@ export function PaymentsContent() {
     exportColumns.filter((c) => c.defaultChecked).map((c) => c.id),
   )
 
-  const [payments, setPayments] = useState([
-    {
-      id: "PAY-0001",
-      customer: "Onboarding Test Customer",
-      amount: "12,00 €",
-      type: "Bank transfer",
-      status: "Draft",
-      date: "Dec 6, 2025",
-    },
-  ])
+  // Fetch payments from selected data source(s)
+  const { data: payments, loading, error } = useFetchData(
+    '/api/payments',
+    MOCK_PAYMENTS,
+    { params: { tenantId: 'default' } }
+  )
 
   const [customer, setCustomer] = useState("Onboarding Test Customer")
   const [amount, setAmount] = useState("12,00")
@@ -70,6 +68,28 @@ export function PaymentsContent() {
   }
 
   const isAllSelected = selectedColumns.length === exportColumns.length
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-red-500 py-8">
+          Error loading payments: {error}
+        </div>
+      </div>
+    )
+  }
+
+  const paymentsList = payments || []
 
   return (
     <div className="p-6">
@@ -97,34 +117,38 @@ export function PaymentsContent() {
         </div>
       </div>
 
-      {payments.length > 0 ? (
+      {paymentsList.length > 0 ? (
         <div className="border border-border rounded-lg">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Number</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">ID</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Customer</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Amount</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Type</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Method</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
               </tr>
             </thead>
             <tbody>
-              {payments.map((payment) => (
+              {paymentsList.map((payment) => (
                 <tr key={payment.id} className="border-b border-border last:border-b-0 hover:bg-muted/50">
                   <td className="p-4">
                     <Link href={`/payments/${payment.id}`} className="text-sm text-orange-500 hover:underline">
-                      {payment.id}
+                      {payment.external_id || payment.id}
                     </Link>
                   </td>
-                  <td className="p-4 text-sm">{payment.customer}</td>
-                  <td className="p-4 text-sm">{payment.amount}</td>
-                  <td className="p-4 text-sm">{payment.type}</td>
+                  <td className="p-4 text-sm">{payment.customer_name || payment.customer_id}</td>
+                  <td className="p-4 text-sm">{payment.amount} {payment.currency}</td>
+                  <td className="p-4 text-sm">{payment.payment_method}</td>
                   <td className="p-4">
-                    <span className="text-xs border border-border rounded px-2 py-1">{payment.status}</span>
+                    <span className={`text-xs rounded px-2 py-1 ${
+                      payment.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                      payment.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-gray-500/20 text-gray-400'
+                    }`}>{payment.status}</span>
                   </td>
-                  <td className="p-4 text-sm text-muted-foreground">{payment.date}</td>
+                  <td className="p-4 text-sm text-muted-foreground">{new Date(payment.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
