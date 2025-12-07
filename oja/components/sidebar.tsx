@@ -298,7 +298,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
         </div>
 
         {/* User Profile */}
-        <div className="border-t border-[#2a2a2a] p-3"
+        <div className="border-t border-[#2a2a2a] p-3">
           <Link
             href="/documentation"
             className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-gray-300 transition-colors hover:bg-[#2a2a2a] hover:text-white"

@@ -1,20 +1,22 @@
 /**
  * Data source configuration
  * Toggle between mock data, local DB, dev, UAT, and production environments
+ * Supports selecting multiple data sources to merge
  */
 
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, createElement } from 'react'
 
 export type DataSourceMode = 'mock' | 'local' | 'dev' | 'uat' | 'production'
 
 interface DataSourceContextType {
-  mode: DataSourceMode
-  setMode: (mode: DataSourceMode) => void
+  selectedSources: DataSourceMode[]
+  toggleSource: (mode: DataSourceMode) => void
+  setSelectedSources: (modes: DataSourceMode[]) => void
   useMockData: () => boolean
-  useApiData: () => boolean
-  getApiBaseUrl: () => string
+  getApiBaseUrls: () => string[]
+  primarySource: DataSourceMode
 }
 
 const DataSourceContext = createContext<DataSourceContextType | undefined>(undefined)
@@ -27,41 +29,63 @@ const API_URLS: Record<Exclude<DataSourceMode, 'mock'>, string> = {
   production: process.env.NEXT_PUBLIC_PROD_API_URL || 'https://api.lastprice.ai',
 }
 
-// Read initial mode from env or localStorage
-function getInitialMode(): DataSourceMode {
+// Read initial selected sources from localStorage
+function getInitialSources(): DataSourceMode[] {
   if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('dataSourceMode') as DataSourceMode | null
-    if (stored && ['mock', 'local', 'dev', 'uat', 'production'].includes(stored)) {
-      return stored
+    const stored = localStorage.getItem('dataSourceModes')
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as DataSourceMode[]
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed
+        }
+      } catch (e) {
+        // Fall through to default
+      }
     }
   }
-  return (process.env.NEXT_PUBLIC_DATA_SOURCE as DataSourceMode) || 'local'
+  return [(process.env.NEXT_PUBLIC_DATA_SOURCE as DataSourceMode) || 'local']
 }
 
 export function DataSourceProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<DataSourceMode>(getInitialMode)
+  const [selectedSources, setSelectedSourcesState] = useState<DataSourceMode[]>(getInitialSources)
 
-  const setMode = (newMode: DataSourceMode) => {
-    setModeState(newMode)
+  const setSelectedSources = (modes: DataSourceMode[]) => {
+    setSelectedSourcesState(modes)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('dataSourceMode', newMode)
+      localStorage.setItem('dataSourceModes', JSON.stringify(modes))
     }
   }
 
-  const getApiBaseUrl = (): string => {
-    if (mode === 'mock') return ''
-    return API_URLS[mode]
+  const toggleSource = (mode: DataSourceMode) => {
+    const newSources = selectedSources.includes(mode)
+      ? selectedSources.filter((s) => s !== mode)
+      : [...selectedSources, mode]
+    
+    // Ensure at least one source is selected
+    if (newSources.length === 0) {
+      return
+    }
+    
+    setSelectedSources(newSources)
   }
 
-  const value: DataSourceContextType = {
-    mode,
-    setMode,
-    useMockData: () => mode === 'mock',
-    useApiData: () => mode !== 'mock',
-    getApiBaseUrl,
+  const getApiBaseUrls = (): string[] => {
+    return selectedSources
+      .filter((mode) => mode !== 'mock')
+      .map((mode) => API_URLS[mode as Exclude<DataSourceMode, 'mock'>])
   }
 
-  return <DataSourceContext.Provider value={value}>{children}</DataSourceContext.Provider>
+  const contextValue: DataSourceContextType = {
+    selectedSources,
+    toggleSource,
+    setSelectedSources,
+    useMockData: () => selectedSources.includes('mock'),
+    getApiBaseUrls,
+    primarySource: selectedSources[0] || 'local',
+  }
+
+  return createElement(DataSourceContext.Provider, { value: contextValue }, children)
 }
 
 export function useDataSource() {
@@ -73,11 +97,11 @@ export function useDataSource() {
 }
 
 export function useMockData(): boolean {
-  const { mode } = useDataSource()
-  return mode === 'mock'
+  const { useMockData } = useDataSource()
+  return useMockData()
 }
 
 export function useApiData(): boolean {
-  const { mode } = useDataSource()
-  return mode !== 'mock'
+  const { selectedSources } = useDataSource()
+  return selectedSources.some((mode) => mode !== 'mock')
 }

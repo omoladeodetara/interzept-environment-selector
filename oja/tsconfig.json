@@ -23,12 +23,24 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@packages/*": ["../packages/*"],
-      "@services/*": ["../packages/services/*"],
-      "@utils/*": ["../packages/utils/*"],
-      "@models/*": ["../packages/models/*"],
-      "@jale/*": ["../packages/jale/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@packages/*": [
+        "../packages/*"
+      ],
+      "@services/*": [
+        "../packages/services/*"
+      ],
+      "@utils/*": [
+        "../packages/utils/*"
+      ],
+      "@models/*": [
+        "../packages/models/*"
+      ],
+      "@jale/*": [
+        "../packages/jale/*"
+      ]
     }
   },
   "include": [

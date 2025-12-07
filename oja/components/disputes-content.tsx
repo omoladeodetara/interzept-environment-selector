@@ -66,7 +66,7 @@ const DEMO_TENANT_ID = "bb62d990-23c8-486e-b7ac-736611c2427b"
 
 export function DisputesContent() {
   const isMockMode = useMockData()
-  const { getApiBaseUrl } = useDataSource()
+  const { getApiBaseUrls } = useDataSource()
   const [disputes, setDisputes] = useState<Dispute[]>(isMockMode ? MOCK_DISPUTES : [])
   const [loading, setLoading] = useState(!isMockMode)
   const [error, setError] = useState<string | null>(null)
@@ -85,14 +85,30 @@ export function DisputesContent() {
     async function fetchDisputes() {
       try {
         setLoading(true)
-        const baseUrl = getApiBaseUrl()
-        const url = baseUrl ? `${baseUrl}/api/disputes?tenantId=${DEMO_TENANT_ID}` : `/api/disputes?tenantId=${DEMO_TENANT_ID}`
-        const res = await fetch(url)
-        if (!res.ok) {
-          throw new Error(`Failed to fetch disputes: ${res.status}`)
-        }
-        const json = await res.json()
-        setDisputes(json.data || [])
+        const baseUrls = getApiBaseUrls()
+        
+        // Fetch from all selected data sources in parallel
+        const results = await Promise.allSettled(
+          baseUrls.map(async (baseUrl) => {
+            const url = baseUrl ? `${baseUrl}/api/disputes?tenantId=${DEMO_TENANT_ID}` : `/api/disputes?tenantId=${DEMO_TENANT_ID}`
+            const res = await fetch(url)
+            if (!res.ok) {
+              throw new Error(`Failed to fetch from ${baseUrl}: ${res.status}`)
+            }
+            const json = await res.json()
+            return json.data || []
+          })
+        )
+        
+        // Merge all successful results without deduplication
+        const allDisputes: Dispute[] = []
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            allDisputes.push(...result.value)
+          }
+        })
+        
+        setDisputes(allDisputes)
       } catch (err) {
         console.error(err)
         setError(err instanceof Error ? err.message : 'Unknown error')
@@ -101,7 +117,7 @@ export function DisputesContent() {
       }
     }
     fetchDisputes()
-  }, [isMockMode, getApiBaseUrl])
+  }, [isMockMode, getApiBaseUrls])
 
   // Calculate stats
   const totalDisputes = disputes.length
