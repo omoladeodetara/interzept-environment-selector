@@ -383,8 +383,8 @@ MIT
 Built with ❤️ for developers who need to test across multiple environments simultaneously.
 
 **Check out other Interzept projects:**
-- [Interzept Browser Extension](https://github.com/omoladeodetara/interzept-browser-extension) - Browser extension for enhanced development workflows
+- [Interzept Browser Extension](https://github.com/interzept/interzept-browser-extension) - Browser extension for enhanced development workflows
 
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/omoladeodetara/interzept-environment-selector/issues)
+**Need help?** Open an issue on [GitHub](https://github.com/interzept/interzept-environment-selector/issues)
