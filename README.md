@@ -29,12 +29,18 @@ This flexibility makes it a powerful tool for development, QA, and debugging.
 
 ## Installation
 
+### From npm (recommended)
 ```bash
 npm install @interzept/interzept-environment-selector
 # or
 pnpm add @interzept/interzept-environment-selector
 # or
 yarn add @interzept/interzept-environment-selector
+```
+
+### From GitHub Packages
+```bash
+npm install @interzept/interzept-environment-selector --registry=https://npm.pkg.github.com
 ```
 
 ## Quick Start
