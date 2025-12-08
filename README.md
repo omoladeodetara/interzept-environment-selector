@@ -30,11 +30,11 @@ This flexibility makes it a powerful tool for development, QA, and debugging.
 ## Installation
 
 ```bash
-npm install interzept-environment-selector
+npm install @interzept/interzept-environment-selector
 # or
-pnpm add interzept-environment-selector
+pnpm add @interzept/interzept-environment-selector
 # or
-yarn add interzept-environment-selector
+yarn add @interzept/interzept-environment-selector
 ```
 
 ## Quick Start
@@ -43,7 +43,7 @@ yarn add interzept-environment-selector
 
 ```tsx
 // app/layout.tsx
-import { DataSourceProvider } from 'interzept-environment-selector'
+import { DataSourceProvider } from '@interzept/interzept-environment-selector'
 
 export default function RootLayout({ children }) {
   return (
@@ -60,14 +60,14 @@ export default function RootLayout({ children }) {
 
   ## Using Wrappers for Customization
 
-  You can create thin wrapper files in your app or in this package to customize, feature-flag, or style the exports from `interzept-environment-selector`. Wrappers help keep your import paths stable and allow you to add app-specific logic.
+  You can create thin wrapper files in your app or in this package to customize, feature-flag, or style the exports from `@interzept/interzept-environment-selector`. Wrappers help keep your import paths stable and allow you to add app-specific logic.
 
   **Example: Custom Wrapper for DataSourceToggle**
 
   ```tsx
   // src/data-source-toggle-wrapper.tsx
   // Add feature flags, custom props, or styling here if needed
-  export { DataSourceToggle } from 'interzept-environment-selector'
+  export { DataSourceToggle } from '@interzept/interzept-environment-selector'
   ```
 
   **Why use wrappers?**
@@ -86,7 +86,7 @@ Choose the version that fits your project:
 **Option A: With Tailwind CSS**
 ```tsx
 // components/sidebar.tsx
-import { DataSourceToggle } from 'interzept-environment-selector'
+import { DataSourceToggle } from '@interzept/interzept-environment-selector'
 
 export function Sidebar() {
   return (
@@ -103,7 +103,7 @@ Then configure Tailwind to scan the package:
 module.exports = {
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
-    './node_modules/interzept-environment-selector/dist/**/*.{js,mjs}'
+    './node_modules/@interzept/interzept-environment-selector/dist/**/*.{js,mjs}'
   ],
 }
 ```
@@ -111,8 +111,8 @@ module.exports = {
 **Option B: Without Tailwind (Plain CSS)**
 ```tsx
 // components/sidebar.tsx
-import { DataSourceToggleUnstyled } from 'interzept-environment-selector/unstyled'
-import 'interzept-environment-selector/styles.css'
+import { DataSourceToggleUnstyled } from '@interzept/interzept-environment-selector/unstyled'
+import '@interzept/interzept-environment-selector/styles.css'
 
 export function Sidebar() {
   return (
@@ -129,7 +129,7 @@ No configuration needed! Works in any React project.
 
 ```tsx
 // components/my-component.tsx
-import { useDataSource, useMockData } from 'interzept-environment-selector'
+import { useDataSource, useMockData } from '@interzept/interzept-environment-selector'
 
 export function MyComponent() {
   const isMockMode = useMockData()
@@ -243,12 +243,12 @@ UI component for source selection. Choose based on your styling preference:
 
 ```tsx
 // Tailwind version (requires Tailwind CSS setup)
-import { DataSourceToggle } from 'interzept-environment-selector'
+import { DataSourceToggle } from '@interzept/interzept-environment-selector'
 <DataSourceToggle />
 
 // Plain CSS version (works everywhere)
-import { DataSourceToggleUnstyled } from 'interzept-environment-selector/unstyled'
-import 'interzept-environment-selector/styles.css'
+import { DataSourceToggleUnstyled } from '@interzept/interzept-environment-selector/unstyled'
+import '@interzept/interzept-environment-selector/styles.css'
 <DataSourceToggleUnstyled />
 ```
 
@@ -363,7 +363,7 @@ return (
 Full TypeScript support included:
 
 ```typescript
-import type { DataSourceMode } from 'interzept-environment-selector'
+import type { DataSourceMode } from '@interzept/interzept-environment-selector'
 
 type DataSourceMode = 'mock' | 'local' | 'dev' | 'uat' | 'production'
 ```

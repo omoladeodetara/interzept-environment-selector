@@ -67,7 +67,7 @@
   "bugs": {
     "url": "https://github.com/interzept/interzept-environment-selector/issues"
   },
-  "homepage": "https://github.com/interzept/interzept-environment-selector#readme",
+  "homepage": "https://interzept.dev",
   "license": "MIT",
   "author": "Omolade Odetara",
   "engines": {
